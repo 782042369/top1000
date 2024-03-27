@@ -1,0 +1,88 @@
+/*
+ * @Author: 杨宏旋
+ * @Date: 2020-07-04 23:15:34
+ * @LastEditors: yanghongxuan
+ * @LastEditTime: 2024-03-26 13:04:13
+ * @Description:
+ */
+import axios from 'axios';
+import fs from 'fs';
+import schedule from 'node-schedule';
+import path from 'path';
+
+const handleJsonData = (data: string) => {
+  // 解析内容并创建JSON对象
+  const lines = data.split('\r\n');
+  const [time, _v, ...linesData] = lines;
+  const items: {
+    siteName: string;
+    siteid: string;
+    duplication: string;
+    mainTitle: string;
+    subTitle: string;
+    size: string;
+    id: number;
+  }[] = [];
+  const siteName: string[] = [];
+  const regex = /站名：(.*?) 【ID：(\d+)】/;
+  for (let i = 0; i < linesData.length; i += 5) {
+    // 假设每6行为一组数据
+    const match = linesData[i].match(regex);
+    const duplication = linesData[i + 1]?.split('：')[1]?.trim();
+    const mainTitle = linesData[i + 2]?.split('：')[1]?.trim();
+    const subTitle = linesData[i + 3]?.split('：')[1]?.trim();
+    const size = linesData[i + 4]?.split('：')[1]?.trim();
+    if (match?.[1]) {
+      siteName.indexOf(match[1]) === -1 && siteName.push(match[1]);
+      items.push({
+        siteName: match?.[1] || '', // 网站名
+        siteid: match?.[2] || '', // id
+        duplication,
+        mainTitle,
+        subTitle,
+        size,
+        id: i / 5 + 1,
+      });
+    }
+  }
+
+  // 写入JSON文件
+  const jsonFilePath = path.join(__dirname, '../../static/top1000.json');
+  fs.writeFile(
+    jsonFilePath,
+    JSON.stringify(
+      {
+        time,
+        items,
+        siteName,
+      },
+      null,
+      2,
+    ),
+    err => {
+      if (err) {
+        console.error('Error writing JSON file:', err);
+        return;
+      }
+      console.log('JSON file was successfully created.');
+    },
+  );
+};
+// 定时任务
+const scheduleCronstyle = () => {
+  axios.get('http://api.bolahg.cn/top1000.txt').then(res => {
+    if (res.data) {
+      handleJsonData(res.data);
+    }
+  });
+  schedule.scheduleJob('0 08 * * *', () => {
+    try {
+      axios.get('http://api.bolahg.cn/top1000.txt').then(res => {
+        if (res.data) {
+          handleJsonData(res.data);
+        }
+      });
+    } catch (error) {}
+  });
+};
+export default scheduleCronstyle;
