@@ -9,7 +9,6 @@
  * Normalize a port into a number, string, or false.
  */
 
-
 export function normalizePort(val: string) {
   const portNum = parseInt(val, 10);
 
@@ -31,20 +30,20 @@ export function normalizePort(val: string) {
  */
 
 export function onError(error: any, port: string) {
-  if (error.syscall !== "listen") {
+  if (error.syscall !== 'listen') {
     throw error;
   }
 
-  const bind = typeof port === "string" ? `Pipe ${port}` : `Port ${port}`;
+  const bind = typeof port === 'string' ? `Pipe ${port}` : `Port ${port}`;
 
   // handle specific listen errors with friendly messages
   switch (error.code) {
-    case "EACCES":
-        console.error(`${bind} requires elevated privileges`);
+    case 'EACCES':
+      console.error(`${bind} requires elevated privileges`);
       process.exit(1);
       break;
-    case "EADDRINUSE":
-        console.error(`${bind} is already in use`);
+    case 'EADDRINUSE':
+      console.error(`${bind} is already in use`);
       process.exit(1);
       break;
     default:

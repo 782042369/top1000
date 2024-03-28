@@ -1,14 +1,14 @@
 {
-    "name": "pay_work",
-    "version": "2.0.0",
+    "name": "top_work",
+    "version": "1.0.0",
     "private": true,
     "scripts": {
         "dev": "nodemon",
+        "start": "nodemon",
         "lint": "eslint . --ext .ts --fix & pnpm prettier",
         "prettier": "prettier --write 'src/**/*.ts'"
     },
     "dependencies": {
-        "@types/big.js": "^6.1.6",
         "@types/koa": "^2.13.6",
         "@types/koa-compress": "^4.0.3",
         "@types/koa-logger": "^3.1.2",

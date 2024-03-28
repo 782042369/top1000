@@ -5,9 +5,6 @@ settings:
   excludeLinksFromLockfile: false
 
 dependencies:
-  '@types/big.js':
-    specifier: ^6.1.6
-    version: 6.1.6
   '@types/koa':
     specifier: ^2.13.6
     version: 2.13.6
@@ -200,10 +197,6 @@ packages:
     resolution: {integrity: sha512-jOdnI/3qTpHABjM5cx1Hc0sKsPoYCp+DP/GJRGtDlPd7fiV9oXGGIcjW/ZOxLIvjGz8MA+uMZI9metHlgqbgwQ==}
     dependencies:
       '@types/node': 20.4.1
-    dev: false
-
-  /@types/big.js@6.1.6:
-    resolution: {integrity: sha512-0r9J+Zz9rYm2hOTwiMAVkm3XFQ4u5uTK37xrQMhc9bysn/sf/okzovWMYYIBMFTn/yrEZ11pusgLEaoarTlQbA==}
     dev: false
 
   /@types/body-parser@1.19.2:
