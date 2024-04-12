@@ -1,9 +1,9 @@
 #!/bin/bash
 
-# 初始版本号
-VERSION="1.7"
+# 默认初始版本号
+DEFAULT_VERSION="1.7"
 
-# 自动增加版本号的函数
+# 使用函数处理版本号增加
 increment_version() {
     local IFS=.
     local num=($1)
@@ -16,39 +16,44 @@ increment_version() {
     echo "${num[0]}.${num[1]}"
 }
 
-# 读取当前版本号
-current_version=$(grep '^VERSION=' $0 | cut -d'=' -f2 | tr -d '"')
-
-# 检查是否传入了版本号或使用自动增加的版本号
-if [ "$#" -ne 1 ]; then
-    if [ -z "$current_version" ]; then
-        echo "No version specified and no version found in script."
-        exit 1
+# 使用函数更新文件中的版本号
+update_version_in_file() {
+    local file=$1
+    local version=$2
+    local pattern=$3
+    if [[ "$OSTYPE" == "darwin"* ]]; then
+        sed -i "" "s#$pattern#$version#" "$file"
+    else
+        sed -i "s#$pattern#$version#" "$file"
     fi
-    VERSION=$(increment_version $current_version)
-else
-    VERSION=$1
-fi
+}
 
-# 更新脚本中的版本号
-if [[ "$OSTYPE" == "darwin"* ]]; then
-    # macOS requires an empty extension with -i for in-place editing
-    sed -i "" "s/^VERSION=\"[0-9]*\.[0-9]*\"/VERSION=\"$VERSION\"/" $0
-else
-    # Linux and others
-    sed -i "s/^VERSION=\"[0-9]*\.[0-9]*\"/VERSION=\"$VERSION\"/" $0
-fi
+# 主逻辑
+main() {
+    # 读取当前版本号或使用默认版本号
+    local current_version=$(grep '^VERSION=' $0 | cut -d'=' -f2 | tr -d '"')
+    local version=${1:-$(increment_version ${current_version:-$DEFAULT_VERSION})}
 
-echo "Building version $VERSION"
+    # 更新脚本中的版本号
+    update_version_in_file "$0" "VERSION=\"$version\"" "^VERSION=\"[0-9]*\.[0-9]*\""
 
-# 构建过程
-cd web && pnpm i && pnpm build
-cd ../service && docker buildx build --platform linux/amd64,linux/arm64 -t 782042369/top1000-iyuu:v.$VERSION . --push
+    # 更新 docker-compose.yaml 文件中的版本号
+    update_version_in_file "docker-compose.yaml" "image: 782042369/top1000-iyuu:v$version" "image: 782042369\/top1000-iyuu:v[0-9]*\.[0-9]*"
 
-# Git 提交
-cd ../
-git add .
-git commit -m "feat: docker build v.$VERSION"
-git push
+    echo "Building version $version"
 
-echo "Updated script to version $VERSION and pushed to Git."
+    # 构建过程
+    cd web && pnpm i && pnpm build
+    cd ../service && docker buildx build --platform linux/amd64,linux/arm64 -t 782042369/top1000-iyuu:$version . --push
+
+    # Git 提交
+    cd ../
+    git add .
+   git commit -m "feat: docker build v.$VERSION"
+    git push
+
+    echo "Updated script and docker-compose to version $version and pushed to Git."
+}
+
+# 调用主函数
+main "$@"
