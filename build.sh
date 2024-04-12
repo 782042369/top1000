@@ -35,24 +35,22 @@ main() {
     local version=${1:-$(increment_version ${current_version:-$DEFAULT_VERSION})}
 
     # 更新脚本中的版本号
-    update_version_in_file "$0" "VERSION=\"$version\"" "^VERSION=\"[0-9]*\.[0-9]*\""
+    update_version_in_file "$0" "DEFAULT_VERSION=\"$version\"" "^DEFAULT_VERSION=\"[0-9]*\.[0-9]*\""
 
-    # 更新 docker-compose.yaml 文件中的版本号
-    update_version_in_file "docker-compose.yaml" "image: 782042369/top1000-iyuu:v$version" "image: 782042369\/top1000-iyuu:v[0-9]*\.[0-9]*"
 
     echo "Building version $version"
 
     # 构建过程
     cd web && pnpm i && pnpm build
-    cd ../service && docker buildx build --platform linux/amd64,linux/arm64 -t 782042369/top1000-iyuu:$version . --push
+    cd ../service && docker buildx build --platform linux/amd64,linux/arm64 -t 782042369/top1000-iyuu:v.$version . --push
 
     # Git 提交
     cd ../
     git add .
-   git commit -m "feat: docker build v.$VERSION"
+    git commit -m "feat: docker build v.$DEFAULT_VERSION"
     git push
 
-    echo "Updated script and docker-compose to version $version and pushed to Git."
+    echo "Updated script to version $version and pushed to Git."
 }
 
 # 调用主函数
