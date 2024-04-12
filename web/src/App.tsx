@@ -22,6 +22,17 @@ const ptUrlConfig = {
   chdbits: 'https://chdbits.co',
   ssd: 'https://springsunday.net',
   ourbits: 'https://ourbits.club',
+  ptsbao: 'https://ptsbao.club',
+  nanyangpt: 'https://nanyangpt.com',
+  pthome: 'https://pthome.net',
+  tjupt: 'https://tjupt.org',
+  upxin: 'https://pt.upxin.net',
+  hd4fans: 'https://pt.hd4fans.org',
+  hhanclub: 'https://hhanclub.top',
+  hdtime: 'https://hdtime.org',
+  hdarea: 'https://hdarea.club',
+  hdzone: 'http://www.hdzone.org',
+  '1ptba': 'https://1ptba.com',
 } as const;
 interface DataType {
   siteName: keyof typeof ptUrlConfig;
@@ -65,7 +76,7 @@ const App: React.FC = () => {
     setSortedInfo(sorter as Sorts);
   };
   useEffect(() => {
-    fetch('./top1000.json')
+    fetch('https://top1000.waibuzheng.club/top1000.json')
       .then(response => response.json())
       .then((json: ResDataType) => {
         if (json) {
@@ -121,7 +132,6 @@ const App: React.FC = () => {
       key: 'action',
       render: (_text, record) => {
         const url = ptUrlConfig[record.siteName];
-
         return !url ? (
           ''
         ) : (

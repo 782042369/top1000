@@ -2,14 +2,14 @@
  * @Author: 杨宏旋
  * @Date: 2020-07-04 23:15:34
  * @LastEditors: yanghongxuan
- * @LastEditTime: 2024-03-26 13:04:13
+ * @LastEditTime: 2024-04-12 09:44:17
  * @Description:
  */
 import axios from 'axios';
 import fs from 'fs';
+import https from 'https';
 import schedule from 'node-schedule';
 import path from 'path';
-
 const handleJsonData = (data: string) => {
   // 解析内容并创建JSON对象
   const lines = data.split('\r\n');
@@ -68,20 +68,34 @@ const handleJsonData = (data: string) => {
     },
   );
 };
+// 创建一个新的 httpsAgent 并设置 rejectUnauthorized 为 false
+const agent = new https.Agent({
+  rejectUnauthorized: false,
+});
 // 定时任务
 const scheduleCronstyle = () => {
-  axios.get('http://api.bolahg.cn/top1000.txt').then(res => {
-    if (res.data) {
-      handleJsonData(res.data);
-    }
-  });
-  schedule.scheduleJob('0 08 * * *', () => {
+  axios
+    .get('https://api.bolahg.cn/top1000.txt', { httpsAgent: agent })
+    .then(res => {
+      if (res.data) {
+        handleJsonData(res.data);
+      }
+    })
+    .catch(err => {
+      console.log('err: ', err);
+    });
+  schedule.scheduleJob('0 09 * * *', () => {
     try {
-      axios.get('http://api.bolahg.cn/top1000.txt').then(res => {
-        if (res.data) {
-          handleJsonData(res.data);
-        }
-      });
+      axios
+        .get('https://api.bolahg.cn/top1000.txt', { httpsAgent: agent })
+        .then(res => {
+          if (res.data) {
+            handleJsonData(res.data);
+          }
+        })
+        .catch(err => {
+          console.log('err: ', err);
+        });
     } catch (error) {}
   });
 };
