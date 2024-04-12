@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # 初始版本号
-VERSION="1.6"
+VERSION="1.7"
 
 # 自动增加版本号的函数
 increment_version() {
@@ -46,7 +46,8 @@ cd web && pnpm i && pnpm build
 cd ../service && docker buildx build --platform linux/amd64,linux/arm64 -t 782042369/top1000-iyuu:v.$VERSION . --push
 
 # Git 提交
-git add $0
+cd ../
+git add .
 git commit -m "feat: docker build v.$VERSION"
 git push
 
