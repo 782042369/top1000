@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # 默认初始版本号
-DEFAULT_VERSION="1.7"
+DEFAULT_VERSION="1.8"
 
 # 使用函数处理版本号增加
 increment_version() {
