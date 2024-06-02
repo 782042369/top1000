@@ -76,7 +76,7 @@ const App: React.FC = () => {
     setSortedInfo(sorter as Sorts);
   };
   useEffect(() => {
-    fetch('https://top1000.waibuzheng.club/top1000.json')
+    fetch('./top1000.json')
       .then(response => response.json())
       .then((json: ResDataType) => {
         if (json) {
