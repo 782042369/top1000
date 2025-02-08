@@ -8,7 +8,7 @@
 ###
 
 # 默认初始版本号
-DEFAULT_VERSION="2.1"
+DEFAULT_VERSION="2.3"
 
 # 使用函数处理版本号增加
 increment_version() {
