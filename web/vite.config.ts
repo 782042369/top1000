@@ -2,7 +2,7 @@
  * @Author: yanghongxuan
  * @Date: 2024-02-04 16:54:18
  * @Description:
- * @LastEditTime: 2025-02-08 14:16:15
+ * @LastEditTime: 2025-02-08 21:48:30
  * @LastEditors: yanghongxuan
  */
 import { antdResolver } from '@bit-ocean/auto-import';
@@ -46,5 +46,13 @@ export default defineConfig({
     },
     emptyOutDir: false,
     outDir: resolve(__dirname, '../service/static'),
+  },
+  server: {
+    proxy: {
+      '/top1000': {
+        target: 'http://top1000.939593.xyz',
+        changeOrigin: true,
+      },
+    },
   },
 });
