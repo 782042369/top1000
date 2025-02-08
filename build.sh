@@ -1,7 +1,14 @@
 #!/bin/bash
+###
+ # @Author: yanghongxuan
+ # @Date: 2025-02-08 13:41:26
+ # @Description:
+ # @LastEditTime: 2025-02-08 14:21:52
+ # @LastEditors: yanghongxuan
+###
 
 # 默认初始版本号
-DEFAULT_VERSION="2.0"
+DEFAULT_VERSION="2.1"
 
 # 使用函数处理版本号增加
 increment_version() {
@@ -42,7 +49,7 @@ main() {
 
     # 构建过程
     cd web && pnpm i && pnpm build
-    cd ../service && docker buildx build --platform linux/amd64,linux/arm64 -t 782042369/top1000-iyuu:v.$version . --push
+    cd ../service && docker build -t 782042369/top1000-iyuu:v.$version . --push
 
     # Git 提交
     cd ../
