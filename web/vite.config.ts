@@ -2,15 +2,28 @@
  * @Author: yanghongxuan
  * @Date: 2024-02-04 16:54:18
  * @Description:
- * @LastEditTime: 2024-03-27 17:35:05
+ * @LastEditTime: 2025-02-08 14:16:15
  * @LastEditors: yanghongxuan
  */
+import { antdResolver } from '@bit-ocean/auto-import';
 import react from '@vitejs/plugin-react-swc';
 import { resolve } from 'node:path';
+import AutoImport from 'unplugin-auto-import/vite';
 import { defineConfig } from 'vite';
 // https://vitejs.dev/config/
 export default defineConfig({
-  plugins: [react()],
+  plugins: [
+    react(),
+    AutoImport({
+      imports: ['react'],
+      dts: '@types/auto-imports.d.ts',
+      include: [
+        /\.[tj]sx?$/, // .ts, .tsx, .js, .jsx
+        /\.md$/, // .md
+      ],
+      resolvers: [antdResolver()],
+    }),
+  ],
   build: {
     rollupOptions: {
       // 自定义底层的 Rollup 打包配d置

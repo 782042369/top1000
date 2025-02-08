@@ -1,7 +1,5 @@
 import type { TableColumnsType, TableProps } from 'antd';
-import { ConfigProvider, Table } from 'antd';
 import zhCN from 'antd/es/locale/zh_CN';
-import React, { useEffect, useRef, useState } from 'react';
 import './index.css';
 type OnChange = NonNullable<TableProps<DataType>['onChange']>;
 type Filters = Parameters<OnChange>[1];
@@ -102,7 +100,7 @@ const App: React.FC = () => {
     setSortedInfo(sorter as Sorts);
   };
   useEffect(() => {
-    fetch('./top1000.json')
+    fetch('https://top1000.939593.xyz/top1000.json')
       .then(response => response.json())
       .then((json: ResDataType) => {
         if (json) {
