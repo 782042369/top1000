@@ -17,7 +17,7 @@ const ptUrlConfig = {
   keepfrds: 'https://pt.keepfrds.com',
   pter: 'https://pterclub.com',
   hdsky: 'https://hdsky.me',
-  chdbits: 'https://chdbits.co',
+  chdbits: 'https://ptchdbits.co',
   ssd: 'https://springsunday.net',
   ourbits: 'https://ourbits.club',
   ptsbao: 'https://ptsbao.club',
@@ -100,7 +100,7 @@ const App: React.FC = () => {
     setSortedInfo(sorter as Sorts);
   };
   useEffect(() => {
-    fetch('https://top1000.939593.xyz/top1000.json')
+    fetch('./top1000.json')
       .then(response => response.json())
       .then((json: ResDataType) => {
         if (json) {
@@ -159,13 +159,23 @@ const App: React.FC = () => {
         return !url ? (
           ''
         ) : (
-          <a
-            href={`${url}/details.php?id=${record.siteid}&hit=1`}
-            target="_blank"
-            rel="noreferrer"
-          >
-            查看
-          </a>
+          <div>
+            <a
+              href={`${url}/details.php?id=${record.siteid}&hit=1`}
+              target="_blank"
+              rel="noreferrer"
+            >
+              查看详情
+            </a>
+            <a
+              style={{ marginLeft: '10px' }}
+              href={`${url}/download.php?id=${record.siteid}`}
+              target="_blank"
+              rel="noreferrer"
+            >
+              下载种子
+            </a>
+          </div>
         );
       },
     },
