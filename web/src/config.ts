@@ -49,4 +49,5 @@ export const ptUrlConfig = {
   dmhy: 'https://u2.dmhy.org',
   hdcity: 'https://hdcity.city',
   dajiao: 'https://dajiao.cyou',
+  ptlsp: 'https://audiences.me',
 } as const;

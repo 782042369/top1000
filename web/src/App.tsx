@@ -2,7 +2,7 @@
  * @Author: yanghongxuan
  * @Date: 2025-02-08 21:16:06
  * @Description:
- * @LastEditTime: 2025-02-08 21:48:37
+ * @LastEditTime: 2025-02-09 19:08:41
  * @LastEditors: yanghongxuan
  */
 import type { TableColumnsType } from 'antd';
@@ -68,6 +68,8 @@ const App: React.FC = () => {
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       onFilter: (value: any, record) => record.siteName.includes(value),
       ellipsis: true,
+      filterMode: 'tree',
+      filterSearch: true,
     },
     {
       title: '资源ID',
@@ -93,9 +95,34 @@ const App: React.FC = () => {
       title: '操作',
       key: 'action',
       render: (_text, record) => {
-        const { siteName, siteid } = record;
+        const { siteName } = record;
+        let { siteid } = record;
         const url = ptUrlConfig[siteName];
-        return url ? (
+        if (!url) {
+          return null;
+        }
+        if (url === 'https://kp.m-team.cc') {
+          return (
+            <div>
+              <a
+                href={`${url}/detail/${siteid}`}
+                target="_blank"
+                rel="noreferrer"
+              >
+                查看详情(下载需要触发接口)
+              </a>
+            </div>
+          );
+        }
+        if (siteName === 'ptlsp') {
+          siteid = {
+            '649': '297203',
+            '8667': '353903',
+            '8765': '288867',
+            default: '297203',
+          }[siteid] as string;
+        }
+        return (
           <div>
             <a
               href={`${url}/details.php?id=${siteid}&hit=1`}
@@ -113,7 +140,7 @@ const App: React.FC = () => {
               下载种子
             </a>
           </div>
-        ) : null; // 优化：简化条件渲染
+        );
       },
     },
   ];
@@ -132,7 +159,7 @@ const App: React.FC = () => {
     window.addEventListener('resize', updateTableHeight); // 优化：监听窗口大小变化
     return () => window.removeEventListener('resize', updateTableHeight); // 清理事件监听
   }, [taskContainerRef]);
-
+  const x = window.innerWidth;
   return (
     <ConfigProvider locale={zhCN}>
       <div ref={taskContainerRef}>
@@ -142,7 +169,7 @@ const App: React.FC = () => {
           dataSource={responseData.items}
           onChange={handleTableChange}
           pagination={false}
-          scroll={{ x: 'max-content', y: tableHeight }}
+          scroll={{ x, y: tableHeight }}
           virtual={true}
           style={{ height: '100vh' }}
           size="small"
