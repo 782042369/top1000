@@ -2,7 +2,7 @@
  * @Author: yanghongxuan
  * @Date: 2025-02-08 21:16:06
  * @Description:
- * @LastEditTime: 2025-02-09 19:08:41
+ * @LastEditTime: 2025-02-10 18:15:56
  * @LastEditors: yanghongxuan
  */
 import type { TableColumnsType } from 'antd';
@@ -121,6 +121,15 @@ const App: React.FC = () => {
             '8765': '288867',
             default: '297203',
           }[siteid] as string;
+        }
+        if (siteName === 'ttg') {
+          return (
+            <div>
+              <a href={`${url}/t/${siteid}`} target="_blank" rel="noreferrer">
+                查看详情(下载链接规则还没研究清楚)
+              </a>
+            </div>
+          );
         }
         return (
           <div>
