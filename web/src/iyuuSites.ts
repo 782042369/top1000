@@ -841,5 +841,25 @@ const siteData = [
     is_https: 1,
     cookie_required: 0,
   },
+  {
+    id: 117,
+    site: 'tjupt',
+    nickname: '北洋',
+    base_url: 'tjupt.org',
+    download_page: 'download.php?id={}&passkey={passkey}',
+    details_page: 'details.php?id={}',
+    is_https: 1,
+    cookie_required: 0,
+  },
+  {
+    id: 118,
+    site: 'hdvideo',
+    nickname: '北洋',
+    base_url: 'hdvideo.one',
+    download_page: 'download.php?id={}&passkey={passkey}',
+    details_page: 'details.php?id={}',
+    is_https: 1,
+    cookie_required: 0,
+  },
 ] as const;
 export default siteData;
