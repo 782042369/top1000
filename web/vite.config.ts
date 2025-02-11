@@ -2,7 +2,7 @@
  * @Author: yanghongxuan
  * @Date: 2024-02-04 16:54:18
  * @Description:
- * @LastEditTime: 2025-02-08 21:48:30
+ * @LastEditTime: 2025-02-11 15:55:33
  * @LastEditors: yanghongxuan
  */
 import { antdResolver } from '@bit-ocean/auto-import';
@@ -55,5 +55,6 @@ export default defineConfig({
       },
     },
     open: true,
+    host: '0.0.0.0',
   },
 });
