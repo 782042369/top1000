@@ -1,3 +1,10 @@
+/*
+ * @Author: yanghongxuan
+ * @Date: 2025-02-10 15:29:50
+ * @Description:
+ * @LastEditTime: 2025-02-11 09:31:44
+ * @LastEditors: yanghongxuan
+ */
 export const ptUrlConfig = {
   hdhome: 'https://hdhome.org',
   btschool: 'https://pt.btschool.club',
@@ -50,4 +57,5 @@ export const ptUrlConfig = {
   hdcity: 'https://hdcity.city',
   dajiao: 'https://dajiao.cyou',
   ptlsp: 'https://audiences.me',
+  dragonhd: 'https://www.dragonhd.xyz',
 } as const;
