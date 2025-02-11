@@ -2,60 +2,35 @@
  * @Author: yanghongxuan
  * @Date: 2025-02-10 15:29:50
  * @Description:
- * @LastEditTime: 2025-02-11 09:31:44
+ * @LastEditTime: 2025-02-11 14:56:28
  * @LastEditors: yanghongxuan
  */
-export const ptUrlConfig = {
-  hdhome: 'https://hdhome.org',
-  btschool: 'https://pt.btschool.club',
-  ttg: 'https://totheglory.im',
-  'm-team': 'https://kp.m-team.cc',
-  torrentccf: 'https://et8.org',
-  audiences: 'https://audiences.me',
-  greatposterwall: 'https://greatposterwall.com',
-  keepfrds: 'https://pt.keepfrds.com',
-  pter: 'https://pterclub.com',
-  hdsky: 'https://hdsky.me',
-  chdbits: 'https://ptchdbits.co',
-  ssd: 'https://springsunday.net',
-  ourbits: 'https://ourbits.club',
-  ptsbao: 'https://ptsbao.club',
-  nanyangpt: 'https://nanyangpt.com',
-  pthome: 'https://pthome.net',
-  tjupt: 'https://tjupt.org',
-  upxin: 'https://pt.upxin.net',
-  hd4fans: 'https://pt.hd4fans.org',
-  hhanclub: 'https://hhanclub.top',
-  hdtime: 'https://hdtime.org',
-  hdarea: 'https://hdarea.club',
-  hdzone: 'http://www.hdzone.org',
-  '1ptba': 'https://1ptba.com',
-  rousi: 'https://rousi.zip',
-  cyanbug: 'https://cyanbug.net',
-  zmpt: 'https://zmpt.club',
-  hdfans: 'https://hdfans.org',
-  hdatmos: 'https://hdatmos.club',
-  piggo: 'https://piggo.me',
-  hddolby: 'https://www.hddolby.com/',
-  crabpt: 'https://crabpt.vip',
-  discfan: 'https://discfan.net',
-  '52pt': 'https://52pt.size',
-  ubits: 'https://ubits.club',
-  agsvpt: 'https://www.agsvpt.com',
-  eastgame: 'https://pt.eastgame.org',
-  tosky: 'https://t.tosky.club',
-  icc2022: 'https://www.icc2022.com',
-  carpt: 'https://carpt.net',
-  qingwapt: 'https://qingwapt.com',
-  oshen: 'https://www.oshen.win',
-  hitpt: 'https://www.hitpt.com',
-  yemapt: 'https://www.yemapt.org',
-  pandapt: 'https://pandapt.net',
-  monikadesign: 'https://monikadesign.uk',
-  hdvideo: 'https://hdvideo.one',
-  dmhy: 'https://u2.dmhy.org',
-  hdcity: 'https://hdcity.city',
-  dajiao: 'https://dajiao.cyou',
-  ptlsp: 'https://audiences.me',
-  dragonhd: 'https://www.dragonhd.xyz',
-} as const;
+import siteData from './iyuuSites';
+export const ptUrlConfig = siteData.reduce(
+  (acc, cur) => {
+    const base_url = cur.site === 'm-team' ? 'kp.m-team.cc' : cur.base_url;
+    const url = cur.is_https ? `https://${base_url}` : `http://${base_url}`;
+    acc[cur.site] = {
+      details: (id: string) => `${url}/${cur.details_page.replace(`{}`, id)}`,
+      download: (id: string) => {
+        const download_page = cur.download_page;
+        if (download_page.includes('download.php')) {
+          return `${url}/${download_page
+            .replace(`{}`, id)
+            .replace(`&passkey={passkey}`, '')
+            .replace(`&downhash={downHash}`, '')}
+            `;
+        }
+      },
+    };
+
+    return acc;
+  },
+  {} as Record<
+    string,
+    {
+      details: (id: string) => string;
+      download: (id: string) => string | undefined;
+    }
+  >,
+);

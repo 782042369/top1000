@@ -2,7 +2,7 @@
  * @Author: yanghongxuan
  * @Date: 2025-02-08 21:16:06
  * @Description:
- * @LastEditTime: 2025-02-10 18:15:56
+ * @LastEditTime: 2025-02-11 14:52:00
  * @LastEditors: yanghongxuan
  */
 import type { TableColumnsType } from 'antd';
@@ -97,22 +97,10 @@ const App: React.FC = () => {
       render: (_text, record) => {
         const { siteName } = record;
         let { siteid } = record;
-        const url = ptUrlConfig[siteName];
-        if (!url) {
+        const getUrl =
+          ptUrlConfig[siteName === 'ptlsp' ? 'audiences' : siteName];
+        if (!getUrl) {
           return null;
-        }
-        if (url === 'https://kp.m-team.cc') {
-          return (
-            <div>
-              <a
-                href={`${url}/detail/${siteid}`}
-                target="_blank"
-                rel="noreferrer"
-              >
-                查看详情(下载需要触发接口)
-              </a>
-            </div>
-          );
         }
         if (siteName === 'ptlsp') {
           siteid = {
@@ -122,32 +110,26 @@ const App: React.FC = () => {
             default: '297203',
           }[siteid] as string;
         }
-        if (siteName === 'ttg') {
-          return (
-            <div>
-              <a href={`${url}/t/${siteid}`} target="_blank" rel="noreferrer">
-                查看详情(下载链接规则还没研究清楚)
-              </a>
-            </div>
-          );
-        }
+        const downloadUrl = getUrl.download(siteid);
         return (
           <div>
             <a
-              href={`${url}/details.php?id=${siteid}&hit=1`}
+              href={`${getUrl.details(siteid)}`}
               target="_blank"
               rel="noreferrer"
             >
-              查看详情
+              {downloadUrl ? `查看详情` : `查看详情(下载到详情页面)`}
             </a>
-            <a
-              style={{ marginLeft: '10px' }}
-              href={`${url}/download.php?id=${siteid}`}
-              target="_blank"
-              rel="noreferrer"
-            >
-              下载种子
-            </a>
+            {downloadUrl ? (
+              <a
+                style={{ marginLeft: '10px' }}
+                href={`${getUrl.download(siteid)}`}
+                target="_blank"
+                rel="noreferrer"
+              >
+                下载种子
+              </a>
+            ) : null}
           </div>
         );
       },

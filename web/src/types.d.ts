@@ -3,17 +3,16 @@
  * @Author: yanghongxuan
  * @Date: 2025-02-08 21:31:56
  * @Description:
- * @LastEditTime: 2025-02-08 21:45:54
+ * @LastEditTime: 2025-02-11 14:37:10
  * @LastEditors: yanghongxuan
  */
-import { ptUrlConfig } from '@/config';
 import type { TableProps } from 'antd';
 
 namespace API {
   /** 种子详情 */
   interface DataType {
     /** 站点名称 */
-    siteName: keyof typeof ptUrlConfig;
+    siteName: string;
     /** 资源ID */
     siteid: string;
     /** 重复度 */
