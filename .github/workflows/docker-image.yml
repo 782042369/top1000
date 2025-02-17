@@ -12,12 +12,13 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v2
 
-      - name: Install web dependencies
+      - name: Install web dependencies & Build web 
         run: |
           npm install -g pnpm
           cd web
           pnpm install
-
+          pnpm run build
+          
       - name: Log in to Docker Hub
         uses: docker/login-action@v3
         with:
