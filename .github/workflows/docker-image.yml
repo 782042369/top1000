@@ -24,7 +24,7 @@ jobs:
           cd web
           pnpm install
           pnpm run build
-          cd service
+          cd ../service
           docker build --progress=plain -t 782042369/top1000-iyuu:latest .
 
       - name: Push Docker image
