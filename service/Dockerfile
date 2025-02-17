@@ -18,6 +18,8 @@ RUN npm install -g pnpm && pnpm install --prod
 # 复制应用的其余部分
 COPY . .
 
+COPY ./static ./static
+
 # 阶段 2: 生产阶段
 FROM node:18-alpine as production
 
