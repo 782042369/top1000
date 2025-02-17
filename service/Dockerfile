@@ -11,9 +11,6 @@ WORKDIR /app
 # 复制 package.json 和锁文件
 COPY package.json pnpm-lock.yaml ./
 
-# 设置环境变量
-RUN npm config set registry https://registry.npmmirror.com
-
 # 安装 pnpm 并安装生产依赖
 # 合并 RUN 命令以减少镜像层
 RUN npm install -g pnpm && pnpm install --prod
