@@ -2,10 +2,10 @@
 logs
 
 # 忽略node_modules目录
-node_modules/
+node_modules
 
 # 忽略Dockerfile本身
 Dockerfile
 
 # 忽略.git目录
-.git/
+.git
