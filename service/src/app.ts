@@ -2,7 +2,7 @@
  * @Author: 杨宏旋
  * @Date: 2020-07-01 14:41:22
  * @LastEditors: yanghongxuan
- * @LastEditTime: 2024-03-27 17:38:40
+ * @LastEditTime: 2025-03-12 09:46:47
  * @Description:
  */
 import http from 'http';
@@ -49,7 +49,7 @@ app.use(async (ctx, next) => {
 app.on('error', (err, ctx) => {
   console.error('server error', err, ctx);
 });
-const publicPath = path.join(__dirname, '../static');
+const publicPath = path.join(__dirname, '../dist');
 app.use(
   KoaStatic(publicPath, {
     setHeaders: (res, path) => {
