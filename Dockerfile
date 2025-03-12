@@ -3,8 +3,7 @@
 FROM node:18-alpine AS builder
 WORKDIR /app
 
-# 启用 corepack 避免全局安装 pnpm
-RUN corepack enable
+RUN npm i pnpm@8.15.4
 
 # 优先复制包管理文件以利用构建缓存
 COPY web/package.json web/pnpm-lock.yaml ./web/
