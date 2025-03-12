@@ -40,8 +40,7 @@ COPY --from=builder --chown=appuser:appgroup \
 
 # 安装生产依赖（自动使用 corepack）
 RUN npm i pnpm@8.15.4 -g && \
-    pnpm install --prod && \
-    pnpm cache clean --force
+    pnpm install --prod
 
 # 设置用户权限
 USER appuser
