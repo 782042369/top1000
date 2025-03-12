@@ -3,7 +3,7 @@
 FROM node:18-alpine AS builder
 WORKDIR /app
 
-RUN npm i pnpm@8.15.4
+RUN npm i pnpm@8.15.4 -g
 
 # 优先复制包管理文件以利用构建缓存
 COPY web/package.json web/pnpm-lock.yaml ./web/
@@ -39,7 +39,7 @@ COPY --from=builder --chown=appuser:appgroup \
     /app/service/pnpm-lock.yaml ./
 
 # 安装生产依赖（自动使用 corepack）
-RUN npm i pnpm@8.15.4 && \
+RUN npm i pnpm@8.15.4 -g && \
     pnpm install --frozen-lockfile --prod && \
     pnpm cache clean --force
 
