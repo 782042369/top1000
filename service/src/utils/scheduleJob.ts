@@ -2,7 +2,7 @@
  * @Author: 杨宏旋
  * @Date: 2020-07-04 23:15:34
  * @LastEditors: yanghongxuan
- * @LastEditTime: 2025-03-12 09:41:33
+ * @LastEditTime: 2025-03-12 09:46:21
  * @Description:
  */
 import axios from 'axios';
@@ -47,7 +47,7 @@ const handleJsonData = (data: string) => {
   }
 
   // 写入JSON文件
-  const jsonFilePath = path.join(__dirname, '../../static/top1000.json');
+  const jsonFilePath = path.join(__dirname, '../../dist/top1000.json');
   fs.writeFile(
     jsonFilePath,
     JSON.stringify(
