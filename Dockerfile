@@ -10,8 +10,8 @@ COPY web/package.json web/pnpm-lock.yaml ./web/
 COPY service/package.json service/pnpm-lock.yaml ./service/
 
 # 安装项目依赖（web & service）
-RUN cd web && pnpm install --frozen-lockfile
-RUN cd service && pnpm install --frozen-llockfile
+RUN cd web && pnpm install
+RUN cd service && pnpm install
 
 # 复制源代码（此时依赖已缓存，代码变更不会触发重新安装依赖）
 COPY web ./web/
@@ -40,7 +40,7 @@ COPY --from=builder --chown=appuser:appgroup \
 
 # 安装生产依赖（自动使用 corepack）
 RUN npm i pnpm@8.15.4 -g && \
-    pnpm install --frozen-lockfile --prod && \
+    pnpm install --prod && \
     pnpm cache clean --force
 
 # 设置用户权限
