@@ -24,7 +24,6 @@
     "koa-compress": "^5.1.1",
     "koa-logger": "^3.2.1",
     "koa-static": "^5.0.0",
-    "mime-db": "1.53.0",
     "node-schedule": "^2.1.1",
     "nodemon": "^3.1.9",
     "prettier": "^3.5.3",
