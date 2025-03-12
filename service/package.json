@@ -9,7 +9,7 @@
     "lint": "eslint . --ext .ts --fix & pnpm prettier",
     "prettier": "prettier --write 'src/**/*.ts'"
   },
-  "dependencies": {
+  "devDependencies": {
     "@types/koa": "^2.15.0",
     "@types/koa-compress": "^4.0.6",
     "@types/koa-logger": "^3.1.5",
@@ -18,17 +18,19 @@
     "@types/node-schedule": "^2.1.7",
     "@typescript-eslint/eslint-plugin": "^8.26.1",
     "@typescript-eslint/parser": "^8.26.1",
-    "axios": "^1.8.2",
     "eslint": "^9.22.0",
-    "koa": "^2.16.0",
-    "koa-compress": "^5.1.1",
-    "koa-logger": "^3.2.1",
-    "koa-static": "^5.0.0",
-    "node-schedule": "^2.1.1",
     "nodemon": "^3.1.9",
     "prettier": "^3.5.3",
     "ts-node": "^10.9.2",
     "tsconfig-paths": "^4.2.0",
     "typescript": "^5.8.2"
+  },
+  "dependencies": {
+    "axios": "^1.8.2",
+    "koa": "^2.16.0",
+    "koa-compress": "^5.1.1",
+    "koa-logger": "^3.2.1",
+    "koa-static": "^5.0.0",
+    "node-schedule": "^2.1.1"
   }
 }
