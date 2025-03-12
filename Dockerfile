@@ -1,24 +1,29 @@
-# 使用更小的 Alpine 版本作为构建基础镜像
-FROM node:18-alpine as web-builder
-WORKDIR /app/web
-COPY web/package*.json ./
-# 利用 Alpine 的 pnpm 安装并启用缓存清理
-RUN corepack enable && \
-    pnpm install --frozen-lockfile && \
-    pnpm cache clean --force
-COPY web .
-RUN pnpm build
+# 构建阶段：使用多阶段构建最小化生产镜像
+# 阶段一：构建 web 和 service
+FROM node:18-alpine AS builder
+WORKDIR /app
 
-FROM node:18-alpine as service-builder
-WORKDIR /app/service
-COPY service/package*.json ./
-RUN corepack enable && \
-    pnpm install --frozen-lockfile --prod && \
-    pnpm cache clean --force
-COPY service .
-RUN pnpm build
+# 启用 corepack 避免全局安装 pnpm
+RUN corepack enable
 
-# 最终生产镜像
+# 优先复制包管理文件以利用构建缓存
+COPY web/package.json web/pnpm-lock.yaml ./web/
+COPY service/package.json service/pnpm-lock.yaml ./service/
+
+# 安装项目依赖（web & service）
+RUN cd web && pnpm install --frozen-lockfile
+RUN cd service && pnpm install --frozen-llockfile
+
+# 复制源代码（此时依赖已缓存，代码变更不会触发重新安装依赖）
+COPY web ./web/
+COPY service ./service/
+
+# 执行构建
+RUN cd web && pnpm build
+RUN cd service && pnpm build
+
+# -------------------------------------------
+# 生产阶段：创建最小化生产镜像
 FROM node:18-alpine
 
 # 创建非特权用户
@@ -27,17 +32,15 @@ RUN addgroup -g 1001 appgroup && \
 
 WORKDIR /app
 
-# 从构建阶段复制必要文件
-COPY --from=service-builder --chown=appuser:appgroup \
+# 从构建阶段仅复制必要文件
+COPY --from=builder --chown=appuser:appgroup \
     /app/service/dist ./dist/
-COPY --from=service-builder --chown=appuser:appgroup \
-    /app/service/package.json ./package.json
+COPY --from=builder --chown=appuser:appgroup \
+    /app/service/package.json \
+    /app/service/pnpm-lock.yaml ./
 
-# 单独复制 pnpm 相关文件
-COPY --from=service-builder /app/service/pnpm-lock.yaml ./
-
-# 安装生产依赖并清理缓存
-RUN corepack enable && \
+# 安装生产依赖（自动使用 corepack）
+RUN npm i pnpm@8.15.4 && \
     pnpm install --frozen-lockfile --prod && \
     pnpm cache clean --force
 
