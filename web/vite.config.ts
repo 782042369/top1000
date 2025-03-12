@@ -2,7 +2,7 @@
  * @Author: yanghongxuan
  * @Date: 2024-02-04 16:54:18
  * @Description:
- * @LastEditTime: 2025-02-11 15:55:33
+ * @LastEditTime: 2025-03-12 09:19:44
  * @LastEditors: yanghongxuan
  */
 import { antdResolver } from '@bit-ocean/auto-import';
@@ -45,7 +45,7 @@ export default defineConfig({
       },
     },
     emptyOutDir: false,
-    outDir: resolve(__dirname, '../service/static'),
+    outDir: resolve(__dirname, '../service/dist'),
   },
   server: {
     proxy: {

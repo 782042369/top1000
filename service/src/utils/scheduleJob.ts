@@ -2,7 +2,7 @@
  * @Author: 杨宏旋
  * @Date: 2020-07-04 23:15:34
  * @LastEditors: yanghongxuan
- * @LastEditTime: 2024-04-12 09:44:17
+ * @LastEditTime: 2025-03-12 09:41:33
  * @Description:
  */
 import axios from 'axios';
@@ -75,7 +75,7 @@ const agent = new https.Agent({
 // 定时任务
 const scheduleCronstyle = () => {
   axios
-    .get('https://api.bolahg.cn/top1000.txt', { httpsAgent: agent })
+    .get('https://api.iyuu.cn/top1000.php', { httpsAgent: agent })
     .then(res => {
       if (res.data) {
         handleJsonData(res.data);
@@ -87,7 +87,7 @@ const scheduleCronstyle = () => {
   schedule.scheduleJob('0 09 * * *', () => {
     try {
       axios
-        .get('https://api.bolahg.cn/top1000.txt', { httpsAgent: agent })
+        .get('https://api.iyuu.cn/top1000.php', { httpsAgent: agent })
         .then(res => {
           if (res.data) {
             handleJsonData(res.data);
