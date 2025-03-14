@@ -2,7 +2,7 @@
  * @Author: 杨宏旋
  * @Date: 2020-07-01 14:41:22
  * @LastEditors: yanghongxuan
- * @LastEditTime: 2025-03-14 15:25:05
+ * @LastEditTime: 2025-03-14 15:33:09
  * @Description: 完善了错误处理、安全头、SPA路由支持等功能
  */
 import http from 'http';
@@ -116,5 +116,4 @@ server.on('listening', () => {
   const addr = server.address();
   const bind = typeof addr === 'string' ? `pipe ${addr}` : `port ${addr?.port}`;
   logger.info(`Server started on ${bind}`);
-  console.log(`Listening on ${bind}`);
 });
