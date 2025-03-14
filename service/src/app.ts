@@ -2,7 +2,7 @@
  * @Author: 杨宏旋
  * @Date: 2020-07-01 14:41:22
  * @LastEditors: yanghongxuan
- * @LastEditTime: 2025-03-14 15:18:04
+ * @LastEditTime: 2025-03-14 15:25:05
  * @Description: 完善了错误处理、安全头、SPA路由支持等功能
  */
 import http from 'http';
@@ -21,7 +21,6 @@ app.use(helmet());
 // GZIP 压缩
 app.use(
   compress({
-    threshold: 2048, // 超过 2KB 才压缩
     gzip: { flush: require('zlib').constants.Z_SYNC_FLUSH },
     deflate: false,
     br: false,
