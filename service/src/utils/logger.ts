@@ -1,13 +1,13 @@
 // utils/logger.ts
-import { inspect } from 'util';
-import winston from 'winston';
+import { inspect } from 'node:util'
+import winston from 'winston'
 
-const { combine, timestamp, colorize, printf } = winston.format;
+const { combine, timestamp, colorize, printf } = winston.format
 
 // 智能对象格式化函数
-const smartStringify = (data: unknown) => {
+function smartStringify(data: unknown) {
   if (data instanceof Error) {
-    return `${data.message}\n${data.stack}`;
+    return `${data.message}\n${data.stack}`
   }
   if (typeof data === 'object') {
     return inspect(data, {
@@ -15,31 +15,31 @@ const smartStringify = (data: unknown) => {
       colors: true,
       compact: false,
       breakLength: Infinity,
-    });
+    })
   }
-  return data;
-};
+  return data
+}
 
 const logFormat = printf(({ level, message, timestamp, ...meta }) => {
-  const ts = (timestamp as string).slice(0, 19).replace('T', ' ');
-  let logMessage = `[${ts}] ${level}:`;
+  const ts = (timestamp as string).slice(0, 19).replace('T', ' ')
+  let logMessage = `[${ts}] ${level}:`
 
   // 处理多参数日志 (logger.info('msg', context))
   if (meta[Symbol.for('splat') as unknown as string]) {
     // @ts-ignore
-    const args = [message, ...meta[Symbol.for('splat') as unknown as string]];
-    logMessage += args.map(smartStringify).join(' ');
+    const args = [message, ...meta[Symbol.for('splat') as unknown as string]]
+    logMessage += args.map(smartStringify).join(' ')
   } else {
-    logMessage += smartStringify(message);
+    logMessage += smartStringify(message)
   }
 
   // 处理元数据
   if (Object.keys(meta).length > 0) {
-    logMessage += '\n' + smartStringify(meta);
+    logMessage += `\n${smartStringify(meta)}`
   }
 
-  return logMessage;
-});
+  return logMessage
+})
 
 const logger = winston.createLogger({
   level: 'debug',
@@ -47,6 +47,6 @@ const logger = winston.createLogger({
   transports: [new winston.transports.Console()],
   exceptionHandlers: [new winston.transports.Console()],
   rejectionHandlers: [new winston.transports.Console()],
-});
+})
 
-export default logger;
+export default logger

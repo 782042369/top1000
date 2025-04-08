@@ -2,7 +2,7 @@
  * @Author: yanghongxuan
  * @Date: 2023-07-10 11:12:24
  * @LastEditors: yanghongxuan
- * @LastEditTime: 2025-03-14 15:03:21
+ * @LastEditTime: 2025-04-08 14:49:31
  * @Description:
  */
 /**
@@ -10,19 +10,19 @@
  */
 
 export function normalizePort(val: string) {
-  const portNum = parseInt(val, 10);
+  const portNum = Number.parseInt(val, 10)
 
-  if (isNaN(portNum)) {
+  if (Number.isNaN(portNum)) {
     // named pipe
-    return val;
+    return val
   }
 
   if (portNum >= 0) {
     // port number
-    return portNum;
+    return portNum
   }
 
-  return false;
+  return false
 }
 
 /**
@@ -31,24 +31,24 @@ export function normalizePort(val: string) {
 
 export function onError(error: any, port: string) {
   if (error.syscall !== 'listen') {
-    throw error;
+    throw error
   }
 
-  const bind = typeof port === 'string' ? `Pipe ${port}` : `Port ${port}`;
+  const bind = typeof port === 'string' ? `Pipe ${port}` : `Port ${port}`
 
   // handle specific listen errors with friendly messages
   switch (error.code) {
     case 'EACCES':
-      console.error(`${bind} requires elevated privileges`);
-      process.exit(1);
-      break;
+      console.error(`${bind} requires elevated privileges`)
+      process.exit(1)
+      break
     case 'EADDRINUSE':
-      console.error(`${bind} is already in use`);
-      process.exit(1);
-      break;
+      console.error(`${bind} is already in use`)
+      process.exit(1)
+      break
     default:
-      throw error;
+      throw error
   }
 }
-export { default as logger } from './logger';
-export { default as scheduleJob } from './scheduleJob';
+export { default as logger } from './logger'
+export { default as scheduleJob } from './scheduleJob'

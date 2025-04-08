@@ -5,11 +5,11 @@
  * @LastEditTime: 2025-03-12 09:19:44
  * @LastEditors: yanghongxuan
  */
-import { antdResolver } from '@bit-ocean/auto-import';
-import react from '@vitejs/plugin-react-swc';
-import { resolve } from 'node:path';
-import AutoImport from 'unplugin-auto-import/vite';
-import { defineConfig } from 'vite';
+import { antdResolver } from '@bit-ocean/auto-import'
+import react from '@vitejs/plugin-react-swc'
+import { resolve } from 'node:path'
+import AutoImport from 'unplugin-auto-import/vite'
+import { defineConfig } from 'vite'
 // https://vitejs.dev/config/
 export default defineConfig({
   plugins: [
@@ -39,7 +39,7 @@ export default defineConfig({
                 .toString()
                 .match(/\/node_modules\/(?!.pnpm)(?<moduleName>[^\\/]*)\//)
                 ?.groups!.moduleName ?? 'vender'
-            );
+            )
           }
         },
       },
@@ -57,4 +57,4 @@ export default defineConfig({
     open: true,
     host: '0.0.0.0',
   },
-});
+})

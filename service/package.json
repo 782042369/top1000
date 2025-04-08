@@ -6,10 +6,11 @@
     "dev": "nodemon",
     "start": "nodemon",
     "build": "tsc --project tsconfig.json",
-    "lint": "eslint . --ext .ts --fix & pnpm prettier",
+    "lint": "eslint --fix",
     "prettier": "prettier --write 'src/**/*.ts'"
   },
   "devDependencies": {
+    "@antfu/eslint-config": "^4.11.0",
     "@types/koa": "^2.15.0",
     "@types/koa-compress": "^4.0.6",
     "@types/koa-logger": "^3.1.5",
@@ -19,6 +20,7 @@
     "@typescript-eslint/eslint-plugin": "^8.26.1",
     "@typescript-eslint/parser": "^8.26.1",
     "eslint": "^9.22.0",
+    "eslint-plugin-format": "^1.0.1",
     "nodemon": "^3.1.9",
     "prettier": "^3.5.3",
     "ts-node": "^10.9.2",

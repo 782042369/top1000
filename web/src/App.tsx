@@ -2,14 +2,22 @@
  * @Author: yanghongxuan
  * @Date: 2025-02-08 21:16:06
  * @Description:
- * @LastEditTime: 2025-02-11 14:52:00
+ * @LastEditTime: 2025-04-08 14:49:37
  * @LastEditors: yanghongxuan
  */
 import type { TableColumnsType } from 'antd';
+
 import zhCN from 'antd/es/locale/zh_CN';
-import { ptUrlConfig } from './config';
+
+import type {
+  API,
+  FilterParams,
+  SortParams,
+  TableChangeHandler,
+} from './types';
+
 import './index.css';
-import { API, FilterParams, SortParams, TableChangeHandler } from './types';
+import { ptUrlConfig } from './config';
 import { convertSizeToKb } from './utils';
 
 const App: React.FC = () => {
@@ -65,7 +73,6 @@ const App: React.FC = () => {
       key: 'siteName',
       filters: siteOptions,
       filteredValue: filterParams.siteName || null,
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       onFilter: (value: any, record) => record.siteName.includes(value),
       ellipsis: true,
       filterMode: 'tree',
@@ -80,7 +87,8 @@ const App: React.FC = () => {
       title: '重复度',
       dataIndex: 'duplication',
       key: 'duplication',
-      sorter: (a, b) => parseInt(a.duplication) - parseInt(b.duplication),
+      sorter: (a, b) =>
+        Number.parseInt(a.duplication) - Number.parseInt(b.duplication),
       sortOrder:
         sortParams.columnKey === 'duplication' ? sortParams.order : null,
     },
@@ -104,9 +112,9 @@ const App: React.FC = () => {
         }
         if (siteName === 'ptlsp') {
           siteid = {
-            '649': '297203',
-            '8667': '353903',
-            '8765': '288867',
+            649: '297203',
+            8667: '353903',
+            8765: '288867',
             default: '297203',
           }[siteid] as string;
         }
@@ -155,7 +163,7 @@ const App: React.FC = () => {
     <ConfigProvider locale={zhCN}>
       <div ref={taskContainerRef}>
         <Table
-          rowKey={'id'}
+          rowKey="id"
           columns={columns}
           dataSource={responseData.items}
           onChange={handleTableChange}

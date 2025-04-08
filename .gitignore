@@ -7,8 +7,6 @@ dist
 dist-ssr
 *.local
 
-# Editor directories and files
-.vscode
 # mac files
 .DS_Store
 

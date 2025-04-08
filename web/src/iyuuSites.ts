@@ -861,5 +861,5 @@ const siteData = [
     is_https: 1,
     cookie_required: 0,
   },
-] as const;
-export default siteData;
+] as const
+export default siteData
