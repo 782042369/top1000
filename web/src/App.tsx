@@ -2,12 +2,12 @@
  * @Author: yanghongxuan
  * @Date: 2025-02-08 21:16:06
  * @Description:
- * @LastEditTime: 2025-04-11 14:55:44
+ * @LastEditTime: 2025-04-11 17:00:33
  * @LastEditors: yanghongxuan
  */
 import type { TableColumnsType } from 'antd'
 
-import { useEventListener } from 'ahooks'
+import { useEventListener, useMount } from 'ahooks'
 import zhCN from 'antd/es/locale/zh_CN'
 
 import './index.css'
@@ -146,18 +146,22 @@ const App: React.FC = () => {
       },
     },
   ]
-
-  /* 计算表格高度 */
-  useEventListener('resize', () => {
+  const setHeight = () => {
     const taskContainer = taskContainerRef.current
     if (taskContainer && window.innerHeight) {
       const headerElement = taskContainer.querySelector('.ant-table-header')
       const { height = 0 } = headerElement?.getBoundingClientRect() || {}
       setTableHeight(window.innerHeight - height)
     }
-  }, {
-    target: window
-  })
+  }
+  useMount(setHeight)
+  /* 计算表格高度 */
+  useEventListener(
+    'resize',
+    setHeight,
+    {
+      target: window,
+    })
   const x = window.innerWidth
   return (
     <ConfigProvider locale={zhCN}>
