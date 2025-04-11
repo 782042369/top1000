@@ -2,7 +2,7 @@
  * @Author: 杨宏旋
  * @Date: 2020-07-04 23:15:34
  * @LastEditors: yanghongxuan
- * @LastEditTime: 2025-03-14 15:16:18
+ * @LastEditTime: 2025-04-11 16:18:18
  * @Description:
  */
 import axios from 'axios'
@@ -10,8 +10,6 @@ import schedule from 'node-schedule'
 import fs from 'node:fs'
 import https from 'node:https'
 import path from 'node:path'
-
-import logger from './logger'
 
 function handleJsonData(data: string) {
   // 解析内容并创建JSON对象
@@ -64,10 +62,10 @@ function handleJsonData(data: string) {
     ),
     (err) => {
       if (err) {
-        logger.error('Error writing JSON file:', err)
+        console.error('Error writing JSON file:', err)
         return
       }
-      logger.info('JSON file was successfully created.')
+      console.info('JSON file was successfully created.')
     },
   )
 }
@@ -84,7 +82,7 @@ function getTop1000() {
       }
     })
     .catch((err) => {
-      logger.error(err)
+      console.error(err)
     })
 }
 // 定时任务
@@ -94,7 +92,7 @@ function scheduleCronstyle() {
     try {
       getTop1000()
     } catch (error) {
-      logger.error(error)
+      console.error(error)
     }
   })
 }
