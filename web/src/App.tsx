@@ -2,37 +2,39 @@
  * @Author: yanghongxuan
  * @Date: 2025-02-08 21:16:06
  * @Description:
- * @LastEditTime: 2025-04-08 14:49:37
+ * @LastEditTime: 2025-04-11 14:26:50
  * @LastEditors: yanghongxuan
  */
-import type { TableColumnsType } from 'antd';
+import type { TableColumnsType } from 'antd'
 
-import zhCN from 'antd/es/locale/zh_CN';
+import { useEventListener } from 'ahooks'
+import zhCN from 'antd/es/locale/zh_CN'
+
+import './index.css'
 
 import type {
   API,
   FilterParams,
   SortParams,
   TableChangeHandler,
-} from './types';
+} from './types'
 
-import './index.css';
-import { ptUrlConfig } from './config';
-import { convertSizeToKb } from './utils';
+import { ptUrlConfig } from './config'
+import { convertSizeToKb } from './utils'
 
 const App: React.FC = () => {
-  const [filterParams, setFilterParams] = useState<FilterParams>({});
-  const [sortParams, setSortParams] = useState<SortParams>({});
+  const [filterParams, setFilterParams] = useState<FilterParams>({})
+  const [sortParams, setSortParams] = useState<SortParams>({})
   const [responseData, setResponseData] = useState<API.ResDataType>({
     items: [],
     time: '',
     siteName: [],
-  });
+  })
   const [siteOptions, setSiteOptions] = useState<
-    { text: string; value: string }[]
-  >([]);
-  const taskContainerRef = useRef<HTMLDivElement>(null);
-  const [tableHeight, setTableHeight] = useState<number>(500);
+    { text: string, value: string }[]
+  >([])
+  const taskContainerRef = useRef<HTMLDivElement>(null)
+  const [tableHeight, setTableHeight] = useState<number>(500)
 
   /* 处理表格变化 */
   const handleTableChange: TableChangeHandler = (
@@ -40,30 +42,30 @@ const App: React.FC = () => {
     filters,
     sorter,
   ) => {
-    setFilterParams(filters);
-    setSortParams(sorter as SortParams);
-  };
+    setFilterParams(filters)
+    setSortParams(sorter as SortParams)
+  }
 
   /* 获取数据 */
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const response = await fetch('./top1000.json');
-        const json: API.ResDataType = await response.json();
+        const response = await fetch('./top1000.json')
+        const json: API.ResDataType = await response.json()
         setResponseData({
           items: json.items,
           time: json.time,
           siteName: json.siteName,
-        });
+        })
         setSiteOptions(
           json.siteName.map(item => ({ text: item, value: item })),
-        );
+        )
       } catch (error) {
-        console.error('Error:', error);
+        console.error('Error:', error)
       }
-    };
-    fetchData();
-  }, []);
+    }
+    fetchData()
+  }, [])
 
   /* 表格列定义 */
   const columns: TableColumnsType<API.DataType> = [
@@ -103,12 +105,12 @@ const App: React.FC = () => {
       title: '操作',
       key: 'action',
       render: (_text, record) => {
-        const { siteName } = record;
-        let { siteid } = record;
+        const { siteName } = record
+        let { siteid } = record
         const getUrl =
-          ptUrlConfig[siteName === 'ptlsp' ? 'audiences' : siteName];
+          ptUrlConfig[siteName === 'ptlsp' ? 'audiences' : siteName]
         if (!getUrl) {
-          return null;
+          return null
         }
         if (siteName === 'ptlsp') {
           siteid = {
@@ -116,9 +118,9 @@ const App: React.FC = () => {
             8667: '353903',
             8765: '288867',
             default: '297203',
-          }[siteid] as string;
+          }[siteid] as string
         }
-        const downloadUrl = getUrl.download(siteid);
+        const downloadUrl = getUrl.download(siteid)
         return (
           <div>
             <a
@@ -128,37 +130,36 @@ const App: React.FC = () => {
             >
               {downloadUrl ? `查看详情` : `查看详情(下载到详情页面)`}
             </a>
-            {downloadUrl ? (
-              <a
-                style={{ marginLeft: '10px' }}
-                href={`${getUrl.download(siteid)}`}
-                target="_blank"
-                rel="noreferrer"
-              >
-                下载种子
-              </a>
-            ) : null}
+            {downloadUrl
+              ? (
+                  <a
+                    style={{ marginLeft: '10px' }}
+                    href={`${getUrl.download(siteid)}`}
+                    target="_blank"
+                    rel="noreferrer"
+                  >
+                    下载种子
+                  </a>
+                )
+              : null}
           </div>
-        );
+        )
       },
     },
-  ];
+  ]
 
   /* 计算表格高度 */
-  useEffect(() => {
-    const updateTableHeight = () => {
-      const taskContainer = taskContainerRef.current;
-      if (taskContainer && window.innerHeight) {
-        const headerElement = taskContainer.querySelector('.ant-table-header');
-        const { height = 0 } = headerElement?.getBoundingClientRect() || {};
-        setTableHeight(window.innerHeight - height);
-      }
-    };
-    updateTableHeight();
-    window.addEventListener('resize', updateTableHeight); // 优化：监听窗口大小变化
-    return () => window.removeEventListener('resize', updateTableHeight); // 清理事件监听
-  }, [taskContainerRef]);
-  const x = window.innerWidth;
+  useEventListener('resize', () => {
+    const taskContainer = taskContainerRef.current
+    if (taskContainer && window.innerHeight) {
+      const headerElement = taskContainer.querySelector('.ant-table-header')
+      const { height = 0 } = headerElement?.getBoundingClientRect() || {}
+      setTableHeight(window.innerHeight - height)
+    }
+  }, {
+    target: window
+  })
+  const x = window.innerWidth
   return (
     <ConfigProvider locale={zhCN}>
       <div ref={taskContainerRef}>
@@ -175,7 +176,7 @@ const App: React.FC = () => {
         />
       </div>
     </ConfigProvider>
-  );
-};
+  )
+}
 
-export default App;
+export default App
