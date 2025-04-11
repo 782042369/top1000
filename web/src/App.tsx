@@ -2,7 +2,7 @@
  * @Author: yanghongxuan
  * @Date: 2025-02-08 21:16:06
  * @Description:
- * @LastEditTime: 2025-04-11 14:26:50
+ * @LastEditTime: 2025-04-11 14:55:44
  * @LastEditors: yanghongxuan
  */
 import type { TableColumnsType } from 'antd'
@@ -19,8 +19,7 @@ import type {
   TableChangeHandler,
 } from './types'
 
-import { ptUrlConfig } from './config'
-import { convertSizeToKb } from './utils'
+import { convertSizeToKb, ptUrlConfig } from './utils'
 
 const App: React.FC = () => {
   const [filterParams, setFilterParams] = useState<FilterParams>({})

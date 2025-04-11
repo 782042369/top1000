@@ -1,3 +1,4 @@
+export * from './config'
 /* 文件大小转换为 KB */
 export function convertSizeToKb(sizeStr: string) {
   const sizeUnits = {

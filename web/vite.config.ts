@@ -2,7 +2,7 @@
  * @Author: yanghongxuan
  * @Date: 2024-02-04 16:54:18
  * @Description:
- * @LastEditTime: 2025-03-12 09:19:44
+ * @LastEditTime: 2025-04-11 14:56:38
  * @LastEditors: yanghongxuan
  */
 import { antdResolver } from '@bit-ocean/auto-import'
@@ -41,6 +41,13 @@ export default defineConfig({
                 ?.groups!.moduleName ?? 'vender'
             )
           }
+          if (id.includes('vite')) {
+            return 'vite'
+          }
+          if (id.includes('/utils/')) {
+            return 'utils'
+          }
+          console.log('%c [ id ]-36', 'font-size:13px; background:#41bf39; color:#85ff7d;', id)
         },
       },
     },
