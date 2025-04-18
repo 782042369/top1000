@@ -2,20 +2,16 @@
  * @Author: 杨宏旋
  * @Date: 2020-07-01 14:41:22
  * @LastEditors: yanghongxuan
- * @LastEditTime: 2025-04-11 16:57:54
+ * @LastEditTime: 2025-04-18 16:13:36
  * @Description: 完善了错误处理、安全头、SPA路由支持等功能
  */
 import compress from '@fastify/compress'
 import helmet from '@fastify/helmet'
 import fastifyStatic from '@fastify/static'
-import fastify from 'fastify'
 import path from 'node:path'
 
+import { server } from './core'
 import { cacheHeader, scheduleJob } from './utils'
-
-const server = fastify({
-  logger: true
-})
 
 server.register(
   helmet
