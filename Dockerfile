@@ -1,6 +1,6 @@
 # 构建阶段：使用多阶段构建最小化生产镜像
 # 阶段一：构建 web 和 service
-FROM node:18-alpine AS builder
+FROM node:22-alpine AS builder
 WORKDIR /app
 
 RUN npm i pnpm@8.15.4 -g
@@ -23,7 +23,7 @@ RUN cd service && pnpm build
 
 # -------------------------------------------
 # 生产阶段：创建最小化生产镜像
-FROM node:18-alpine
+FROM node:22-alpine
 
 # 创建非特权用户
 RUN addgroup -g 1001 appgroup && \

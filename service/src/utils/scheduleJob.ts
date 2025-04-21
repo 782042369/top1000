@@ -2,11 +2,10 @@
  * @Author: 杨宏旋
  * @Date: 2020-07-04 23:15:34
  * @LastEditors: yanghongxuan
- * @LastEditTime: 2025-04-18 16:18:12
+ * @LastEditTime: 2025-04-21 09:41:04
  * @Description:
  */
 import axios from 'axios'
-import fastify from 'fastify'
 import schedule from 'node-schedule'
 import fs from 'node:fs'
 import https from 'node:https'
@@ -94,7 +93,8 @@ function scheduleCronstyle() {
   schedule.scheduleJob('0 09 * * *', () => {
     try {
       getTop1000()
-    } catch (error) {
+    }
+    catch (error) {
       server.log.error(error)
     }
   })

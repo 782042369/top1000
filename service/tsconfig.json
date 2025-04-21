@@ -1,24 +1,43 @@
 {
   "compilerOptions": {
-    "target": "es2022", // 升级到与 Node.js 18 完全兼容的 ES 版本
-    "module": "node16", // 更符合现代 Node.js 的模块解析模式
-    "moduleResolution": "node16", // 显式声明模块解析策略
+    "target": "es2022", // 与 Node.js 18+ 原生支持的 ES 特性保持一致
+    "lib": ["es2022","DOM"], // 显式指定基础库版本
+    "module": "NodeNext", // 官方推荐的 Node ESM 模式
+    "moduleResolution": "nodenext", // 现代模块解析策略
     "outDir": "dist",
     "rootDir": "./src",
+
+    /* 严格类型检查 */
     "strict": true,
+    "noImplicitAny": true,
+    "strictNullChecks": true,
+    "strictFunctionTypes": true,
+    "strictBindCallApply": true,
+
+    /* 模块兼容性配置 */
     "esModuleInterop": true,
-    "forceConsistentCasingInFileNames": true, // 避免大小写敏感系统的问题
-    "skipLibCheck": true, // 提升编译速度
-    "sourceMap": false, // 生产环境关闭 sourcemap
-    "inlineSources": false, // 确保不嵌入源码
+    "allowSyntheticDefaultImports": true,
     "resolveJsonModule": true,
-    "types": ["node"], // 显式声明全局类型
-    "diagnostics": true, // 显示编译详细信息
-    "removeComments": true
+
+    /* 生产优化 */
+    "sourceMap": false,
+    "inlineSources": false,
+    "removeComments": true,
+    "noEmitOnError": true,     // 编译错误时阻止生成
+
+    /* 类型声明 */
+    "types": ["node"],
+    "typeRoots": ["./node_modules/@types"],
+
+    /* 工程规范 */
+    "forceConsistentCasingInFileNames": true,
+    "skipLibCheck": true,
+
+    "allowImportingTsExtensions": true,
+    "rewriteRelativeImportExtensions": true,
   },
   "include": ["src/**/*.ts"],
   "exclude": [
-    // 明确排除非必要文件
     "**/__tests__",
     "**/*.spec.ts",
     "**/*.mock.ts",

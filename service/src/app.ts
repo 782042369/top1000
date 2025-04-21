@@ -2,7 +2,7 @@
  * @Author: 杨宏旋
  * @Date: 2020-07-01 14:41:22
  * @LastEditors: yanghongxuan
- * @LastEditTime: 2025-04-18 16:13:36
+ * @LastEditTime: 2025-04-21 09:43:30
  * @Description: 完善了错误处理、安全头、SPA路由支持等功能
  */
 import compress from '@fastify/compress'
@@ -41,8 +41,9 @@ server.register(fastifyStatic, {
   },
 })
 
+// 定时任务
+scheduleJob()
+
 server.listen({ port: 7066 }).then(() => {
-  console.log('server is running')
-  // 定时任务
-  scheduleJob()
+  server.log.info('server is running')
 })
