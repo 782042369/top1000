@@ -23,6 +23,7 @@
     "@types/react": "^19.1.0",
     "@types/react-dom": "^19.1.2",
     "@vitejs/plugin-react-swc": "^3.8.1",
+    "es-module-lexer": "^1.7.0",
     "eslint": "^9.24.0",
     "eslint-plugin-format": "^1.0.1",
     "eslint-plugin-react-hooks": "^5.2.0",
