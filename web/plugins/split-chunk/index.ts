@@ -2,21 +2,20 @@
  * @Author: yanghongxuan
  * @Date: 2025-04-23 15:00:35
  * @Description:
- * @LastEditTime: 2025-04-23 17:24:42
+ * @LastEditTime: 2025-04-25 14:00:38
  * @LastEditors: yanghongxuan
  */
-import type { BuildEnvironmentOptions, Plugin } from 'vite'
+import type { Plugin } from 'vite'
 
 import { init } from 'es-module-lexer'
 import assert from 'node:assert'
 import path from 'node:path'
 
+import type { ManualChunksOption } from './type'
+
 import { staticImportedScan } from './staticImportScan'
 import { nodeName, normalizePath } from './utils'
 
-type SingleArrayType<T> = T extends (infer U)[] ? U : T
-
-type ManualChunksOption = SingleArrayType<BuildEnvironmentOptions['rollupOptions']['output']>['manualChunks']
 function wrapCustomSplitConfig(manualChunks: ManualChunksOption): ManualChunksOption {
   assert(typeof manualChunks === 'function')
   return (
@@ -34,10 +33,10 @@ function generateManualChunks(): ManualChunksOption {
       if (id.includes('node_modules')) {
         if (staticImportedScan(id, getModuleInfo, new Map(), [])) {
           return `p-${nodeName(id) ?? 'vender'
-          }`
+            }`
         } else {
           return `p-${nodeName(id) ?? 'vender'
-          }-async`
+            }-async`
         }
       }
       if (!id.includes('node_modules')) {
