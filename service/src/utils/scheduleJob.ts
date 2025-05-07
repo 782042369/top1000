@@ -2,101 +2,114 @@
  * @Author: 杨宏旋
  * @Date: 2020-07-04 23:15:34
  * @LastEditors: yanghongxuan
- * @LastEditTime: 2025-04-21 09:41:04
+ * @LastEditTime: 2025-05-07 11:48:36
  * @Description:
  */
 import axios from 'axios'
-import schedule from 'node-schedule'
-import fs from 'node:fs'
+import fs from 'node:fs/promises' // 使用Promise-based API
 import https from 'node:https'
 import path from 'node:path'
 
 import { server } from '../core'
 
-function handleJsonData(data: string) {
-  // 解析内容并创建JSON对象
-  const lines = data.split('\r\n')
-  const [time, _v, ...linesData] = lines
-  const items: {
-    siteName: string
-    siteid: string
-    duplication: string
-    mainTitle: string
-    subTitle: string
-    size: string
-    id: number
-  }[] = []
-  const siteName: string[] = []
-  const regex = /站名：(.*?) 【ID：(\d+)】/
-  for (let i = 0; i < linesData.length; i += 5) {
-    // 假设每6行为一组数据
-    const match = linesData[i].match(regex)
-    const duplication = linesData[i + 1]?.split('：')[1]?.trim()
-    const mainTitle = linesData[i + 2]?.split('：')[1]?.trim()
-    const subTitle = linesData[i + 3]?.split('：')[1]?.trim()
-    const size = linesData[i + 4]?.split('：')[1]?.trim()
-    if (match?.[1]) {
-      !siteName.includes(match[1]) && siteName.push(match[1])
-      items.push({
-        siteName: match?.[1] || '', // 网站名
-        siteid: match?.[2] || '', // id
-        duplication,
-        mainTitle,
-        subTitle,
-        size,
-        id: i / 5 + 1,
-      })
-    }
+// 类型定义
+interface SiteItem {
+  siteName: string
+  siteid: string
+  duplication: string
+  mainTitle: string
+  subTitle: string
+  size: string
+  id: number
+}
+
+interface ProcessedData {
+  time: string
+  items: SiteItem[]
+  siteName: string[]
+}
+
+// 常量定义
+const JSON_FILE_PATH = path.join(__dirname, '../../dist/top1000.json')
+const ONE_DAY_MS = 24 * 60 * 60 * 1000
+const DATA_GROUP_SIZE = 5
+const SITE_REGEX = /站名：(.*?) 【ID：(\d+)】/
+
+// 创建自定义httpsAgent（注意安全风险）
+const httpsAgent = new https.Agent({ rejectUnauthorized: false })
+
+/** 处理原始数据并返回结构化结果 */
+function processData(rawData: string): ProcessedData {
+  const lines = rawData.split(/\r?\n/) // 通用换行符处理
+  const [timeLine, _v, ...dataLines] = lines
+
+  const siteNames = new Set<string>()
+  const items: SiteItem[] = []
+
+  // 有效数据分组处理
+  for (let i = 0; i <= dataLines.length - DATA_GROUP_SIZE; i += DATA_GROUP_SIZE) {
+    const group = dataLines.slice(i, i + DATA_GROUP_SIZE)
+    const [siteLine, dupLine, mainLine, subLine, sizeLine] = group
+
+    const match = siteLine?.match(SITE_REGEX)
+    if (!match) continue
+
+    const [, siteName, siteid] = match
+    siteNames.add(siteName)
+
+    items.push({
+      siteName,
+      siteid,
+      duplication: dupLine.split('：')[1]?.trim() || '',
+      mainTitle: mainLine.split('：')[1]?.trim() || '',
+      subTitle: subLine.split('：')[1]?.trim() || '',
+      size: sizeLine.split('：')[1]?.trim() || '',
+      id: items.length + 1,
+    })
   }
 
-  // 写入JSON文件
-  const jsonFilePath = path.join(__dirname, '../../dist/top1000.json')
-  fs.writeFile(
-    jsonFilePath,
-    JSON.stringify(
-      {
-        time,
-        items,
-        siteName,
-      },
-      null,
-      2,
-    ),
-    (err) => {
-      if (err) {
-        server.log.error('Error writing JSON file:', err)
-        return
-      }
-      server.log.info('JSON file was successfully created.')
-    },
-  )
+  return {
+    time: parseTime(timeLine),
+    items,
+    siteName: Array.from(siteNames),
+  }
 }
-function getTop1000() {
-  // 创建一个新的 httpsAgent 并设置 rejectUnauthorized 为 false
-  const agent = new https.Agent({
-    rejectUnauthorized: false,
-  })
-  axios
-    .get('https://api.iyuu.cn/top1000.php', { httpsAgent: agent })
-    .then((res) => {
-      if (res.data) {
-        handleJsonData(res.data)
-      }
-    })
-    .catch((err) => {
-      server.log.error(err)
-    })
+
+/** 解析时间字符串 */
+function parseTime(rawTime: string): string {
+  return rawTime
+    .replace('create time ', '')
+    .replace(' by http://api.iyuu.cn/ptgen/', '')
 }
-// 定时任务
-function scheduleCronstyle() {
-  getTop1000()
-  schedule.scheduleJob('0 09 * * *', () => {
-    try {
-      getTop1000()
+
+/** 定时任务：获取并处理数据 */
+export async function scheduleJob(): Promise<void> {
+  try {
+    const { data } = await axios.get('https://api.iyuu.cn/top1000.php', { httpsAgent })
+    const processed = processData(data)
+
+    await fs.writeFile(
+      JSON_FILE_PATH,
+      JSON.stringify(processed, null, 2)
+    )
+    server.log.info('JSON file successfully updated')
+  } catch (error) {
+    server.log.error('Failed to update data:', error)
+  }
+}
+
+/** 检查数据过期状态 */
+export async function checkExpired(): Promise<void> {
+  try {
+    const rawData = await fs.readFile(JSON_FILE_PATH, 'utf8')
+    const { time } = JSON.parse(rawData) as ProcessedData
+    const dataTime = new Date(time).getTime()
+
+    if (Date.now() - dataTime > ONE_DAY_MS) {
+      await scheduleJob()
     }
-    catch (error) {
-      server.log.error(error)
-    }
-  })
+  } catch (error) {
+    server.log.error('Expiry check failed, triggering update:', error)
+    await scheduleJob()
+  }
 }
-export default scheduleCronstyle
