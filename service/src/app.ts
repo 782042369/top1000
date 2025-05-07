@@ -2,7 +2,7 @@
  * @Author: 杨宏旋
  * @Date: 2020-07-01 14:41:22
  * @LastEditors: yanghongxuan
- * @LastEditTime: 2025-04-21 09:43:30
+ * @LastEditTime: 2025-05-07 11:37:28
  * @Description: 完善了错误处理、安全头、SPA路由支持等功能
  */
 import compress from '@fastify/compress'
@@ -11,7 +11,7 @@ import fastifyStatic from '@fastify/static'
 import path from 'node:path'
 
 import { server } from './core'
-import { cacheHeader, scheduleJob } from './utils'
+import { cacheHeader, checkExpired, scheduleJob } from './utils'
 
 server.register(
   helmet
@@ -37,6 +37,9 @@ server.register(fastifyStatic, {
   cacheControl: false, // 必须设置 才能动态
   setHeaders: (res, filePath) => {
     const ext = path.extname(filePath).toLowerCase()
+    if (ext === '.json') {
+      checkExpired()
+    }
     res.setHeader('cache-control', ['.html', '.json'].includes(ext) ? noCacheHeaderText : cacheHeaderText)
   },
 })
