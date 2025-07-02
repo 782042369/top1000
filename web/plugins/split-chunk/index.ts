@@ -33,10 +33,10 @@ function generateManualChunks(): ManualChunksOption {
       if (id.includes('node_modules')) {
         if (staticImportedScan(id, getModuleInfo, new Map(), [])) {
           return `p-${nodeName(id) ?? 'vender'
-            }`
+          }`
         } else {
           return `p-${nodeName(id) ?? 'vender'
-            }-async`
+          }-async`
         }
       }
       if (!id.includes('node_modules')) {

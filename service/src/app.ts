@@ -47,6 +47,6 @@ server.register(fastifyStatic, {
 // 定时任务
 scheduleJob()
 
-server.listen({ port: 7066 }).then(() => {
+server.listen({ port: 7066, host: '0.0.0.0' }).then(() => {
   server.log.info('server is running')
 })
