@@ -10,6 +10,7 @@ import react from '@vitejs/plugin-react-swc'
 import { resolve } from 'node:path'
 import AutoImport from 'unplugin-auto-import/vite'
 import { defineConfig } from 'vite'
+import { createHtmlPlugin } from 'vite-plugin-html'
 
 import splitChunk from './plugins/split-chunk'
 
@@ -26,7 +27,10 @@ export default defineConfig({
       ],
       resolvers: [antdResolver()],
     }),
-    splitChunk()
+    splitChunk(),
+    createHtmlPlugin({
+      minify: true,
+    })
   ],
   build: {
     rollupOptions: {
