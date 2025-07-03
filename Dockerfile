@@ -37,6 +37,8 @@ COPY --from=builder --chown=appuser:appgroup \
 COPY --from=builder --chown=appuser:appgroup \
     /app/service/package.json \
     /app/service/pnpm-lock.yaml ./
+COPY --from=builder --chown=appuser:appgroup \
+    /app/service/public ./public/
 
 # 安装生产依赖（自动使用 corepack）
 RUN npm i pnpm@8.15.4 -g && \
