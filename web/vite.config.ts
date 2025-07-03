@@ -42,7 +42,7 @@ export default defineConfig({
       },
     },
     emptyOutDir: false,
-    outDir: resolve(__dirname, '../service/dist'),
+    outDir: resolve(__dirname, '../service/public'),
   },
   server: {
     proxy: {

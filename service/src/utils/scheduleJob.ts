@@ -30,7 +30,7 @@ interface ProcessedData {
 }
 
 // 常量定义
-const JSON_FILE_PATH = path.join(__dirname, '../../dist/top1000.json')
+const JSON_FILE_PATH = path.join(__dirname, '../../public/top1000.json')
 const ONE_DAY_MS = 24 * 60 * 60 * 1000
 const DATA_GROUP_SIZE = 5
 const SITE_REGEX = /站名：(.*?) 【ID：(\d+)】/

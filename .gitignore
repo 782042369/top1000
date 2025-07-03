@@ -11,3 +11,4 @@ dist-ssr
 .DS_Store
 
 service/static
+public

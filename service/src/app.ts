@@ -22,7 +22,7 @@ server.register(compress, {
   encodings: ['gzip'] // 仅启用 gzip
 })
 // 静态文件服务
-const publicPath = path.join(__dirname, '../dist')
+const publicPath = path.join(__dirname, '../public')
 const cacheHeaderText = cacheHeader({
   public: true,
   maxAge: '1year',
