@@ -5,9 +5,7 @@
  * @LastEditTime: 2025-05-07 11:48:36
  * @Description:
  */
-import axios from 'axios'
 import fs from 'node:fs/promises' // 使用Promise-based API
-import https from 'node:https'
 import path from 'node:path'
 
 import { server } from '../core'
@@ -34,9 +32,6 @@ const JSON_FILE_PATH = path.join(__dirname, '../../public/top1000.json')
 const ONE_DAY_MS = 24 * 60 * 60 * 1000
 const DATA_GROUP_SIZE = 5
 const SITE_REGEX = /站名：(.*?) 【ID：(\d+)】/
-
-// 创建自定义httpsAgent（注意安全风险）
-const httpsAgent = new https.Agent({ rejectUnauthorized: false })
 
 /** 处理原始数据并返回结构化结果 */
 function processData(rawData: string): ProcessedData {
@@ -85,7 +80,8 @@ function parseTime(rawTime: string): string {
 /** 定时任务：获取并处理数据 */
 export async function scheduleJob(): Promise<void> {
   try {
-    const { data } = await axios.get('https://api.iyuu.cn/top1000.php', { httpsAgent })
+    const res = await fetch('https://api.iyuu.cn/top1000.php')
+    const data = await res.text()
     const processed = processData(data)
 
     await fs.writeFile(
