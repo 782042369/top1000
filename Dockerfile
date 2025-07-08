@@ -42,7 +42,7 @@ COPY --from=builder --chown=appuser:appgroup \
 
 # 安装生产依赖（自动使用 corepack）
 RUN npm i pnpm@10.11.0 -g && \
-    pnpm install --prod --frozen-lockfile
+    pnpm install --prod
 
 # 设置用户权限
 USER appuser
