@@ -3,7 +3,7 @@
 FROM node:24-alpine AS builder
 WORKDIR /app
 
-RUN npm i pnpm@10.11.0 -g
+RUN npm i pnpm@10.12.4 -g
 
 # 优先复制包管理文件以利用构建缓存
 COPY web/package.json web/pnpm-lock.yaml ./web/
@@ -41,7 +41,7 @@ COPY --from=builder --chown=appuser:appgroup \
     /app/service/public ./public/
 
 # 安装生产依赖（自动使用 corepack）
-RUN npm i pnpm@10.11.0 -g && \
+RUN npm i pnpm@10.12.4 -g && \
     pnpm install --prod
 
 # 设置用户权限
