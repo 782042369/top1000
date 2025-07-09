@@ -1,10 +1,10 @@
-import type { GetModuleInfo } from 'rollup'
+import type { GetModuleInfo } from './type'
 
 export function staticImportedScan(
   id: string,
   getModuleInfo: GetModuleInfo,
   cache: Map<string, boolean>,
-  importChain: string[] = []
+  importChain: string[] = [],
 ): boolean {
   if (cache.has(id)) {
     return cache.get(id) as boolean
@@ -26,7 +26,7 @@ export function staticImportedScan(
     return true
   }
   const staticImport = mod.importers.some((importer): boolean =>
-    staticImportedScan(importer, getModuleInfo, cache, importChain.concat(id))
+    staticImportedScan(importer, getModuleInfo, cache, importChain.concat(id)),
   )
   cache.set(id, staticImport)
   return staticImport

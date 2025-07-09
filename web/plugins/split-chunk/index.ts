@@ -20,7 +20,7 @@ function wrapCustomSplitConfig(manualChunks: ManualChunksOption): ManualChunksOp
   assert(typeof manualChunks === 'function')
   return (
     moduleId,
-    { getModuleIds, getModuleInfo }
+    { getModuleIds, getModuleInfo },
   ) => {
     return manualChunks(moduleId, { getModuleIds, getModuleInfo })
   }
@@ -34,7 +34,8 @@ function generateManualChunks(): ManualChunksOption {
         if (staticImportedScan(id, getModuleInfo, new Map(), [])) {
           return `p-${nodeName(id) ?? 'vender'
           }`
-        } else {
+        }
+        else {
           return `p-${nodeName(id) ?? 'vender'
           }-async`
         }
