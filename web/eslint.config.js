@@ -17,11 +17,6 @@ export default antfu({
   },
   rules: {
     // 代码风格 相关规则
-    'style/comma-dangle': 'off',
-    'style/brace-style': 'off',
-    'style/operator-linebreak': 'off',
-    'antfu/consistent-list-newline': 'off',
-    'antfu/if-newline': 'off',
     'perfectionist/sort-imports': [
       'error',
       {

@@ -9,7 +9,7 @@ export function convertSizeToKb(sizeStr: string) {
   }
   const match = sizeStr.match(/([\d.]+)\s*(KB|MB|GB|TB)/i)
   return match
-    ? Number.parseFloat(match[1]) *
-    sizeUnits[match[2].toUpperCase() as keyof typeof sizeUnits]
+    ? Number.parseFloat(match[1])
+    * sizeUnits[match[2].toUpperCase() as keyof typeof sizeUnits]
     : 0 // 优化：使用 keyof 来确保安全
 }

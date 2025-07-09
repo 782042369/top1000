@@ -30,7 +30,7 @@ export default defineConfig({
     splitChunk(),
     createHtmlPlugin({
       minify: true,
-    })
+    }),
   ],
   build: {
     rollupOptions: {

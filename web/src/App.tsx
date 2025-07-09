@@ -59,7 +59,8 @@ const App: React.FC = () => {
         setSiteOptions(
           json.siteName.map(item => ({ text: item, value: item })),
         )
-      } catch (error) {
+      }
+      catch (error) {
         console.error('Error:', error)
       }
     }
@@ -106,8 +107,8 @@ const App: React.FC = () => {
       render: (_text, record) => {
         const { siteName } = record
         let { siteid } = record
-        const getUrl =
-          ptUrlConfig[siteName === 'ptlsp' ? 'audiences' : siteName]
+        const getUrl
+          = ptUrlConfig[siteName === 'ptlsp' ? 'audiences' : siteName]
         if (!getUrl) {
           return null
         }
@@ -161,7 +162,8 @@ const App: React.FC = () => {
     setHeight,
     {
       target: window,
-    })
+    },
+  )
   const x = window.innerWidth
   return (
     <ConfigProvider locale={zhCN}>
