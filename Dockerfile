@@ -19,7 +19,9 @@ COPY service ./service/
 
 # 执行构建
 RUN cd web && pnpm build
-RUN cd service && pnpm build && rm -rf node_modules && pnpm install --prod
+RUN cd service && pnpm build
+RUN cd service && rm -rf node_modules
+RUN cd service && pnpm install --prod
 
 # -------------------------------------------
 # 生产阶段：创建最小化生产镜像
