@@ -47,7 +47,8 @@ function processData(rawData: string): ProcessedData {
     const [siteLine, dupLine, mainLine, subLine, sizeLine] = group
 
     const match = siteLine?.match(SITE_REGEX)
-    if (!match) continue
+    if (!match)
+      continue
 
     const [, siteName, siteid] = match
     siteNames.add(siteName)
@@ -86,10 +87,11 @@ export async function scheduleJob(): Promise<void> {
 
     await fs.writeFile(
       JSON_FILE_PATH,
-      JSON.stringify(processed, null, 2)
+      JSON.stringify(processed, null, 2),
     )
     server.log.info('JSON file successfully updated')
-  } catch (error) {
+  }
+  catch (error) {
     server.log.error('Failed to update data:', error)
   }
 }
@@ -104,7 +106,8 @@ export async function checkExpired(): Promise<void> {
     if (Date.now() - dataTime > ONE_DAY_MS) {
       await scheduleJob()
     }
-  } catch (error) {
+  }
+  catch (error) {
     server.log.error('Expiry check failed, triggering update:', error)
     await scheduleJob()
   }
