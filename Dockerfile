@@ -19,7 +19,7 @@ COPY service ./service/
 
 # 执行构建
 RUN cd web && pnpm build
-RUN cd service && pnpm build
+RUN cd service && pnpm build && rm -rf node_modules && pnpm install --prod
 
 # -------------------------------------------
 # 生产阶段：创建最小化生产镜像
@@ -35,14 +35,9 @@ WORKDIR /app
 COPY --from=builder --chown=appuser:appgroup \
     /app/service/dist ./dist/
 COPY --from=builder --chown=appuser:appgroup \
-    /app/service/package.json \
-    /app/service/pnpm-lock.yaml ./
+    /app/service/node_modules ./
 COPY --from=builder --chown=appuser:appgroup \
     /app/service/public ./public/
-
-# 安装生产依赖（自动使用 corepack）
-RUN npm i pnpm@10.12.4 -g && \
-    pnpm install --prod
 
 # 设置用户权限
 USER appuser
