@@ -21,15 +21,15 @@ COPY service ./service/
 
 # 执行构建
 RUN cd web && pnpm build && \
-    cd ../service && pnpm build
+    cd ../service && pnpm build && \
+    rm -rf node_modules && \
+    pnpm install --prod && \
+    pnpm add @vercel/nft@0.24.4 fs-extra@11.2.0 --save-prod
 
 # 生产阶段：仅安装生产依赖
 FROM node:24-alpine AS production-deps
 
 WORKDIR /app
-
-RUN npm i -g pnpm@10.12.4 && \
-    pnpm add @vercel/nft@0.24.4 fs-extra@11.2.0 --save-prod
 
 COPY --from=builder /app/service/ /app/
 
