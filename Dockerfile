@@ -33,8 +33,7 @@ RUN npm i -g pnpm@10.12.4 && \
 
 COPY --from=builder /app /app
 
-RUN export PROJECT_ROOT=/app/service && \
-    node /app/service/scripts/minify-docker.cjs && \
+RUN node /app/service/scripts/minify-docker.cjs && \
     rm -rf /app/service/node_modules /app/scripts && \
     mv /app/service/app-minimal/node_modules /app/service/ && \
     rm -rf /app/service/app-minimal
