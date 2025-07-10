@@ -31,7 +31,7 @@ WORKDIR /app
 RUN npm i -g pnpm@10.12.4 && \
     pnpm add @vercel/nft@0.24.4 fs-extra@11.2.0 --save-prod
 
-COPY --from=builder /app/service /app
+COPY --from=builder /app/service/ /app/
 
 RUN export PROJECT_ROOT=/app/ && \
     node /app/scripts/minify-docker.cjs && \
