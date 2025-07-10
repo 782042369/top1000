@@ -4,7 +4,7 @@ const path = require('node:path');
 // !!! if any new dependencies are added, update the Dockerfile !!!
 
 (async () => {
-  const projectRoot = path.resolve(path.join(__dirname, '../'))
+  const projectRoot = path.resolve(process.env.PROJECT_ROOT || path.join(__dirname, '../'))
   const resultFolder = path.join(projectRoot, 'app-minimal') // no need to resolve, ProjectRoot is always absolute
   const pkg = await fs.readJSON(path.join(projectRoot, 'package.json'))
 

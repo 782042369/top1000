@@ -9,7 +9,7 @@ RUN npm i -g pnpm@10.12.4 && \
 
 # 优先复制包管理文件以利用构建缓存
 COPY web/package.json web/pnpm-lock.yaml ./web/
-COPY service/package.json service/pnpm-lock.yaml service/scripts ./service/
+COPY service/package.json service/pnpm-lock.yaml ./service/
 
 # 安装所有依赖（包括devDependencies）
 RUN cd web && pnpm install --frozen-lockfile && \
@@ -31,14 +31,13 @@ WORKDIR /app
 RUN npm i -g pnpm@10.12.4 && \
     pnpm add @vercel/nft@0.24.4 fs-extra@11.2.0 --save-prod
 
-COPY --from=builder /app /app
+COPY --from=builder /app/service /app
 
-RUN cd service && \
-    node ./scripts/minify-docker.cjs && \
-    rm -rf ./node_modules ./scripts && \
-    mv ./app-minimal/node_modules ./ && \
-    rm -rf ./app-minimal
-
+RUN export PROJECT_ROOT=/app/ && \
+    node /app/scripts/minify-docker.cjs && \
+    rm -rf /app/node_modules /app/scripts && \
+    mv /app/app-minimal/node_modules /app/ && \
+    rm -rf /app/app-minimal
 
 # 最终生产阶段
 FROM node:24-alpine
