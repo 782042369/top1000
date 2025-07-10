@@ -1,6 +1,6 @@
 # 构建阶段：使用多阶段构建最小化生产镜像
 # 阶段一：构建 web 和 service
-FROM node:24-alpine AS builder
+FROM node:24-alpine as builder
 WORKDIR /app
 
 # 安装 pnpm 并配置缓存
@@ -27,7 +27,7 @@ RUN cd web && pnpm build && \
     pnpm add @vercel/nft fs-extra --save-prod
 
 # 生产阶段：仅安装生产依赖
-FROM node:24-alpine AS production-deps
+FROM node:24-alpine as production-deps
 
 WORKDIR /app
 
