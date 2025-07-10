@@ -33,10 +33,11 @@ RUN npm i -g pnpm@10.12.4 && \
 
 COPY --from=builder /app /app
 
-RUN node /app/service/scripts/minify-docker.cjs && \
-    rm -rf /app/service/node_modules /app/scripts && \
-    mv /app/service/app-minimal/node_modules /app/service/ && \
-    rm -rf /app/service/app-minimal
+RUN cd service && \
+    node ./scripts/minify-docker.cjs && \
+    rm -rf ./node_modules ./scripts && \
+    mv ./app-minimal/node_modules ./ && \
+    rm -rf ./app-minimal
 
 
 # 最终生产阶段
