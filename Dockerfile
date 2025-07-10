@@ -28,7 +28,8 @@ FROM node:24-alpine AS production-deps
 
 WORKDIR /app
 
-RUN pnpm add @vercel/nft@0.24.4 fs-extra@11.2.0 --save-prod
+RUN npm i -g pnpm@10.12.4 && \
+    pnpm add @vercel/nft@0.24.4 fs-extra@11.2.0 --save-prod
 
 COPY --from=builder /app /app
 
