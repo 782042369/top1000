@@ -9,7 +9,7 @@ RUN npm i -g pnpm@10.12.4 && \
 
 # 优先复制包管理文件以利用构建缓存
 COPY web/package.json web/pnpm-lock.yaml ./web/
-COPY service/package.json service/pnpm-lock.yaml ./service/
+COPY service/package.json service/pnpm-lock.yaml service/scripts ./service/
 
 # 安装所有依赖（包括devDependencies）
 RUN cd web && pnpm install --frozen-lockfile && \
@@ -25,14 +25,19 @@ RUN cd web && pnpm build && \
 
 # 生产阶段：仅安装生产依赖
 FROM node:24-alpine AS production-deps
+
 WORKDIR /app
 
-# 仅复制生产需要的package文件
-COPY service/package.json service/pnpm-lock.yaml ./
+RUN pnpm add @vercel/nft@0.24.4 fs-extra@11.2.0 --save-prod
 
-# 安装生产依赖（更小的node_modules）
-RUN npm i -g pnpm@10.12.4 && \
-    pnpm install --prod --frozen-lockfile
+COPY --from=builder /app /app
+
+RUN export PROJECT_ROOT=/app/service && \
+    node /app/service/scripts/minify-docker.cjs && \
+    rm -rf /app/service/node_modules /app/scripts && \
+    mv /app/service/app-minimal/node_modules /app/service/ && \
+    rm -rf /app/service/app-minimal
+
 
 # 最终生产阶段
 FROM node:24-alpine
