@@ -24,7 +24,7 @@ RUN cd web && pnpm build && \
     cd ../service && pnpm build && \
     rm -rf node_modules && \
     pnpm install --prod && \
-    pnpm add @vercel/nft@0.24.4 fs-extra@11.2.0 --save-prod
+    pnpm add @vercel/nft fs-extra --save-prod
 
 # 生产阶段：仅安装生产依赖
 FROM node:24-alpine AS production-deps

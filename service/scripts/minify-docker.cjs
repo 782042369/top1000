@@ -5,7 +5,6 @@ const path = require('node:path');
 
 (async () => {
   const projectRoot = path.resolve(process.env.PROJECT_ROOT || path.join(__dirname, '../'))
-  console.log('%c [ projectRoot ]-8', 'font-size:13px; background:#228280; color:#66c6c4;', projectRoot)
   const resultFolder = path.join(projectRoot, 'app-minimal') // no need to resolve, ProjectRoot is always absolute
 
   let mainPath = ''
