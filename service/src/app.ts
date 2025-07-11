@@ -19,10 +19,10 @@ server.register(
     contentSecurityPolicy: {
       directives: {
         defaultSrc: ['\'self\''],
-        scriptSrc: ['\'self\'', '\'https://log.939593.xyz\''],
-        styleSrc: ['\'self\'', '\'unsafe-inline\''],
-        imgSrc: ['\'self\'', '\'data:\''],
-        connectSrc: ['\'self\'', '\'https://log.939593.xy\''],
+        scriptSrc: ['\'self\'', 'https://log.939593.xyz'],
+        styleSrc: ['\'self\'', 'unsafe-inline'],
+        imgSrc: ['\'self\'', 'data:'],
+        connectSrc: ['\'self\'', 'https://log.939593.xy'],
       },
     },
   },
