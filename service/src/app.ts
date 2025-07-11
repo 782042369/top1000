@@ -15,6 +15,17 @@ import { cacheHeader, checkExpired, scheduleJob } from './utils'
 
 server.register(
   helmet,
+  {
+    contentSecurityPolicy: {
+      directives: {
+        defaultSrc: ['\'self\''],
+        scriptSrc: ['\'self\'', 'https://log.939593.xyz'],
+        styleSrc: ['\'self\'', '\'unsafe-inline\''],
+        imgSrc: ['\'self\'', 'data:'],
+        connectSrc: ['\'self\''],
+      },
+    },
+  },
 )
 
 server.register(compress, {
