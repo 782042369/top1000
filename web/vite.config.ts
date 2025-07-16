@@ -7,12 +7,11 @@
  */
 import { antdResolver } from '@bit-ocean/auto-import'
 import react from '@vitejs/plugin-react-swc'
+import { splitChunks } from '@xiaowaibuzheng/rolldown-vite-split-chunks'
 import { resolve } from 'node:path'
 import AutoImport from 'unplugin-auto-import/vite'
 import { defineConfig } from 'vite'
 import { createHtmlPlugin } from 'vite-plugin-html'
-
-import splitChunk from './plugins/split-chunk'
 
 // https://vitejs.dev/config/
 export default defineConfig({
@@ -27,7 +26,7 @@ export default defineConfig({
       ],
       resolvers: [antdResolver()],
     }),
-    splitChunk(),
+    splitChunks(),
     createHtmlPlugin({
       minify: true,
     }),
