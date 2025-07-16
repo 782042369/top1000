@@ -20,9 +20,9 @@ function wrapCustomSplitConfig(manualChunks: ManualChunksOption): ManualChunksOp
   assert(typeof manualChunks === 'function')
   return (
     moduleId,
-    { getModuleIds, getModuleInfo },
+    { getModuleInfo },
   ) => {
-    return manualChunks(moduleId, { getModuleIds, getModuleInfo })
+    return manualChunks(moduleId, { getModuleInfo })
   }
 }
 // eslint-disable-next-line node/prefer-global/process
@@ -33,11 +33,11 @@ function generateManualChunks(): ManualChunksOption {
       if (id.includes('node_modules')) {
         if (staticImportedScan(id, getModuleInfo, new Map(), [])) {
           return `p-${nodeName(id) ?? 'vender'
-          }`
+            }`
         }
         else {
           return `p-${nodeName(id) ?? 'vender'
-          }-async`
+            }-async`
         }
       }
       if (!id.includes('node_modules')) {
