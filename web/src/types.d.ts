@@ -5,39 +5,30 @@
  * @LastEditTime: 2025-04-08 14:44:06
  * @LastEditors: yanghongxuan
  */
-import type { TableProps } from 'antd'
 
-namespace API {
-  /** 种子详情 */
-  interface DataType {
-    /** 站点名称 */
-    siteName: string
-    /** 资源ID */
-    siteid: string
-    /** 重复度 */
-    duplication: string
-    /** 文件大小 */
-    mainTitle: string
-    /** 副标题 */
-    subTitle: string
-    /** 文件大小 */
-    size: string
-    /** ID */
-    id: number
-  }
-  /** 接口返回 */
-  interface ResDataType {
-    /** 种子列表 */
-    items: DataType[]
-    /** 更新时间 */
-    time: string
-    /** 站点名称集合 */
-    siteName: string[]
-  }
+/** 种子详情 */
+export interface DataType {
+  /** 站点名称 */
+  siteName: string
+  /** 资源ID */
+  siteid: string
+  /** 重复度 */
+  duplication: string
+  /** 文件大小 */
+  mainTitle: string
+  /** 副标题 */
+  subTitle: string
+  /** 文件大小 */
+  size: string
+  /** ID */
+  id: number
 }
-
-/* 类型定义 */
-type TableChangeHandler = NonNullable<TableProps<API.DataType>['onChange']>
-type FilterParams = Parameters<TableChangeHandler>[1]
-type GetSingle<T> = T extends (infer U)[] ? U : never
-type SortParams = GetSingle<Parameters<TableChangeHandler>[2]>
+/** 接口返回 */
+export interface ResDataType {
+  /** 种子列表 */
+  items: DataType[]
+  /** 更新时间 */
+  time: string
+  /** 站点名称集合 */
+  siteName: string[]
+}
