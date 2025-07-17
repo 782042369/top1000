@@ -5,7 +5,6 @@
  * @LastEditTime: 2025-04-23 17:13:04
  * @LastEditors: yanghongxuan
  */
-import { antdResolver } from '@bit-ocean/auto-import'
 import react from '@vitejs/plugin-react-swc'
 import { splitChunks } from '@xiaowaibuzheng/rolldown-vite-split-chunks'
 import { resolve } from 'node:path'
@@ -24,7 +23,6 @@ export default defineConfig({
         /\.[tj]sx?$/, // .ts, .tsx, .js, .jsx
         /\.md$/, // .md
       ],
-      resolvers: [antdResolver()],
     }),
     splitChunks(),
     createHtmlPlugin({
@@ -44,12 +42,6 @@ export default defineConfig({
     outDir: resolve(__dirname, '../service/public'),
   },
   server: {
-    proxy: {
-      '/top1000': {
-        target: 'http://top1000.939593.xyz',
-        changeOrigin: true,
-      },
-    },
     open: true,
     host: '0.0.0.0',
   },
