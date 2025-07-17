@@ -10,9 +10,6 @@ import type { ColDef, ICellEditorParams } from 'ag-grid-community'
 import { AG_GRID_LOCALE_CN } from '@ag-grid-community/locale'
 import { ClientSideRowModelModule, CustomFilterModule, DateFilterModule, LocaleModule, ModuleRegistry, NumberFilterModule, TextFilterModule, ValidationModule } from 'ag-grid-community'
 import { GroupFilterModule, LicenseManager, MultiFilterModule, SetFilterModule } from 'ag-grid-enterprise'
-
-import './index.css'
-
 import { AgGridReact } from 'ag-grid-react'
 import { useMount } from 'ahooks'
 
