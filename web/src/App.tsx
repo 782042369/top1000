@@ -34,8 +34,8 @@ ModuleRegistry.registerModules([
   MultiFilterModule,
   GroupFilterModule,
   CustomFilterModule,
-  ValidationModule,
   LocaleModule,
+  ...(process.env.NODE_ENV !== 'production' ? [ValidationModule] : []),
 ])
 
 const App: React.FC = () => {
