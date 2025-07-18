@@ -15,10 +15,6 @@ export interface DataType {
   /** 重复度 */
   duplication: string
   /** 文件大小 */
-  mainTitle: string
-  /** 副标题 */
-  subTitle: string
-  /** 文件大小 */
   size: string
   /** ID */
   id: number
@@ -29,6 +25,4 @@ export interface ResDataType {
   items: DataType[]
   /** 更新时间 */
   time: string
-  /** 站点名称集合 */
-  siteName: string[]
 }

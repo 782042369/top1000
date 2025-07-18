@@ -12,19 +12,23 @@ import { server } from '../core'
 
 // 类型定义
 interface SiteItem {
+  /** 站点名称 */
   siteName: string
+  /** 资源ID */
   siteid: string
+  /** 重复度 */
   duplication: string
-  mainTitle: string
-  subTitle: string
+  /** 文件大小 */
   size: string
+  /** ID */
   id: number
 }
 
 interface ProcessedData {
-  time: string
+  /** 种子列表 */
   items: SiteItem[]
-  siteName: string[]
+  /** 更新时间 */
+  time: string
 }
 
 // 常量定义
@@ -44,7 +48,7 @@ function processData(rawData: string): ProcessedData {
   // 有效数据分组处理
   for (let i = 0; i <= dataLines.length - DATA_GROUP_SIZE; i += DATA_GROUP_SIZE) {
     const group = dataLines.slice(i, i + DATA_GROUP_SIZE)
-    const [siteLine, dupLine, mainLine, subLine, sizeLine] = group
+    const [siteLine, dupLine, _mainLine, _subLine, sizeLine] = group
 
     const match = siteLine?.match(SITE_REGEX)
     if (!match)
@@ -57,8 +61,6 @@ function processData(rawData: string): ProcessedData {
       siteName,
       siteid,
       duplication: dupLine.split('：')[1]?.trim() || '',
-      mainTitle: mainLine.split('：')[1]?.trim() || '',
-      subTitle: subLine.split('：')[1]?.trim() || '',
       size: sizeLine.split('：')[1]?.trim() || '',
       id: items.length + 1,
     })
@@ -67,7 +69,6 @@ function processData(rawData: string): ProcessedData {
   return {
     time: parseTime(timeLine),
     items,
-    siteName: Array.from(siteNames),
   }
 }
 
