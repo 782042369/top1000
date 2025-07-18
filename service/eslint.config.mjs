@@ -32,6 +32,4 @@ export default antfu({
     'dist',
   ],
   formatters: true,
-  jsonc: false,
-  yaml: false,
 })

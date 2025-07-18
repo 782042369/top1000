@@ -25,12 +25,11 @@ export default antfu({
         order: 'asc',
       },
     ],
+    'node/prefer-global/process': 'off',
   },
   ignores: [
     '**/node_modules/**',
     'pnpm-lock.yaml',
   ],
   formatters: true,
-  jsonc: false,
-  yaml: false,
 })

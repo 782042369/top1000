@@ -2,12 +2,24 @@
   "name": "top_work",
   "version": "1.0.0",
   "private": true,
+  "packageManager": "pnpm@10.12.4",
+  "engines": {
+    "node": ">=24.3.0",
+    "pnpm": "=10.12.4"
+  },
   "scripts": {
     "dev": "nodemon",
     "start": "nodemon",
     "build": "tsc",
     "lint": "eslint --fix",
     "prettier": "prettier --write 'src/**/*.ts'"
+  },
+  "dependencies": {
+    "@fastify/compress": "^8.1.0",
+    "@fastify/helmet": "^13.0.1",
+    "@fastify/static": "^8.2.0",
+    "fastify": "^5.4.0",
+    "timestring": "^7.0.0"
   },
   "devDependencies": {
     "@antfu/eslint-config": "^4.17.0",
@@ -22,17 +34,5 @@
     "prettier": "^3.6.2",
     "ts-node": "^10.9.2",
     "typescript": "^5.8.3"
-  },
-  "dependencies": {
-    "@fastify/compress": "^8.1.0",
-    "@fastify/helmet": "^13.0.1",
-    "@fastify/static": "^8.2.0",
-    "fastify": "^5.4.0",
-    "timestring": "^7.0.0"
-  },
-  "engines": {
-    "node": ">=24.3.0",
-    "pnpm": "=10.12.4"
-  },
-  "packageManager": "pnpm@10.12.4"
+  }
 }
