@@ -20,6 +20,7 @@ server.register(
       directives: {
         'scriptSrc': ['\'self\'', 'https://log.939593.xyz'],
         'connect-src': ['\'self\'', 'https://log.939593.xyz'], // 添加允许的 API
+        'img-src': ['\'self\'', 'data:', 'https://lsky.939593.xyz', 'https://lsky.939593.xyz:11111'], // 添加允许的 API
       },
     },
   },
