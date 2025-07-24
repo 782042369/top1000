@@ -5,7 +5,7 @@
  * @LastEditTime: 2025-04-23 17:13:04
  * @LastEditors: yanghongxuan
  */
-import react from '@vitejs/plugin-react-swc'
+import react from '@vitejs/plugin-react'
 import { splitChunks } from '@xiaowaibuzheng/rolldown-vite-split-chunks'
 import { resolve } from 'node:path'
 import AutoImport from 'unplugin-auto-import/vite'
