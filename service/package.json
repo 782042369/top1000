@@ -2,7 +2,7 @@
   "name": "top_work",
   "version": "1.0.0",
   "private": true,
-  "packageManager": "pnpm@10.12.4",
+  "packageManager": "pnpm@10.14.0",
   "engines": {
     "node": ">=24.3.0",
     "pnpm": "=10.12.4"
@@ -23,7 +23,7 @@
   },
   "devDependencies": {
     "@antfu/eslint-config": "^5.1.0",
-    "@types/node": "^24.1.0",
+    "@types/node": "^24.2.0",
     "@types/timestring": "^7.0.0",
     "eslint": "^9.32.0",
     "eslint-plugin-format": "^1.0.1",
