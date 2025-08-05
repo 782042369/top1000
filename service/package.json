@@ -2,10 +2,9 @@
   "name": "top_work",
   "version": "1.0.0",
   "private": true,
-  "packageManager": "pnpm@10.14.0",
   "engines": {
     "node": ">=24.3.0",
-    "pnpm": "=10.12.4"
+    "pnpm": ">=10.12.4"
   },
   "scripts": {
     "dev": "nodemon",

@@ -4,7 +4,7 @@ FROM node:24-alpine as builder
 WORKDIR /app
 
 # 安装 pnpm 并配置缓存
-RUN npm i -g pnpm@10.12.4 && \
+RUN npm i -g pnpm@^10 && \
     pnpm config set store-dir /root/.pnpm-store
 
 # 优先复制包管理文件以利用构建缓存
