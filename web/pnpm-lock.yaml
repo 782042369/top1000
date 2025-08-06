@@ -12,17 +12,17 @@ importers:
   .:
     dependencies:
       '@ag-grid-community/locale':
-        specifier: ^34.1.0
-        version: 34.1.0
+        specifier: ^34.1.1
+        version: 34.1.1
       ag-grid-community:
-        specifier: ^34.1.0
-        version: 34.1.0
+        specifier: ^34.1.1
+        version: 34.1.1
       ag-grid-enterprise:
-        specifier: ^34.1.0
-        version: 34.1.0
+        specifier: ^34.1.1
+        version: 34.1.1
       ag-grid-react:
-        specifier: ^34.1.0
-        version: 34.1.0(react-dom@19.1.1(react@19.1.1))(react@19.1.1)
+        specifier: ^34.1.1
+        version: 34.1.1(react-dom@19.1.1(react@19.1.1))(react@19.1.1)
       ahooks:
         specifier: ^3.9.0
         version: 3.9.0(react-dom@19.1.1(react@19.1.1))(react@19.1.1)
@@ -50,10 +50,10 @@ importers:
         version: 19.1.7(@types/react@19.1.9)
       '@vitejs/plugin-react':
         specifier: ^4.7.0
-        version: 4.7.0(rolldown-vite@7.0.12(@types/node@24.2.0)(esbuild@0.25.6)(terser@5.43.1)(yaml@2.8.0))
+        version: 4.7.0(rolldown-vite@7.0.12(@types/node@24.2.0)(esbuild@0.25.6)(terser@5.43.1)(yaml@2.8.1))
       '@xiaowaibuzheng/rolldown-vite-split-chunks':
-        specifier: ^0.0.13
-        version: 0.0.13
+        specifier: ^0.0.14
+        version: 0.0.14
       eslint:
         specifier: ^9.32.0
         version: 9.32.0
@@ -70,19 +70,19 @@ importers:
         specifier: ^5.9.2
         version: 5.9.2
       unplugin-auto-import:
-        specifier: ^19.3.0
-        version: 19.3.0
+        specifier: ^20.0.0
+        version: 20.0.0
       vite:
-        specifier: npm:rolldown-vite@latest
-        version: rolldown-vite@7.0.12(@types/node@24.2.0)(esbuild@0.25.6)(terser@5.43.1)(yaml@2.8.0)
+        specifier: npm:rolldown-vite@^7.0.12
+        version: rolldown-vite@7.0.12(@types/node@24.2.0)(esbuild@0.25.6)(terser@5.43.1)(yaml@2.8.1)
       vite-plugin-html:
         specifier: ^3.2.2
-        version: 3.2.2(rolldown-vite@7.0.12(@types/node@24.2.0)(esbuild@0.25.6)(terser@5.43.1)(yaml@2.8.0))
+        version: 3.2.2(rolldown-vite@7.0.12(@types/node@24.2.0)(esbuild@0.25.6)(terser@5.43.1)(yaml@2.8.1))
 
 packages:
 
-  '@ag-grid-community/locale@34.1.0':
-    resolution: {integrity: sha512-Hv0Jej5h3Z9gi5hr3waCGLUITRFSfCOfVJOeUcWaVtAd5ln2ok5YuwWb1bXk5xUTtgAxSvZWVPv/ITeeUOJ0rw==}
+  '@ag-grid-community/locale@34.1.1':
+    resolution: {integrity: sha512-3cYTOgCQvyB9ExfhniSEioOPbGdVRlA60qogYoCc5Z+pEjDRK7qavx1wRMJ/SZwyr1aPBMqtMJ4Z7tfz7PMfUg==}
 
   '@ampproject/remapping@2.3.0':
     resolution: {integrity: sha512-30iZtAPgz+LTIYoeivqYo853f02jBYSd5uGnGpkFV0M3xOt9aN73erkgYAmZU43x4VfqcnLxW9Kpg3R5LC4YYw==}
@@ -804,8 +804,8 @@ packages:
   '@vue/shared@3.5.17':
     resolution: {integrity: sha512-CabR+UN630VnsJO/jHWYBC1YVXyMq94KKp6iF5MQgZJs5I8cmjw6oVMO1oDbtBkENSHSSn/UadWlW/OAgdmKrg==}
 
-  '@xiaowaibuzheng/rolldown-vite-split-chunks@0.0.13':
-    resolution: {integrity: sha512-82gHOOjp9SHYduT7362HlK6l2knuA/Txq7wl6G9CyFlU/JeLj3dun0s1I6biupKLg/aZF/v+orAGHI78+MRzAQ==}
+  '@xiaowaibuzheng/rolldown-vite-split-chunks@0.0.14':
+    resolution: {integrity: sha512-hZWu4z4oZZK+Q86kNUrR9dQ3vEducBL2c6tfxhsuVdxdL4WUqYXyl5KtV4yPHaxX780McDKOrxCHVHgJYOT9rA==}
     engines: {node: '>=20', pnpm: '>=8'}
 
   acorn-jsx@5.3.2:
@@ -818,29 +818,29 @@ packages:
     engines: {node: '>=0.4.0'}
     hasBin: true
 
-  ag-charts-community@12.1.0:
-    resolution: {integrity: sha512-UEY5SAnW46sE/QNq0hTAz3VlpE2qNScP1DEqAcDzNlxO10y16/Q3E9m0uY0Jprn1jGDrkRTdAFhcSPbkqMZ+Aw==}
+  ag-charts-community@12.1.1:
+    resolution: {integrity: sha512-5RfYXwqUr4yR1KIQAPvCsF9uaNRV6Ghs6Bj9tMn5bHL0xf1EOncEpkzXZjIXpM4yGxYk8UJKRTI3mByPjYRe8A==}
 
-  ag-charts-core@12.1.0:
-    resolution: {integrity: sha512-jfEqb9Ag1Bac7EoYOV8dtlGPL8AXce7+36ggL/2zfrvH/TgSflTYSh1lpGnfDkC0Q4zsl4L4StuBOK25y5/SSQ==}
+  ag-charts-core@12.1.1:
+    resolution: {integrity: sha512-Kp/fXAtNmHWWo4MTHfYN1O4O5F3wWF5ZhLcjbfrdBcx3rBdbQGw46K/FcclK8Wyer3tmITBG9EZQFO/CDeu4vA==}
 
-  ag-charts-enterprise@12.1.0:
-    resolution: {integrity: sha512-/4eq1nUmag99tVAEOpG0LFIgsT/uBn80naaEV9HU7HOqa1SJjkOrsnLb3d6BxB/MuY8XqdrR3vm/+Wfu+YeUkA==}
+  ag-charts-enterprise@12.1.1:
+    resolution: {integrity: sha512-kcifzWM1JA+gmXKUcHrFb5P23MAnY+3lyBo9MVziZh0RMH/fHa7wEjgPHyim7/71Lbz9DmJbaYaPwXpLp/4f9Q==}
 
-  ag-charts-locale@12.1.0:
-    resolution: {integrity: sha512-J7hO9oYAExsN/qv7MZRB6way+q+Z3ePoTXYBvCz+GA7NQ9dgpK/dnyZbWrakF2wlAW0OqasirzhSUM93PVB8kQ==}
+  ag-charts-locale@12.1.1:
+    resolution: {integrity: sha512-kpmtZvC12idQcNPnM3BIALmFUXvbb2TtCZtTuXqWdmtT7ykgnQCWWFczLOcM4EsgfnaudATI952JLAeQ/C2wwQ==}
 
-  ag-charts-types@12.1.0:
-    resolution: {integrity: sha512-qeODwJ1EqKjpwEbp0mQ2wQ0arRNYaZo2BafdAGfcuOwjOBlagSwJvUg5MCvAYZ/W/mg2uEmt7jKMNfDy4ul4+Q==}
+  ag-charts-types@12.1.1:
+    resolution: {integrity: sha512-VbAOfp1E7+Z/TBufJOIjUYdx70kQRDg49WoluiVKVSB0r0el/uvxARp9xjzx4ByBq9+Xq/V23tJVsRj1MS2A/g==}
 
-  ag-grid-community@34.1.0:
-    resolution: {integrity: sha512-3rZiOyyCGqSNqqTsrWafDVj1WfK43jfb53Ka5sqzdOG/yu6ySUFmdc0h/OuGLnkzwW5PC29coQwbS2rkb4c9dA==}
+  ag-grid-community@34.1.1:
+    resolution: {integrity: sha512-ODVvGoMTkyGvMT8b5lzvum5r93bG6CKdJdNrk6u/aYS7oqZ5rUEXJJHC8n8Zq+o76KhFiXMBQrU39xuhz8i+Tg==}
 
-  ag-grid-enterprise@34.1.0:
-    resolution: {integrity: sha512-hJIL1WmfHXhIcczN4YllNkOdP0JbnxwrKmZrIbJnPlE2w84vG0L060i0ecS15zeLRp3WCO9H3hVg2LqCf434jA==}
+  ag-grid-enterprise@34.1.1:
+    resolution: {integrity: sha512-r/HPmKM7rU+EnMYjzUUnp7Zlq+C77chUCdcT9oTS4eYPbjS/TF4bZO8laL4Nx/eAnwN5G5tyltIqUnSHpJmqKw==}
 
-  ag-grid-react@34.1.0:
-    resolution: {integrity: sha512-CY1p4/JnvcwOt2HipmsqME9CWz7M21nb3OB1DhJGOvNUaxo1wF6Hb/pKpa20F3F/E93wQCNmCz+gfrSLPuJrQw==}
+  ag-grid-react@34.1.1:
+    resolution: {integrity: sha512-ZffTltCJe5+yzC57LVTMFpjZiYUzFiX8+G4NNfM1MfiLV6cMl5kCEE6w3Afc0nSt8b1JCAZOiX6K0+VXqjIfYQ==}
     peerDependencies:
       react: ^16.8.0 || ^17.0.0 || ^18.0.0 || ^19.0.0
       react-dom: ^16.8.0 || ^17.0.0 || ^18.0.0 || ^19.0.0
@@ -1066,8 +1066,8 @@ packages:
     engines: {node: '>=0.10.0'}
     hasBin: true
 
-  electron-to-chromium@1.5.195:
-    resolution: {integrity: sha512-URclP0iIaDUzqcAyV1v2PgduJ9N0IdXmWsnPzPfelvBmjmZzEy6xJcjb1cXj+TbYqXgtLrjHEoaSIdTYhw4ezg==}
+  electron-to-chromium@1.5.196:
+    resolution: {integrity: sha512-FnnXV0dXANe7YNtKl/Af1raw+sBBUPuwcNEWfLOJyumXBvfQEBsnc0Gn+yEnVscq4x3makTtrlf4TjAo7lcXTQ==}
 
   enhanced-resolve@5.18.2:
     resolution: {integrity: sha512-6Jw4sE1maoRJo3q8MsSIn2onJFbLTOjY9hlx4DZXmOKvLRd1Ok2kXmAGXaafL2+ijsJZ1ClYbl/pmqr9+k4iUQ==}
@@ -1179,8 +1179,8 @@ packages:
       typescript:
         optional: true
 
-  eslint-plugin-jsdoc@52.0.2:
-    resolution: {integrity: sha512-fYrnc7OpRifxxKjH78Y9/D/EouQDYD3G++bpR1Y+A+fy+CMzKZAdGIiHTIxCd2U10hb2y1NxN5TJt9aupq1vmw==}
+  eslint-plugin-jsdoc@52.0.3:
+    resolution: {integrity: sha512-QTFvtVVWXwk0RxYF2GDHIQpkz/0fkonthp13YFMBI+Mco+tFrvU8I8E/WKo5ThcH6y3ya9Zx2VHRrZUrcLhs1A==}
     engines: {node: '>=20.11.0'}
     peerDependencies:
       eslint: ^7.0.0 || ^8.0.0 || ^9.0.0
@@ -2245,8 +2245,8 @@ packages:
   undici-types@7.10.0:
     resolution: {integrity: sha512-t5Fy/nfn+14LuOc2KNYg75vZqClpAiqscVvMygNnlsHBFpSXdJaYtXMcdNLpl/Qvc3P2cB3s6lOV51nqsFq4ag==}
 
-  unimport@4.2.0:
-    resolution: {integrity: sha512-mYVtA0nmzrysnYnyb3ALMbByJ+Maosee2+WyE0puXl+Xm2bUwPorPaaeZt0ETfuroPOtG8jj1g/qeFZ6buFnag==}
+  unimport@5.2.0:
+    resolution: {integrity: sha512-bTuAMMOOqIAyjV4i4UH7P07pO+EsVxmhOzQ2YJ290J6mkLUdozNhb5I/YoOEheeNADC03ent3Qj07X0fWfUpmw==}
     engines: {node: '>=18.12.0'}
 
   unist-util-is@6.0.0:
@@ -2265,11 +2265,11 @@ packages:
     resolution: {integrity: sha512-gptHNQghINnc/vTGIk0SOFGFNXw7JVrlRUtConJRlvaw6DuX0wO5Jeko9sWrMBhh+PsYAZ7oXAiOnf/UKogyiw==}
     engines: {node: '>= 10.0.0'}
 
-  unplugin-auto-import@19.3.0:
-    resolution: {integrity: sha512-iIi0u4Gq2uGkAOGqlPJOAMI8vocvjh1clGTfSK4SOrJKrt+tirrixo/FjgBwXQNNdS7ofcr7OxzmOb/RjWxeEQ==}
+  unplugin-auto-import@20.0.0:
+    resolution: {integrity: sha512-YAqD07gQa5PpGlhLFQ9rWDtGa42nBR2oNMudnX7G5P8XmkQx3EPL7sKNQroTdt5ehwks55NHy0dzxwwA3xtqQg==}
     engines: {node: '>=14'}
     peerDependencies:
-      '@nuxt/kit': ^3.2.2
+      '@nuxt/kit': ^4.0.0
       '@vueuse/core': '*'
     peerDependenciesMeta:
       '@nuxt/kit':
@@ -2331,8 +2331,8 @@ packages:
     resolution: {integrity: sha512-E/+VitOorXSLiAqtTd7Yqax0/pAS3xaYMP+AUUJGOK1OZG3rhcj9fcJOM5HJ2VrP1FrStVCWr1muTfQCdj4tAA==}
     engines: {node: ^14.17.0 || >=16.0.0}
 
-  yaml@2.8.0:
-    resolution: {integrity: sha512-4lLa/EcQCB0cJkyts+FpIRx5G/llPxfP6VQU5KByHEhLxY3IJCH0f0Hy1MHI8sClTvsIb8qwRJ6R/ZdlDJ/leQ==}
+  yaml@2.8.1:
+    resolution: {integrity: sha512-lcYcMxX2PO9XMGvAJkJ3OsNMw+/7FKes7/hgerGUYWIoWu5j/+YQqcZr5JnPZWzOsEBgMbSbiSTn/dv/69Mkpw==}
     engines: {node: '>= 14.6'}
     hasBin: true
 
@@ -2340,15 +2340,15 @@ packages:
     resolution: {integrity: sha512-rVksvsnNCdJ/ohGc6xgPwyN8eheCxsiLM8mxuE/t/mOVqJewPuO1miLpTHQiRgTKCLexL4MeAFVagts7HmNZ2Q==}
     engines: {node: '>=10'}
 
-  zod@4.0.14:
-    resolution: {integrity: sha512-nGFJTnJN6cM2v9kXL+SOBq3AtjQby3Mv5ySGFof5UGRHrRioSJ5iG680cYNjE/yWk671nROcpPj4hAS8nyLhSw==}
+  zod@4.0.15:
+    resolution: {integrity: sha512-2IVHb9h4Mt6+UXkyMs0XbfICUh1eUrlJJAOupBHUhLRnKkruawyDddYRCs0Eizt900ntIMk9/4RksYl+FgSpcQ==}
 
   zwitch@2.0.4:
     resolution: {integrity: sha512-bXE4cR/kVZhKZX/RjPEflHaKVhUVl85noU3v6b8apfQEc1x4A+zBxjZ4lN8LqGd6WZ3dl98pY4o717VFmoPp+A==}
 
 snapshots:
 
-  '@ag-grid-community/locale@34.1.0': {}
+  '@ag-grid-community/locale@34.1.1': {}
 
   '@ampproject/remapping@2.3.0':
     dependencies:
@@ -2374,7 +2374,7 @@ snapshots:
       eslint-plugin-antfu: 3.1.1(eslint@9.32.0)
       eslint-plugin-command: 3.3.1(eslint@9.32.0)
       eslint-plugin-import-lite: 0.3.0(eslint@9.32.0)(typescript@5.9.2)
-      eslint-plugin-jsdoc: 52.0.2(eslint@9.32.0)
+      eslint-plugin-jsdoc: 52.0.3(eslint@9.32.0)
       eslint-plugin-jsonc: 2.20.1(eslint@9.32.0)
       eslint-plugin-n: 17.21.3(eslint@9.32.0)(typescript@5.9.2)
       eslint-plugin-no-only-tests: 3.3.0
@@ -2725,7 +2725,7 @@ snapshots:
       '@eslint-react/eff': 1.52.3
       '@typescript-eslint/utils': 8.39.0(eslint@9.32.0)(typescript@5.9.2)
       ts-pattern: 5.8.0
-      zod: 4.0.14
+      zod: 4.0.15
     transitivePeerDependencies:
       - eslint
       - supports-color
@@ -2737,7 +2737,7 @@ snapshots:
       '@eslint-react/kit': 1.52.3(eslint@9.32.0)(typescript@5.9.2)
       '@typescript-eslint/utils': 8.39.0(eslint@9.32.0)(typescript@5.9.2)
       ts-pattern: 5.8.0
-      zod: 4.0.14
+      zod: 4.0.15
     transitivePeerDependencies:
       - eslint
       - supports-color
@@ -3080,7 +3080,7 @@ snapshots:
       '@typescript-eslint/types': 8.39.0
       eslint-visitor-keys: 4.2.1
 
-  '@vitejs/plugin-react@4.7.0(rolldown-vite@7.0.12(@types/node@24.2.0)(esbuild@0.25.6)(terser@5.43.1)(yaml@2.8.0))':
+  '@vitejs/plugin-react@4.7.0(rolldown-vite@7.0.12(@types/node@24.2.0)(esbuild@0.25.6)(terser@5.43.1)(yaml@2.8.1))':
     dependencies:
       '@babel/core': 7.28.0
       '@babel/plugin-transform-react-jsx-self': 7.27.1(@babel/core@7.28.0)
@@ -3088,7 +3088,7 @@ snapshots:
       '@rolldown/pluginutils': 1.0.0-beta.27
       '@types/babel__core': 7.20.5
       react-refresh: 0.17.0
-      vite: rolldown-vite@7.0.12(@types/node@24.2.0)(esbuild@0.25.6)(terser@5.43.1)(yaml@2.8.0)
+      vite: rolldown-vite@7.0.12(@types/node@24.2.0)(esbuild@0.25.6)(terser@5.43.1)(yaml@2.8.1)
     transitivePeerDependencies:
       - supports-color
 
@@ -3133,7 +3133,7 @@ snapshots:
 
   '@vue/shared@3.5.17': {}
 
-  '@xiaowaibuzheng/rolldown-vite-split-chunks@0.0.13':
+  '@xiaowaibuzheng/rolldown-vite-split-chunks@0.0.14':
     dependencies:
       es-module-lexer: 1.7.0
 
@@ -3143,43 +3143,43 @@ snapshots:
 
   acorn@8.15.0: {}
 
-  ag-charts-community@12.1.0:
+  ag-charts-community@12.1.1:
     dependencies:
-      ag-charts-core: 12.1.0
-      ag-charts-locale: 12.1.0
-      ag-charts-types: 12.1.0
+      ag-charts-core: 12.1.1
+      ag-charts-locale: 12.1.1
+      ag-charts-types: 12.1.1
     optional: true
 
-  ag-charts-core@12.1.0:
+  ag-charts-core@12.1.1:
     dependencies:
-      ag-charts-types: 12.1.0
+      ag-charts-types: 12.1.1
     optional: true
 
-  ag-charts-enterprise@12.1.0:
+  ag-charts-enterprise@12.1.1:
     dependencies:
-      ag-charts-community: 12.1.0
-      ag-charts-core: 12.1.0
+      ag-charts-community: 12.1.1
+      ag-charts-core: 12.1.1
     optional: true
 
-  ag-charts-locale@12.1.0:
+  ag-charts-locale@12.1.1:
     optional: true
 
-  ag-charts-types@12.1.0: {}
+  ag-charts-types@12.1.1: {}
 
-  ag-grid-community@34.1.0:
+  ag-grid-community@34.1.1:
     dependencies:
-      ag-charts-types: 12.1.0
+      ag-charts-types: 12.1.1
 
-  ag-grid-enterprise@34.1.0:
+  ag-grid-enterprise@34.1.1:
     dependencies:
-      ag-grid-community: 34.1.0
+      ag-grid-community: 34.1.1
     optionalDependencies:
-      ag-charts-community: 12.1.0
-      ag-charts-enterprise: 12.1.0
+      ag-charts-community: 12.1.1
+      ag-charts-enterprise: 12.1.1
 
-  ag-grid-react@34.1.0(react-dom@19.1.1(react@19.1.1))(react@19.1.1):
+  ag-grid-react@34.1.1(react-dom@19.1.1(react@19.1.1))(react@19.1.1):
     dependencies:
-      ag-grid-community: 34.1.0
+      ag-grid-community: 34.1.1
       prop-types: 15.8.1
       react: 19.1.1
       react-dom: 19.1.1(react@19.1.1)
@@ -3239,7 +3239,7 @@ snapshots:
   browserslist@4.25.1:
     dependencies:
       caniuse-lite: 1.0.30001731
-      electron-to-chromium: 1.5.195
+      electron-to-chromium: 1.5.196
       node-releases: 2.0.19
       update-browserslist-db: 1.1.3(browserslist@4.25.1)
 
@@ -3382,7 +3382,7 @@ snapshots:
     dependencies:
       jake: 10.9.4
 
-  electron-to-chromium@1.5.195: {}
+  electron-to-chromium@1.5.196: {}
 
   enhanced-resolve@5.18.2:
     dependencies:
@@ -3504,7 +3504,7 @@ snapshots:
     optionalDependencies:
       typescript: 5.9.2
 
-  eslint-plugin-jsdoc@52.0.2(eslint@9.32.0):
+  eslint-plugin-jsdoc@52.0.3(eslint@9.32.0):
     dependencies:
       '@es-joy/jsdoccomment': 0.52.0
       are-docs-informative: 0.0.2
@@ -4573,7 +4573,7 @@ snapshots:
 
   pnpm-workspace-yaml@1.1.0:
     dependencies:
-      yaml: 2.8.0
+      yaml: 2.8.1
 
   postcss-selector-parser@6.1.2:
     dependencies:
@@ -4644,7 +4644,7 @@ snapshots:
 
   reusify@1.1.0: {}
 
-  rolldown-vite@7.0.12(@types/node@24.2.0)(esbuild@0.25.6)(terser@5.43.1)(yaml@2.8.0):
+  rolldown-vite@7.0.12(@types/node@24.2.0)(esbuild@0.25.6)(terser@5.43.1)(yaml@2.8.1):
     dependencies:
       fdir: 6.4.6(picomatch@4.0.3)
       lightningcss: 1.30.1
@@ -4657,7 +4657,7 @@ snapshots:
       esbuild: 0.25.6
       fsevents: 2.3.3
       terser: 5.43.1
-      yaml: 2.8.0
+      yaml: 2.8.1
 
   rolldown@1.0.0-beta.30:
     dependencies:
@@ -4799,7 +4799,7 @@ snapshots:
 
   undici-types@7.10.0: {}
 
-  unimport@4.2.0:
+  unimport@5.2.0:
     dependencies:
       acorn: 8.15.0
       escape-string-regexp: 5.0.0
@@ -4837,12 +4837,12 @@ snapshots:
 
   universalify@2.0.1: {}
 
-  unplugin-auto-import@19.3.0:
+  unplugin-auto-import@20.0.0:
     dependencies:
       local-pkg: 1.1.1
       magic-string: 0.30.17
       picomatch: 4.0.3
-      unimport: 4.2.0
+      unimport: 5.2.0
       unplugin: 2.3.5
       unplugin-utils: 0.2.4
 
@@ -4869,7 +4869,7 @@ snapshots:
 
   util-deprecate@1.0.2: {}
 
-  vite-plugin-html@3.2.2(rolldown-vite@7.0.12(@types/node@24.2.0)(esbuild@0.25.6)(terser@5.43.1)(yaml@2.8.0)):
+  vite-plugin-html@3.2.2(rolldown-vite@7.0.12(@types/node@24.2.0)(esbuild@0.25.6)(terser@5.43.1)(yaml@2.8.1)):
     dependencies:
       '@rollup/pluginutils': 4.2.1
       colorette: 2.0.20
@@ -4883,7 +4883,7 @@ snapshots:
       html-minifier-terser: 6.1.0
       node-html-parser: 5.4.2
       pathe: 0.2.0
-      vite: rolldown-vite@7.0.12(@types/node@24.2.0)(esbuild@0.25.6)(terser@5.43.1)(yaml@2.8.0)
+      vite: rolldown-vite@7.0.12(@types/node@24.2.0)(esbuild@0.25.6)(terser@5.43.1)(yaml@2.8.1)
 
   vue-eslint-parser@10.2.0(eslint@9.32.0):
     dependencies:
@@ -4912,12 +4912,12 @@ snapshots:
   yaml-eslint-parser@1.3.0:
     dependencies:
       eslint-visitor-keys: 3.4.3
-      yaml: 2.8.0
+      yaml: 2.8.1
 
-  yaml@2.8.0: {}
+  yaml@2.8.1: {}
 
   yocto-queue@0.1.0: {}
 
-  zod@4.0.14: {}
+  zod@4.0.15: {}
 
   zwitch@2.0.4: {}
