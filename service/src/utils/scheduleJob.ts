@@ -92,7 +92,7 @@ export async function scheduleJob(): Promise<void> {
     )
     server.log.info('JSON file successfully updated')
   }
-  catch (error) {
+  catch (error: any) {
     server.log.error('Failed to update data:', error)
   }
 }
@@ -108,7 +108,7 @@ export async function checkExpired(): Promise<void> {
       await scheduleJob()
     }
   }
-  catch (error) {
+  catch (error: any) {
     server.log.error('Expiry check failed, triggering update:', error)
     await scheduleJob()
   }
