@@ -40,7 +40,7 @@ const SITE_REGEX = /站名：(.*?) 【ID：(\d+)】/
 /** 处理原始数据并返回结构化结果 */
 function processData(rawData: string): ProcessedData {
   const lines = rawData.split(/\r?\n/) // 通用换行符处理
-  const [timeLine, _v, ...dataLines] = lines
+  const [timeLine = '', _v, ...dataLines] = lines
 
   const siteNames = new Set<string>()
   const items: SiteItem[] = []
@@ -48,13 +48,13 @@ function processData(rawData: string): ProcessedData {
   // 有效数据分组处理
   for (let i = 0; i <= dataLines.length - DATA_GROUP_SIZE; i += DATA_GROUP_SIZE) {
     const group = dataLines.slice(i, i + DATA_GROUP_SIZE)
-    const [siteLine, dupLine, _mainLine, _subLine, sizeLine] = group
+    const [siteLine, dupLine = '', _mainLine, _subLine, sizeLine = ''] = group
 
     const match = siteLine?.match(SITE_REGEX)
     if (!match)
       continue
 
-    const [, siteName, siteid] = match
+    const [, siteName = '', siteid = ''] = match
     siteNames.add(siteName)
 
     items.push({

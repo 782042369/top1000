@@ -1,12 +1,20 @@
 {
   "extends": "fastify-tsconfig",
   "compilerOptions": {
-    "target": "ES2022",
-    "module": "NodeNext",
-    "moduleResolution": "NodeNext",
-    "outDir": "dist",
-    "sourceMap": false,
-    "esModuleInterop": true
+    "target": "ES2023", // 使用 ES2023 特性（Node 24 完全支持）
+    "module": "NodeNext", // 保持 Node 的现代模块系统
+    "moduleResolution": "NodeNext", // 与 Node 的模块解析策略一致
+    "strict": true, // 【新增】启用所有严格类型检查
+    "noFallthroughCasesInSwitch": true, // 【严格】switch case 必须 break 或 return
+    "noImplicitReturns": true, // 【严格】函数必须有明确返回值
+    "noUncheckedIndexedAccess": true, // 【安全】严格索引访问（array['key'] 可能为 undefined）
+    "noUnusedLocals": true, // 【严格】禁止未使用的局部变量
+    "noUnusedParameters": true, // 【严格】禁止未使用的函数参数
+    "outDir": "dist", // 编译输出目录
+    "sourceMap": false, // 【优化】启用源码映射（方便调试）
+    "esModuleInterop": true, // 保持 ESM/CJS 互操作性
+    "forceConsistentCasingInFileNames": true, // 强制文件名大小写一致性（避免跨平台问题）
+    "skipLibCheck": false // 【优化】跳过库声明文件检查（提升编译速度）
   },
   "include": ["src/**/*.ts"]
 }
