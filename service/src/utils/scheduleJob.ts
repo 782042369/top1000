@@ -34,7 +34,7 @@ interface ProcessedData {
 // 常量定义
 const JSON_FILE_PATH = path.join(__dirname, '../../public/top1000.json')
 const ONE_DAY_MS = 24 * 60 * 60 * 1000
-const DATA_GROUP_SIZE = 5
+const DATA_GROUP_SIZE = 3
 const SITE_REGEX = /站名：(.*?) 【ID：(\d+)】/
 
 /** 处理原始数据并返回结构化结果 */
@@ -48,7 +48,7 @@ function processData(rawData: string): ProcessedData {
   // 有效数据分组处理
   for (let i = 0; i <= dataLines.length - DATA_GROUP_SIZE; i += DATA_GROUP_SIZE) {
     const group = dataLines.slice(i, i + DATA_GROUP_SIZE)
-    const [siteLine, dupLine = '', _mainLine, _subLine, sizeLine = ''] = group
+    const [siteLine, dupLine = '', sizeLine = ''] = group
 
     const match = siteLine?.match(SITE_REGEX)
     if (!match)
