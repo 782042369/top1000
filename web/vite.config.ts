@@ -5,25 +5,14 @@
  * @LastEditTime: 2025-04-23 17:13:04
  * @LastEditors: yanghongxuan
  */
-import react from '@vitejs/plugin-react'
 import { splitChunks } from '@xiaowaibuzheng/rolldown-vite-split-chunks'
 import { resolve } from 'node:path'
-import AutoImport from 'unplugin-auto-import/vite'
 import { defineConfig } from 'vite'
 import { createHtmlPlugin } from 'vite-plugin-html'
 
 // https://vitejs.dev/config/
 export default defineConfig({
   plugins: [
-    react(),
-    AutoImport({
-      imports: ['react'],
-      dts: '@types/auto-imports.d.ts',
-      include: [
-        /\.[tj]sx?$/, // .ts, .tsx, .js, .jsx
-        /\.md$/, // .md
-      ],
-    }),
     splitChunks(),
     createHtmlPlugin({
       minify: true,
