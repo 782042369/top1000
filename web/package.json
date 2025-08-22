@@ -14,10 +14,10 @@
     "preview": "vite preview"
   },
   "dependencies": {
-    "@ag-grid-community/locale": "^34.1.1",
-    "ag-grid-community": "^34.1.1",
-    "ag-grid-enterprise": "^34.1.1",
-    "ag-grid-react": "^34.1.1",
+    "@ag-grid-community/locale": "^34.1.2",
+    "ag-grid-community": "^34.1.2",
+    "ag-grid-enterprise": "^34.1.2",
+    "ag-grid-react": "^34.1.2",
     "ahooks": "^3.9.3",
     "react": "^19.1.1",
     "react-dom": "^19.1.1"
