@@ -42,7 +42,6 @@ function processData(rawData: string): ProcessedData {
   const lines = rawData.split(/\r?\n/) // 通用换行符处理
   const [timeLine = '', _v, ...dataLines] = lines
 
-  const siteNames = new Set<string>()
   const items: SiteItem[] = []
 
   // 有效数据分组处理
@@ -55,7 +54,6 @@ function processData(rawData: string): ProcessedData {
       continue
 
     const [, siteName = '', siteid = ''] = match
-    siteNames.add(siteName)
 
     items.push({
       siteName,
