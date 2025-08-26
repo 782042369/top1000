@@ -29,8 +29,8 @@ export function operationRender(params: ICellRendererParams) {
           ${downloadUrl ? `查看详情` : `查看详情(下载到详情页面)`}
         </a>
         ${downloadUrl
-      ? (
-        `<a
+          ? (
+              `<a
                 style="margin-left:10px"
                 href="${getUrl.download(siteid)}"
                 target="_blank"
@@ -38,8 +38,8 @@ export function operationRender(params: ICellRendererParams) {
               >
                 下载种子
               </a>`
-      )
-      : null}
+            )
+          : null}
       </div>`
   return link
 }
