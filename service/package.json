@@ -21,7 +21,7 @@
     "timestring": "^7.0.0"
   },
   "devDependencies": {
-    "@antfu/eslint-config": "^6.0.0",
+    "@antfu/eslint-config": "^6.1.0",
     "@types/node": "^24.9.1",
     "@types/timestring": "^7.0.0",
     "eslint": "^9.38.0",
