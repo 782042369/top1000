@@ -39,7 +39,7 @@ export function operationRender(params: ICellRendererParams) {
                 下载种子
               </a>`
             )
-          : null}
+          : ''}
       </div>`
   return link
 }
