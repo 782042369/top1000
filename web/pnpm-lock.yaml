@@ -34,11 +34,11 @@ importers:
         specifier: ^5.9.3
         version: 5.9.3
       vite:
-        specifier: npm:rolldown-vite@^7.2.6
-        version: rolldown-vite@7.2.6(@types/node@24.10.1)(esbuild@0.25.6)(terser@5.44.0)(yaml@2.8.1)
+        specifier: npm:rolldown-vite@^7.2.7
+        version: rolldown-vite@7.2.7(@types/node@24.10.1)(esbuild@0.25.6)(terser@5.44.0)(yaml@2.8.1)
       vite-plugin-html:
         specifier: ^3.2.2
-        version: 3.2.2(rolldown-vite@7.2.6(@types/node@24.10.1)(esbuild@0.25.6)(terser@5.44.0)(yaml@2.8.1))
+        version: 3.2.2(rolldown-vite@7.2.7(@types/node@24.10.1)(esbuild@0.25.6)(terser@5.44.0)(yaml@2.8.1))
 
 packages:
 
@@ -1779,8 +1779,8 @@ packages:
     resolution: {integrity: sha512-g6QUff04oZpHs0eG5p83rFLhHeV00ug/Yf9nZM6fLeUrPguBTkTQOdpAWWspMh55TZfVQDPaN3NQJfbVRAxdIw==}
     engines: {iojs: '>=1.0.0', node: '>=0.10.0'}
 
-  rolldown-vite@7.2.6:
-    resolution: {integrity: sha512-u+0VLWLPJgwINLTQI18fSQlqfwgu8biRP4SY6HH4HLcEWZUOnDu5ARpwPYPyDahXPuhdSRHmWfS5G2/7CmqpJw==}
+  rolldown-vite@7.2.7:
+    resolution: {integrity: sha512-N6a9KgNZ0xgCJ6/Ej2FQ7W8D3fOzDwFw7CLWZ2ubZknVrs9NdNkx25AFEuNbSwQO76VEHp4N7YatsZwp/ST1Gg==}
     engines: {node: ^20.19.0 || >=22.12.0}
     hasBin: true
     peerDependencies:
@@ -3904,7 +3904,7 @@ snapshots:
 
   reusify@1.1.0: {}
 
-  rolldown-vite@7.2.6(@types/node@24.10.1)(esbuild@0.25.6)(terser@5.44.0)(yaml@2.8.1):
+  rolldown-vite@7.2.7(@types/node@24.10.1)(esbuild@0.25.6)(terser@5.44.0)(yaml@2.8.1):
     dependencies:
       '@oxc-project/runtime': 0.98.0
       fdir: 6.5.0(picomatch@4.0.3)
@@ -4079,7 +4079,7 @@ snapshots:
 
   util-deprecate@1.0.2: {}
 
-  vite-plugin-html@3.2.2(rolldown-vite@7.2.6(@types/node@24.10.1)(esbuild@0.25.6)(terser@5.44.0)(yaml@2.8.1)):
+  vite-plugin-html@3.2.2(rolldown-vite@7.2.7(@types/node@24.10.1)(esbuild@0.25.6)(terser@5.44.0)(yaml@2.8.1)):
     dependencies:
       '@rollup/pluginutils': 4.2.1
       colorette: 2.0.20
@@ -4093,7 +4093,7 @@ snapshots:
       html-minifier-terser: 6.1.0
       node-html-parser: 5.4.2
       pathe: 0.2.0
-      vite: rolldown-vite@7.2.6(@types/node@24.10.1)(esbuild@0.25.6)(terser@5.44.0)(yaml@2.8.1)
+      vite: rolldown-vite@7.2.7(@types/node@24.10.1)(esbuild@0.25.6)(terser@5.44.0)(yaml@2.8.1)
 
   vue-eslint-parser@10.2.0(eslint@9.39.1):
     dependencies:
