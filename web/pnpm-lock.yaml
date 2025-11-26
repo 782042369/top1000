@@ -25,8 +25,8 @@ importers:
         specifier: 24.10.1
         version: 24.10.1
       '@xiaowaibuzheng/rolldown-vite-split-chunks':
-        specifier: ^0.0.15
-        version: 0.0.15
+        specifier: ^0.0.16
+        version: 0.0.16
       eslint:
         specifier: ^9.39.1
         version: 9.39.1
@@ -654,8 +654,8 @@ packages:
   '@vue/shared@3.5.17':
     resolution: {integrity: sha512-CabR+UN630VnsJO/jHWYBC1YVXyMq94KKp6iF5MQgZJs5I8cmjw6oVMO1oDbtBkENSHSSn/UadWlW/OAgdmKrg==}
 
-  '@xiaowaibuzheng/rolldown-vite-split-chunks@0.0.15':
-    resolution: {integrity: sha512-IKvaTq10p3VsYMNKIaX7NAtestGvBXMBO5OTKjQY7EGiKPkwR2uiHbB0gbWn2aJ08DcdWe5LMMj1ruqELKYs8w==}
+  '@xiaowaibuzheng/rolldown-vite-split-chunks@0.0.16':
+    resolution: {integrity: sha512-iLIO/r4iY99apHgkdOTpRGK8xZpQpByiI6Xa3rN78oFSnDsQNGArfNsl0BJZEkCJ2hRgogeyaoNFEEsVuCrtRA==}
     engines: {node: '>=20', pnpm: '>=8'}
 
   acorn-jsx@5.3.2:
@@ -2577,7 +2577,7 @@ snapshots:
 
   '@vue/shared@3.5.17': {}
 
-  '@xiaowaibuzheng/rolldown-vite-split-chunks@0.0.15':
+  '@xiaowaibuzheng/rolldown-vite-split-chunks@0.0.16':
     dependencies:
       es-module-lexer: 1.7.0
 
