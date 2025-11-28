@@ -10,8 +10,7 @@
     "dev": "nodemon",
     "start": "nodemon",
     "build": "tsc",
-    "lint": "eslint --fix --concurrency=auto",
-    "prettier": "prettier --write 'src/**/*.ts'"
+    "lint": "eslint --fix --concurrency=auto"
   },
   "dependencies": {
     "@fastify/compress": "^8.3.0",
@@ -28,7 +27,6 @@
     "eslint-plugin-format": "^1.0.2",
     "fastify-tsconfig": "^3.0.0",
     "nodemon": "^3.1.11",
-    "prettier": "^3.6.2",
     "ts-node": "^10.9.2",
     "typescript": "^5.9.3"
   }
