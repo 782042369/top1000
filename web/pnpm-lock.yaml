@@ -25,8 +25,8 @@ importers:
         specifier: 24.10.1
         version: 24.10.1
       '@xiaowaibuzheng/rolldown-vite-split-chunks':
-        specifier: ^0.0.16
-        version: 0.0.16
+        specifier: ^0.0.17
+        version: 0.0.17
       eslint:
         specifier: ^9.39.1
         version: 9.39.1
@@ -34,11 +34,11 @@ importers:
         specifier: ^5.9.3
         version: 5.9.3
       vite:
-        specifier: npm:rolldown-vite@^7.2.8
-        version: rolldown-vite@7.2.8(@types/node@24.10.1)(esbuild@0.25.6)(terser@5.44.0)(yaml@2.8.1)
+        specifier: npm:rolldown-vite@^7.2.9
+        version: rolldown-vite@7.2.9(@types/node@24.10.1)(esbuild@0.25.6)(terser@5.44.0)(yaml@2.8.1)
       vite-plugin-html:
         specifier: ^3.2.2
-        version: 3.2.2(rolldown-vite@7.2.8(@types/node@24.10.1)(esbuild@0.25.6)(terser@5.44.0)(yaml@2.8.1))
+        version: 3.2.2(rolldown-vite@7.2.9(@types/node@24.10.1)(esbuild@0.25.6)(terser@5.44.0)(yaml@2.8.1))
 
 packages:
 
@@ -654,8 +654,8 @@ packages:
   '@vue/shared@3.5.17':
     resolution: {integrity: sha512-CabR+UN630VnsJO/jHWYBC1YVXyMq94KKp6iF5MQgZJs5I8cmjw6oVMO1oDbtBkENSHSSn/UadWlW/OAgdmKrg==}
 
-  '@xiaowaibuzheng/rolldown-vite-split-chunks@0.0.16':
-    resolution: {integrity: sha512-iLIO/r4iY99apHgkdOTpRGK8xZpQpByiI6Xa3rN78oFSnDsQNGArfNsl0BJZEkCJ2hRgogeyaoNFEEsVuCrtRA==}
+  '@xiaowaibuzheng/rolldown-vite-split-chunks@0.0.17':
+    resolution: {integrity: sha512-eYiLmOX+U6Jgzt691TvqjEtx7mFv3Yl36wkCTQGwtMQOsmy9alsao7AHM7ZTB8nFT7dYbwekzAh8xTyeiVjERQ==}
     engines: {node: '>=20', pnpm: '>=8'}
 
   acorn-jsx@5.3.2:
@@ -1779,8 +1779,8 @@ packages:
     resolution: {integrity: sha512-g6QUff04oZpHs0eG5p83rFLhHeV00ug/Yf9nZM6fLeUrPguBTkTQOdpAWWspMh55TZfVQDPaN3NQJfbVRAxdIw==}
     engines: {iojs: '>=1.0.0', node: '>=0.10.0'}
 
-  rolldown-vite@7.2.8:
-    resolution: {integrity: sha512-8wKihlF6EDF8grimwd7GPOhLkQkSIgj6Hlcp0CXhtO3HAXeUUqhgZmJmn07OF8e4PbTusMX6Yxmy1BptVRZsdw==}
+  rolldown-vite@7.2.9:
+    resolution: {integrity: sha512-Y+Q1FpIgAkK2RiAdeS1SxcvDsJaru1JUANFo1aiFFtuGCckhltIowoC/JMU740tFZDTJA5vg5CAl1RzHExNR/w==}
     engines: {node: ^20.19.0 || >=22.12.0}
     hasBin: true
     peerDependencies:
@@ -2577,7 +2577,7 @@ snapshots:
 
   '@vue/shared@3.5.17': {}
 
-  '@xiaowaibuzheng/rolldown-vite-split-chunks@0.0.16':
+  '@xiaowaibuzheng/rolldown-vite-split-chunks@0.0.17':
     dependencies:
       es-module-lexer: 1.7.0
 
@@ -3904,7 +3904,7 @@ snapshots:
 
   reusify@1.1.0: {}
 
-  rolldown-vite@7.2.8(@types/node@24.10.1)(esbuild@0.25.6)(terser@5.44.0)(yaml@2.8.1):
+  rolldown-vite@7.2.9(@types/node@24.10.1)(esbuild@0.25.6)(terser@5.44.0)(yaml@2.8.1):
     dependencies:
       '@oxc-project/runtime': 0.99.0
       fdir: 6.5.0(picomatch@4.0.3)
@@ -4079,7 +4079,7 @@ snapshots:
 
   util-deprecate@1.0.2: {}
 
-  vite-plugin-html@3.2.2(rolldown-vite@7.2.8(@types/node@24.10.1)(esbuild@0.25.6)(terser@5.44.0)(yaml@2.8.1)):
+  vite-plugin-html@3.2.2(rolldown-vite@7.2.9(@types/node@24.10.1)(esbuild@0.25.6)(terser@5.44.0)(yaml@2.8.1)):
     dependencies:
       '@rollup/pluginutils': 4.2.1
       colorette: 2.0.20
@@ -4093,7 +4093,7 @@ snapshots:
       html-minifier-terser: 6.1.0
       node-html-parser: 5.4.2
       pathe: 0.2.0
-      vite: rolldown-vite@7.2.8(@types/node@24.10.1)(esbuild@0.25.6)(terser@5.44.0)(yaml@2.8.1)
+      vite: rolldown-vite@7.2.9(@types/node@24.10.1)(esbuild@0.25.6)(terser@5.44.0)(yaml@2.8.1)
 
   vue-eslint-parser@10.2.0(eslint@9.39.1):
     dependencies:
