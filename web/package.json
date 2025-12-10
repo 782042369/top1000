@@ -19,8 +19,8 @@
     "ag-grid-enterprise": "^34.3.1"
   },
   "devDependencies": {
-    "@antfu/eslint-config": "^6.4.2",
-    "@types/node": "24.10.1",
+    "@antfu/eslint-config": "^6.5.1",
+    "@types/node": "24.10.2",
     "@xiaowaibuzheng/rolldown-vite-split-chunks": "^0.0.17",
     "eslint": "^9.39.1",
     "typescript": "^5.9.3",
