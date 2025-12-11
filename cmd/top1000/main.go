@@ -49,15 +49,17 @@ func main() {
 func getTop1000Data(c *fiber.Ctx) error {
 	file, err := os.Open(jsonFilePath)
 	if err != nil {
+		log.Printf("打开数据文件失败: %v", err)
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
 			"error": "无法读取数据文件",
 		})
 	}
 	defer file.Close()
-	log.Println("正在读取数据文件...", file)
+
 	var data ProcessedData
 	decoder := json.NewDecoder(file)
 	if err := decoder.Decode(&data); err != nil {
+		log.Printf("解析数据文件失败: %v", err)
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
 			"error": "数据解析失败",
 		})
@@ -72,7 +74,8 @@ func initializeData() error {
 	if err := os.MkdirAll("./public", 0755); err != nil {
 		log.Printf("创建public目录失败详细信息: 当前工作目录=%s, 用户ID=%d, 错误=%v",
 			os.Getenv("PWD"), os.Getuid(), err)
-		return fmt.Errorf("创建public目录失败: %w", err)
+		log.Printf("创建public目录失败: %v", err)
+		return err
 	}
 
 	// 检查数据文件是否存在
@@ -91,30 +94,33 @@ func initializeData() error {
 
 // scheduleJob 从远程API获取并处理数据
 func scheduleJob() error {
-	log.Println("正在从远程API获取数据...")
 	resp, err := http.Get("https://api.iyuu.cn/top1000.php")
 	if err != nil {
-		return fmt.Errorf("获取数据失败: %w", err)
+		log.Printf("获取数据失败: %v", err)
+		return err
 	}
 	defer resp.Body.Close()
 
 	body, err := io.ReadAll(resp.Body)
 	if err != nil {
-		return fmt.Errorf("读取响应体失败: %w", err)
+		log.Printf("读取响应体失败: %v", err)
+		return err
 	}
 
 	processed := processData(string(body))
 
 	file, err := os.Create(jsonFilePath)
 	if err != nil {
-		return fmt.Errorf("创建文件失败: %w", err)
+		log.Printf("创建文件失败: %v", err)
+		return err
 	}
 	defer file.Close()
 
 	encoder := json.NewEncoder(file)
 	encoder.SetIndent("", "  ")
 	if err := encoder.Encode(processed); err != nil {
-		return fmt.Errorf("写入JSON数据失败: %w", err)
+		log.Printf("写入JSON数据失败: %v", err)
+		return err
 	}
 
 	log.Println("数据更新成功")
@@ -192,7 +198,6 @@ func parseTime(rawTime string) string {
 func checkExpired() error {
 	file, err := os.Open(jsonFilePath)
 	if err != nil {
-		log.Printf("打开数据文件失败，触发更新: %v", err)
 		return scheduleJob()
 	}
 	defer file.Close()
@@ -200,20 +205,17 @@ func checkExpired() error {
 	var data ProcessedData
 	decoder := json.NewDecoder(file)
 	if err := decoder.Decode(&data); err != nil {
-		log.Printf("解码数据失败，触发更新: %v", err)
 		return scheduleJob()
 	}
 
-	// 修改: 使用正确的布局格式解析时间 "2025-12-11 07:52:33"
+	// 使用正确的布局格式解析时间 "2025-12-11 07:52:33"
 	dataTime, err := time.Parse("2006-01-02 15:04:05", data.Time)
 	if err != nil {
-		log.Printf("时间解析失败，触发更新: %v", err)
 		return scheduleJob()
 	}
 
-	// 修改: 正确比较时间差是否超过24小时
+	// 正确比较时间差是否超过24小时
 	if time.Since(dataTime).Hours() > 24 {
-		log.Println("数据已过期，正在更新...")
 		return scheduleJob()
 	}
 
