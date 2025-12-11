@@ -11,6 +11,7 @@ RUN go mod download
 
 # 复制源代码
 COPY cmd ./cmd
+COPY internal ./internal
 
 # 构建优化的Go应用
 RUN CGO_ENABLED=0 GOOS=linux go build -a -installsuffix cgo -ldflags="-s -w" -trimpath -o main ./cmd/top1000
