@@ -28,7 +28,7 @@ export default defineConfig({
       },
     },
     emptyOutDir: false,
-    outDir: resolve(__dirname, '../service/public'),
+    outDir: resolve(__dirname, '../web-dist'),
   },
   server: {
     open: true,

@@ -1,8 +1,0 @@
-services:
-  top1000-iyuu:
-    container_name: top1000-iyuu
-    image: 782042369/top1000-iyuu:latest
-    ports:
-      - 7066:7066
-    restart: always
-    network_mode: bridge

@@ -1,6 +1,22 @@
 # 构建阶段：使用多阶段构建最小化生产镜像
-# 阶段一：构建 web 和 service
-FROM node:24-alpine as builder
+# 阶段一：构建 service (Go版本)
+FROM golang:1.25-alpine as service-builder
+WORKDIR /app
+
+# 复制Go模块文件
+COPY go.mod go.sum ./
+
+# 下载依赖
+RUN go mod download
+
+# 复制源代码
+COPY cmd ./cmd
+
+# 构建Go应用
+RUN CGO_ENABLED=0 GOOS=linux go build -a -installsuffix cgo -o main ./cmd/top1000
+
+# 阶段二：构建 web
+FROM node:24-alpine as web-builder
 WORKDIR /app
 
 # 安装 pnpm 并配置缓存
@@ -9,51 +25,41 @@ RUN npm i -g pnpm@^10 && \
 
 # 优先复制包管理文件以利用构建缓存
 COPY web/package.json web/pnpm-lock.yaml ./web/
-COPY service/package.json service/pnpm-lock.yaml ./service/
 
 # 安装所有依赖（包括devDependencies）
-RUN cd web && pnpm install --frozen-lockfile && \
-    cd ../service && pnpm install --frozen-lockfile
+RUN cd web && pnpm install --frozen-lockfile
 
 # 复制源代码
 COPY web ./web/
-COPY service ./service/
 
-# 执行构建
-RUN cd web && pnpm build && \
-    cd ../service && pnpm build && \
-    rm -rf node_modules && \
-    pnpm install --prod && \
-    pnpm add @vercel/nft fs-extra --save-prod
-
-# 生产阶段：仅安装生产依赖
-FROM node:24-alpine as production-deps
-
-WORKDIR /app
-
-COPY --from=builder /app/service/ /app/
-
-RUN export PROJECT_ROOT=/app/ && \
-    node /app/scripts/minify-docker.cjs && \
-    rm -rf /app/node_modules /app/scripts && \
-    mv /app/app-minimal/node_modules /app/ && \
-    rm -rf /app/app-minimal
+# 执行构建，输出到 web-dist 目录
+RUN cd web && pnpm build
 
 # 最终生产阶段
-FROM node:24-alpine
+FROM alpine:latest
 WORKDIR /app
+
+# 安装ca-certificates以支持HTTPS请求
+RUN apk --no-cache add ca-certificates
 
 # 创建非特权用户
 RUN addgroup -g 1001 appgroup && \
     adduser -u 1001 -S appuser -G appgroup
 
-# 从各阶段复制必要文件
-COPY --from=production-deps --chown=appuser:appgroup /app/node_modules ./node_modules/
-COPY --from=builder --chown=appuser:appgroup /app/service/dist ./dist/
-COPY --from=builder --chown=appuser:appgroup /app/service/public ./public/
+# 从 service-builder 阶段复制所有必要文件
+COPY --from=service-builder --chown=appuser:appgroup /app/main ./main
+COPY --from=web-builder --chown=appuser:appgroup /app/web-dist ./web-dist
 
 # 设置用户权限
 USER appuser
 
+# 声明端口
+ENV PORT=7066
+
 EXPOSE 7066
-CMD ["node", "/app/dist/app.js"]
+
+# 添加健康检查
+HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
+  CMD wget --quiet --tries=1 --spider http://localhost:7066/health || exit 1
+
+CMD ["./main"]
