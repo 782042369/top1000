@@ -12,8 +12,8 @@ RUN go mod download
 # 复制源代码
 COPY cmd ./cmd
 
-# 构建Go应用
-RUN CGO_ENABLED=0 GOOS=linux go build -a -installsuffix cgo -o main ./cmd/top1000
+# 构建优化的Go应用
+RUN CGO_ENABLED=0 GOOS=linux go build -a -installsuffix cgo -ldflags="-s -w" -trimpath -o main ./cmd/top1000
 
 # 阶段二：构建 web
 FROM node:24-alpine as web-builder
@@ -63,6 +63,6 @@ EXPOSE 7066
 
 # 添加健康检查
 HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
-  CMD wget --quiet --tries=1 --spider http://localhost:7066/health || exit 1
+  CMD wget --quiet --tries=1 --spider http://localhost:7066/ || exit 1
 
 CMD ["./main"]
