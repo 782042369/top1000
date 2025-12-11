@@ -2,7 +2,7 @@
  * @Author: yanghongxuan
  * @Date: 2024-02-04 16:54:18
  * @Description:
- * @LastEditTime: 2025-04-23 17:13:04
+ * @LastEditTime: 2025-05-13 15:00:00
  * @LastEditors: yanghongxuan
  */
 import { splitChunks } from '@xiaowaibuzheng/rolldown-vite-split-chunks'
@@ -20,7 +20,6 @@ export default defineConfig({
   ],
   build: {
     rollupOptions: {
-      // 自定义底层的 Rollup 打包配d置
       output: {
         chunkFileNames: 'js/[name]-[hash].js', // 引入文件名的名称
         entryFileNames: 'js/[name]-[hash].js', // 包的入口文件名称
@@ -29,6 +28,7 @@ export default defineConfig({
     },
     emptyOutDir: false,
     outDir: resolve(__dirname, '../web-dist'),
+    chunkSizeWarningLimit: 1000,
   },
   server: {
     open: true,
