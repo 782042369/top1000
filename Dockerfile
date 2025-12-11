@@ -50,6 +50,9 @@ RUN addgroup -g 1001 appgroup && \
 COPY --from=service-builder --chown=appuser:appgroup /app/main ./main
 COPY --from=web-builder --chown=appuser:appgroup /app/web-dist ./web-dist
 
+# 创建 public 目录并设置正确的所有权
+RUN mkdir -p ./public && chown appuser:appgroup ./public
+
 # 设置用户权限
 USER appuser
 

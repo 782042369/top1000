@@ -7,6 +7,7 @@ import (
 	"log"
 	"net/http"
 	"os"
+	"os/user"
 	"regexp"
 	"strings"
 	"time"
@@ -69,11 +70,18 @@ func getTop1000Data(c *fiber.Ctx) error {
 func initializeData() error {
 	// 如果public目录不存在则创建
 	if err := os.MkdirAll("./public", 0755); err != nil {
+		log.Printf("创建public目录失败详细信息: 当前工作目录=%s, 用户ID=%d, 错误=%v",
+			os.Getenv("PWD"), os.Getuid(), err)
 		return fmt.Errorf("创建public目录失败: %w", err)
 	}
 
 	// 检查数据文件是否存在
-	if _, err := os.Stat(jsonFilePath); os.IsNotExist(err) {
+	if _, err := os.Stat(jsonFilePath); err != nil {
+		if os.IsNotExist(err) {
+			return scheduleJob()
+		}
+		// 如果是其他错误，记录但不中断程序
+		log.Printf("检查数据文件时发生错误: %v", err)
 		return scheduleJob()
 	}
 
@@ -253,6 +261,9 @@ func startWatcher() {
 	// 初始化数据
 	if err := initializeData(); err != nil {
 		log.Printf("初始化数据失败: %v", err)
+		log.Printf("当前工作目录: %s", os.Getenv("PWD"))
+		log.Printf("当前用户ID: %d", os.Getuid())
+		log.Printf("public目录权限详情: %v", getFilePermissionInfo("./public"))
 	}
 
 	// 安排定时任务定期更新数据
@@ -266,4 +277,25 @@ func startWatcher() {
 
 	// 启动服务器
 	log.Fatal(app.Listen(":7066"))
+}
+
+// getFilePermissionInfo 获取文件或目录的权限信息
+func getFilePermissionInfo(path string) string {
+	info, err := os.Stat(path)
+	if err != nil {
+		if os.IsNotExist(err) {
+			return "目录不存在"
+		}
+		return fmt.Sprintf("获取信息失败: %v", err)
+	}
+
+	// 获取当前用户
+	currentUser, userErr := user.Current()
+	userInfo := "未知"
+	if userErr == nil {
+		userInfo = fmt.Sprintf("用户名:%s, UID:%s", currentUser.Username, currentUser.Uid)
+	}
+
+	// 获取所有者信息（在Unix系统上）
+	return fmt.Sprintf("权限: %s, 类型: %s, 当前用户: %s", info.Mode(), info.Mode().Type(), userInfo)
 }
