@@ -14,7 +14,9 @@ COPY cmd ./cmd
 COPY internal ./internal
 
 # 构建优化的Go应用
-RUN CGO_ENABLED=0 GOOS=linux go build -a -installsuffix cgo -ldflags="-s -w" -trimpath -o main ./cmd/top1000
+RUN CGO_ENABLED=0 GOOS=linux go build -a -installsuffix cgo \
+    -ldflags="-s -w -extldflags '-static'" \
+    -trimpath -o main ./cmd/top1000
 
 # 阶段二：构建 web
 FROM node:24-alpine as web-builder
@@ -56,6 +58,9 @@ RUN mkdir -p ./public && chown appuser:appgroup ./public
 
 # 设置用户权限
 USER appuser
+
+# 设置时区
+ENV TZ=Asia/Shanghai
 
 # 声明端口
 ENV PORT=7066
