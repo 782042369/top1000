@@ -24,7 +24,7 @@
     "@xiaowaibuzheng/rolldown-vite-split-chunks": "^0.0.17",
     "eslint": "^9.39.2",
     "typescript": "^5.9.3",
-    "vite": "8.0.0-beta.2",
+    "vite": "8.0.0-beta.3",
     "vite-plugin-html": "^3.2.2"
   }
 }
