@@ -1,14 +1,11 @@
 package server
 
 import (
-	"fmt"
 	"log"
-	"os"
-	"os/user"
 	"strings"
-	"time"
 
 	"top1000/internal/api"
+	"top1000/internal/config"
 	"top1000/internal/crawler"
 
 	"github.com/gofiber/fiber/v2"
@@ -21,6 +18,8 @@ import (
 
 // StartWatcher 启动服务监控
 func StartWatcher() {
+	cfg := config.Get()
+
 	app := fiber.New(fiber.Config{
 		AppName: "Top1000 Service",
 	})
@@ -38,8 +37,8 @@ func StartWatcher() {
 
 	// 静态文件服务 (限制只服务于/web-dist路径下的文件)
 	// 为非HTML文件添加一年缓存，HTML文件不缓存
-	app.Static("/", "./web-dist", fiber.Static{
-		CacheDuration: 24 * time.Hour,
+	app.Static("/", cfg.WebDistDir, fiber.Static{
+		CacheDuration: cfg.CacheDuration,
 		Browse:        true,
 		MaxAge:        0, // 默认不缓存
 		ModifyResponse: func(c *fiber.Ctx) error {
@@ -61,9 +60,6 @@ func StartWatcher() {
 	// 初始化数据
 	if err := crawler.InitializeData(); err != nil {
 		log.Printf("初始化数据失败: %v", err)
-		log.Printf("当前工作目录: %s", os.Getenv("PWD"))
-		log.Printf("当前用户ID: %d", os.Getuid())
-		log.Printf("public目录权限详情: %v", getFilePermissionInfo("./public"))
 	}
 
 	// 安排定时任务定期更新数据
@@ -76,26 +72,5 @@ func StartWatcher() {
 	c.Start()
 
 	// 启动服务器
-	log.Fatal(app.Listen(":7066"))
-}
-
-// getFilePermissionInfo 获取文件或目录的权限信息
-func getFilePermissionInfo(path string) string {
-	info, err := os.Stat(path)
-	if err != nil {
-		if os.IsNotExist(err) {
-			return "目录不存在"
-		}
-		return fmt.Sprintf("获取信息失败: %v", err)
-	}
-
-	// 获取当前用户
-	currentUser, userErr := user.Current()
-	userInfo := "未知"
-	if userErr == nil {
-		userInfo = fmt.Sprintf("用户名:%s, UID:%s", currentUser.Username, currentUser.Uid)
-	}
-
-	// 获取所有者信息（在Unix系统上）
-	return fmt.Sprintf("权限: %s, 类型: %s, 当前用户: %s", info.Mode(), info.Mode().Type(), userInfo)
+	log.Fatal(app.Listen(":" + cfg.Port))
 }

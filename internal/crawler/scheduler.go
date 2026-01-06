@@ -1,6 +1,7 @@
 package crawler
 
 import (
+	"context"
 	"encoding/json"
 	"io"
 	"log"
@@ -9,27 +10,29 @@ import (
 	"regexp"
 	"strings"
 	"time"
+	"top1000/internal/config"
 	"top1000/internal/model"
-)
-
-const (
-	jsonFilePath = "./public/top1000.json"
 )
 
 var siteRegex = regexp.MustCompile(`站名：(.*?) 【ID：(\d+)】`)
 
+const (
+	// HTTP请求超时时间
+	httpTimeout = 30 * time.Second
+)
+
 // InitializeData 创建public目录和初始数据文件（如果不存在）
 func InitializeData() error {
+	cfg := config.Get()
+
 	// 如果public目录不存在则创建
-	if err := os.MkdirAll("./public", 0755); err != nil {
-		log.Printf("创建public目录失败详细信息: 当前工作目录=%s, 用户ID=%d, 错误=%v",
-			os.Getenv("PWD"), os.Getuid(), err)
-		log.Printf("创建public目录失败: %v", err)
+	if err := os.MkdirAll(cfg.DataDir, 0755); err != nil {
+		log.Printf("创建数据目录失败: %v", err)
 		return err
 	}
 
 	// 检查数据文件是否存在
-	if _, err := os.Stat(jsonFilePath); err != nil {
+	if _, err := os.Stat(cfg.DataFilePath); err != nil {
 		if os.IsNotExist(err) {
 			return ScheduleJob()
 		}
@@ -44,12 +47,35 @@ func InitializeData() error {
 
 // ScheduleJob 从远程API获取并处理数据
 func ScheduleJob() error {
-	resp, err := http.Get("https://api.iyuu.cn/top1000.php")
+	cfg := config.Get()
+
+	// 创建带超时的context
+	ctx, cancel := context.WithTimeout(context.Background(), httpTimeout)
+	defer cancel()
+
+	// 创建HTTP请求
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, cfg.Top1000APIURL, nil)
+	if err != nil {
+		log.Printf("创建HTTP请求失败: %v", err)
+		return err
+	}
+
+	// 执行请求
+	client := &http.Client{
+		Timeout: httpTimeout,
+	}
+	resp, err := client.Do(req)
 	if err != nil {
 		log.Printf("获取数据失败: %v", err)
 		return err
 	}
 	defer resp.Body.Close()
+
+	// 检查响应状态码
+	if resp.StatusCode != http.StatusOK {
+		log.Printf("API返回错误状态码: %d", resp.StatusCode)
+		return err
+	}
 
 	body, err := io.ReadAll(resp.Body)
 	if err != nil {
@@ -59,15 +85,15 @@ func ScheduleJob() error {
 
 	processed := processData(string(body))
 
-	file, err := os.Create(jsonFilePath)
+	file, err := os.Create(cfg.DataFilePath)
 	if err != nil {
 		log.Printf("创建文件失败: %v", err)
 		return err
 	}
 	defer file.Close()
 
+	// 不使用缩进以减小文件大小
 	encoder := json.NewEncoder(file)
-	encoder.SetIndent("", "  ")
 	if err := encoder.Encode(processed); err != nil {
 		log.Printf("写入JSON数据失败: %v", err)
 		return err
@@ -144,9 +170,11 @@ func parseTime(rawTime string) string {
 	return rawTime
 }
 
-// checkExpired 验证数据是否超过一天，如果需要则更新
+// checkExpired 验证数据是否超过配置的过期时间，如果需要则更新
 func checkExpired() error {
-	file, err := os.Open(jsonFilePath)
+	cfg := config.Get()
+
+	file, err := os.Open(cfg.DataFilePath)
 	if err != nil {
 		return ScheduleJob()
 	}
@@ -164,8 +192,8 @@ func checkExpired() error {
 		return ScheduleJob()
 	}
 
-	// 正确比较时间差是否超过24小时
-	if time.Since(dataTime).Hours() > 24 {
+	// 比较时间差是否超过配置的过期时间
+	if time.Since(dataTime) > cfg.DataExpireDuration {
 		return ScheduleJob()
 	}
 
