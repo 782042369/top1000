@@ -1,13 +1,14 @@
 # 构建阶段：使用多阶段构建最小化生产镜像
 # 阶段一：构建 service (Go版本)
-FROM golang:1.25-alpine as service-builder
+FROM golang:1.25-alpine AS service-builder
 WORKDIR /app
 
 # 复制Go模块文件
 COPY go.mod go.sum ./
 
 # 下载依赖
-RUN go mod download
+RUN go mod download && \
+    go mod verify
 
 # 复制源代码
 COPY cmd ./cmd
@@ -19,18 +20,17 @@ RUN CGO_ENABLED=0 GOOS=linux go build -a -installsuffix cgo \
     -trimpath -o main ./cmd/top1000
 
 # 阶段二：构建 web
-FROM node:24-alpine as web-builder
+FROM node:24-alpine AS web-builder
 WORKDIR /app
 
-# 安装 pnpm 并配置缓存
-RUN npm i -g pnpm@^10 && \
-    pnpm config set store-dir /root/.pnpm-store
+# 安装 pnpm
+RUN npm install -g pnpm@10
 
 # 优先复制包管理文件以利用构建缓存
 COPY web/package.json web/pnpm-lock.yaml ./web/
 
-# 安装所有依赖（包括devDependencies）
-RUN cd web && pnpm install --frozen-lockfile
+# 安装依赖
+RUN cd web && pnpm install --frozen-lockfile --prod=false
 
 # 复制源代码
 COPY web ./web/
