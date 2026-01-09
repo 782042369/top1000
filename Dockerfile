@@ -14,7 +14,7 @@ RUN go mod download && \
 COPY cmd ./cmd
 COPY internal ./internal
 
-# 构建优化的Go应用
+# 构建优化的Go应用（完全静态）
 RUN CGO_ENABLED=0 GOOS=linux go build -a -installsuffix cgo \
     -ldflags="-s -w -extldflags '-static'" \
     -trimpath -o main ./cmd/top1000
@@ -38,12 +38,13 @@ COPY web ./web/
 # 执行构建，输出到 web-dist 目录
 RUN cd web && pnpm build
 
-# 最终生产阶段
-FROM alpine:latest
+# 最终生产阶段：使用Alpine优化版本
+FROM alpine:3.19
 WORKDIR /app
 
-# 安装ca-certificates以支持HTTPS请求
-RUN apk --no-cache add ca-certificates
+# 仅安装必需的包
+RUN apk --no-cache add ca-certificates wget tzdata && \
+    rm -rf /var/cache/apk/*
 
 # 创建非特权用户
 RUN addgroup -g 1001 appgroup && \
@@ -53,9 +54,6 @@ RUN addgroup -g 1001 appgroup && \
 COPY --from=service-builder --chown=appuser:appgroup /app/main ./main
 COPY --from=web-builder --chown=appuser:appgroup /app/web-dist ./web-dist
 
-# 创建 public 目录并设置正确的所有权
-RUN mkdir -p ./public && chown appuser:appgroup ./public
-
 # 设置用户权限
 USER appuser
 
@@ -64,11 +62,10 @@ ENV TZ=Asia/Shanghai
 
 # 声明端口
 ENV PORT=7066
-
 EXPOSE 7066
 
 # 添加健康检查
 HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
-  CMD wget --quiet --tries=1 --spider http://localhost:7066/ || exit 1
+  CMD wget --quiet --tries=1 --spider http://localhost:7066/health || exit 1
 
 CMD ["./main"]
