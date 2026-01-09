@@ -1,0 +1,248 @@
+{
+  "metadata": {
+    "version": "1.0.0",
+    "generatedAt": "2026-01-09T20:35:39+08:00",
+    "tool": "Claude Code (Sonnet 4.5)",
+    "projectName": "top1000"
+  },
+  "summary": {
+    "totalFiles": "约50+",
+    "scannedFiles": 20,
+    "coveragePercent": 40,
+    "truncated": false,
+    "ignoredPaths": [
+      "node_modules/**",
+      ".git/**",
+      "web-dist/**",
+      "*.log",
+      "*.lock"
+    ]
+  },
+  "modules": [
+    {
+      "path": "cmd/top1000",
+      "name": "应用程序入口",
+      "language": "Go",
+      "entryPoint": "main.go",
+      "responsibilities": [
+        "启动 HTTP 服务器"
+      ],
+      "dependencies": [
+        "internal/server"
+      ],
+      "hasTests": false,
+      "coverage": "完整"
+    },
+    {
+      "path": "internal/api",
+      "name": "API 处理层",
+      "language": "Go",
+      "entryPoint": "handlers.go",
+      "responsibilities": [
+        "处理 HTTP 请求",
+        "返回 JSON 数据"
+      ],
+      "dependencies": [
+        "internal/config",
+        "internal/model"
+      ],
+      "endpoints": [
+        "GET /top1000.json"
+      ],
+      "hasTests": false,
+      "coverage": "完整"
+    },
+    {
+      "path": "internal/config",
+      "name": "配置管理模块",
+      "language": "Go",
+      "entryPoint": "config.go",
+      "responsibilities": [
+        "管理应用配置",
+        "提供配置访问接口"
+      ],
+      "dependencies": [],
+      "configItems": [
+        "Port",
+        "DataDir",
+        "DataFilePath",
+        "WebDistDir",
+        "Top1000APIURL",
+        "CacheDuration",
+        "DataExpireDuration"
+      ],
+      "hasTests": false,
+      "coverage": "完整"
+    },
+    {
+      "path": "internal/crawler",
+      "name": "数据爬取模块",
+      "language": "Go",
+      "entryPoint": "scheduler.go",
+      "responsibilities": [
+        "从 IYUU API 爬取数据",
+        "解析并保存数据",
+        "检查数据过期"
+      ],
+      "dependencies": [
+        "internal/config",
+        "internal/model"
+      ],
+      "externalAPIs": [
+        "https://api.iyuu.cn/top1000.php"
+      ],
+      "hasTests": false,
+      "coverage": "完整"
+    },
+    {
+      "path": "internal/model",
+      "name": "数据模型模块",
+      "language": "Go",
+      "entryPoint": "types.go",
+      "responsibilities": [
+        "定义数据结构"
+      ],
+      "dependencies": [],
+      "dataStructures": [
+        "SiteItem",
+        "ProcessedData"
+      ],
+      "hasTests": false,
+      "coverage": "完整"
+    },
+    {
+      "path": "internal/server",
+      "name": "HTTP 服务器模块",
+      "language": "Go",
+      "entryPoint": "server.go",
+      "responsibilities": [
+        "配置 HTTP 服务器",
+        "注册中间件和路由",
+        "启动定时任务"
+      ],
+      "dependencies": [
+        "internal/api",
+        "internal/config",
+        "internal/crawler"
+      ],
+      "middlewares": [
+        "recover",
+        "logger",
+        "cors",
+        "compress"
+      ],
+      "hasTests": false,
+      "coverage": "完整"
+    },
+    {
+      "path": "web",
+      "name": "Web 前端应用",
+      "language": "TypeScript",
+      "entryPoint": "src/main.ts",
+      "framework": "Vite 8.0 + AG Grid 35.0",
+      "responsibilities": [
+        "数据可视化展示",
+        "站点详情跳转",
+        "种子下载链接"
+      ],
+      "dependencies": [
+        "ag-grid-community",
+        "ag-grid-enterprise"
+      ],
+      "buildTool": "Vite",
+      "hasTests": false,
+      "coverage": "完整"
+    }
+  ],
+  "gaps": [
+    {
+      "module": "internal/api",
+      "missing": "单元测试、集成测试",
+      "recommendation": "为 handlers.go 添加测试用例"
+    },
+    {
+      "module": "internal/crawler",
+      "missing": "错误重试机制、并发控制",
+      "recommendation": "添加重试逻辑和互斥锁"
+    },
+    {
+      "module": "internal/server",
+      "missing": "健康检查端点、优雅关闭",
+      "recommendation": "添加 /health 端点和信号处理"
+    },
+    {
+      "module": "web",
+      "missing": "单元测试、E2E 测试",
+      "recommendation": "使用 Vitest 和 Playwright 添加测试"
+    }
+  ],
+  "nextSteps": [
+    "为 internal/crawler 添加单元测试（数据解析逻辑）",
+    "为 internal/server 添加健康检查端点",
+    "为 web 添加 Vitest 单元测试配置",
+    "为 web 添加 Playwright E2E 测试",
+    "为 internal/config 添加环境变量支持",
+    "为 internal/api 添加内存缓存机制"
+  ],
+  "documentation": {
+    "rootLevel": {
+      "path": "CLAUDE.md",
+      "status": "已创建",
+      "sections": [
+        "项目愿景",
+        "架构总览",
+        "模块结构图（Mermaid）",
+        "模块索引",
+        "运行与开发",
+        "测试策略",
+        "编码规范",
+        "AI 使用指引"
+      ]
+    },
+    "moduleLevel": [
+      {
+        "path": "internal/api/CLAUDE.md",
+        "status": "已创建"
+      },
+      {
+        "path": "internal/config/CLAUDE.md",
+        "status": "已创建"
+      },
+      {
+        "path": "internal/crawler/CLAUDE.md",
+        "status": "已创建"
+      },
+      {
+        "path": "internal/model/CLAUDE.md",
+        "status": "已创建"
+      },
+      {
+        "path": "internal/server/CLAUDE.md",
+        "status": "已创建"
+      },
+      {
+        "path": "web/CLAUDE.md",
+        "status": "已创建"
+      }
+    ]
+  },
+  "techStack": {
+    "backend": {
+      "language": "Go 1.25.5",
+      "framework": "Fiber v2.52.10",
+      "cron": "robfig/cron v3.0.1"
+    },
+    "frontend": {
+      "language": "TypeScript 5.9.3",
+      "framework": "Vite 8.0.0-beta.5",
+      "ui": "AG Grid Enterprise 35.0.0",
+      "packageManager": "pnpm 10.12.4+"
+    },
+    "deployment": {
+      "container": "Docker",
+      "baseImage": "alpine:latest",
+      "ci": "GitHub Actions",
+      "registry": "docker.io/782042369/top1000-iyuu"
+    }
+  }
+}
