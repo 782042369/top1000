@@ -9,26 +9,31 @@ import (
 )
 
 func main() {
-	// 加载 .env 文件（如果有的话）
-	if err := godotenv.Load(); err != nil {
-		log.Printf("⚠️ 警告: 无法加载 .env 文件: %v", err)
-		log.Println("🔧 将使用系统环境变量")
+	// 加载 .env 文件（非必需，失败时使用系统环境变量）
+	_ = godotenv.Load()
+
+	// 验证必需的环境变量
+	if missing := checkRequiredEnvVars(); len(missing) > 0 {
+		log.Fatalf("❌ 缺少必需的环境变量: %v\n请检查 .env 文件或系统环境变量配置", missing)
 	}
 
-	// 检查必需的环境变量（Redis配置必须要有）
-	requiredEnvs := []string{"REDIS_ADDR", "REDIS_PASSWORD"}
-	missingEnvs := []string{}
-	for _, env := range requiredEnvs {
+	server.StartWatcher()
+}
+
+// checkRequiredEnvVars 检查必需的环境变量是否已设置
+func checkRequiredEnvVars() []string {
+	var missing []string
+
+	for _, env := range []string{"REDIS_ADDR", "REDIS_PASSWORD"} {
 		if os.Getenv(env) == "" {
-			missingEnvs = append(missingEnvs, env)
+			missing = append(missing, env)
 		}
 	}
 
-	// 缺少必需的环境变量则直接退出
-	if len(missingEnvs) > 0 {
-		log.Fatalf("❌ 缺少必需的环境变量: %v\n请检查 .env 文件或系统环境变量配置", missingEnvs)
+	// 如果全部存在，记录日志提示来源
+	if len(missing) == 0 {
+		log.Println("✅ 必需环境变量检查通过")
 	}
 
-	// 启动服务器
-	server.StartWatcher()
+	return missing
 }
