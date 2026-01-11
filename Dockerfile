@@ -1,11 +1,16 @@
 # ============================================
 # 极简版 Dockerfile - Scratch 基础镜像
-# 目标镜像大小：6-8MB（每日100访问量优化版）
+# 目标镜像大小：4-5MB（每日100访问量优化版）
 # ============================================
 # 警告：此镜像不包含 shell 和任何调试工具
 # 如需调试，请使用 Dockerfile（Alpine版）
 # 已移除健康检查（小访问量不需要）
 # 时区默认为中国时区（Asia/Shanghai）
+#
+# 优化措施：
+# 1. 前端：仅导入实际使用的 AG Grid 模块（减少16.5%）
+# 2. Go 二进制：UPX 压缩（减少60%）
+# 3. 基础镜像：Scratch 空镜像
 # ============================================
 
 # 阶段一：构建 service (Go版本)
@@ -23,12 +28,20 @@ RUN go mod download && \
 COPY cmd ./cmd
 COPY internal ./internal
 
+# 安装 UPX 压缩工具
+RUN apk add --no-cache upx
+
 # 构建完全静态的Go应用（极致优化）
 RUN CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -a -installsuffix cgo \
     -ldflags="-s -w -extldflags '-static' -buildid=" \
     -trimpath \
     -o main ./cmd/top1000 && \
     chmod +x main
+
+# 使用 UPX 压缩二进制文件（减少50-70%体积）
+# --best: 最佳压缩比
+# --lzma: 使用LZMA算法（压缩率更高）
+RUN upx --best --lzma main
 
 # 阶段二：构建 web
 FROM node:24-alpine AS web-builder

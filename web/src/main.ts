@@ -4,15 +4,10 @@ import { AG_GRID_LOCALE_CN } from '@ag-grid-community/locale'
 import {
   ClientSideRowModelModule,
   createGrid,
-  CustomFilterModule,
-  DateFilterModule,
   LocaleModule,
   ModuleRegistry,
-  NumberFilterModule,
   TextFilterModule,
-  ValidationModule,
 } from 'ag-grid-community'
-import { GroupFilterModule, LicenseManager, MultiFilterModule, SetFilterModule } from 'ag-grid-enterprise'
 
 import './index.css'
 import type { DataType } from './types'
@@ -20,23 +15,11 @@ import type { DataType } from './types'
 import { convertSizeToKb, fetchData } from './utils'
 import { operationRender } from './utils/operationRender'
 
-// AG Grid 企业版许可证
-LicenseManager.setLicenseKey(
-  '[v3][RELEASE][0102]_NDg2Njc4MzY3MDgzNw==16d78ca762fb5d2ff740aed081e2af7b',
-)
-
-// 注册 AG Grid 模块
+// 注册 AG Grid 模块（仅导入实际使用的模块，减少体积）
 ModuleRegistry.registerModules([
-  ClientSideRowModelModule,
-  TextFilterModule,
-  NumberFilterModule,
-  DateFilterModule,
-  SetFilterModule,
-  MultiFilterModule,
-  GroupFilterModule,
-  CustomFilterModule,
-  LocaleModule,
-  ...(process.env.NODE_ENV !== 'production' ? [ValidationModule] : []),
+  ClientSideRowModelModule, // 客户端行模型（必需）
+  TextFilterModule, // 文本过滤（名字字段使用）
+  LocaleModule, // 中文本地化（必需）
 ])
 
 // 表格配置
