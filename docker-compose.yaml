@@ -1,0 +1,29 @@
+# Docker Compose 配置 - Top1000 服务
+# 版本：Scratch 极简版（6-8MB）
+# Redis：使用外部实例（不在容器内启动）
+# 访问量：每日约100访问（已优化）
+version: '3.8'
+
+services:
+  top1000:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: top1000
+    ports:
+      - "${PORT:-7066}:7066"
+    env_file:
+      - .env
+    environment:
+      - PORT=${PORT:-7066}
+      - TZ=Asia/Shanghai
+      - REDIS_ADDR=${REDIS_ADDR}
+      - REDIS_PASSWORD=${REDIS_PASSWORD}
+    restart: unless-stopped
+    # 注意：已移除健康检查（每日100访问量不需要）
+    # 如需健康检查，请使用 Kubernetes Probe 或外部监控
+
+# Redis 服务已移除，请使用外部 Redis 实例
+# 在 .env 文件中配置：
+# REDIS_ADDR=your-redis-host:port
+# REDIS_PASSWORD=your-redis-password
