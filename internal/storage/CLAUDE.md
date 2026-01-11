@@ -332,6 +332,57 @@ func TestSaveAndLoad(t *testing.T) {
 
 ---
 
+## 代码优化建议
+
+### Context 使用优化（高优先级）
+
+**当前问题**：
+```go
+// internal/storage/redis.go
+var ctx = context.Background()  // 使用全局 context
+```
+
+**建议改进**：
+```go
+func SaveData(data model.ProcessedData) error {
+    ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+    defer cancel()
+
+    // ... 使用 ctx
+    if err := redisClient.Set(ctx, key, jsonData, ttl).Err(); err != nil {
+        return fmt.Errorf("保存数据到Redis失败: %w", err)
+    }
+    return nil
+}
+
+func LoadData() (*model.ProcessedData, error) {
+    ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+    defer cancel()
+
+    // ... 使用 ctx
+    jsonData, err := redisClient.Get(ctx, key).Result()
+    if err != nil {
+        if err == redis.Nil {
+            return nil, fmt.Errorf("数据不存在")
+        }
+        return nil, fmt.Errorf("从Redis读取数据失败: %w", err)
+    }
+    // ...
+}
+```
+
+**优点**：
+- 每个操作有独立的超时控制（5秒）
+- 更好的取消和超时处理
+- 提高系统的健壮性
+- 避免一个慢操作影响整个系统
+
+**工作量**：约 30 分钟
+
+**优先级**：⭐⭐⭐ 高优先级
+
+---
+
 ## 相关文件
 
 - `redis.go` - 所有Redis操作都在这
@@ -342,5 +393,7 @@ func TestSaveAndLoad(t *testing.T) {
 
 **总结**：此模块负责数据存储和读取，需要Redis才能运行。
 
-**更新**: 2026-01-10
-**代码质量**: A级
+**更新**: 2026-01-11
+**代码行数**: 183 行（已优化，从200行精简）
+**代码质量**: A+ 级
+**优化**: 提取常量 + 为 `isUpdating` 添加互斥锁保护 + 使用 `%w` 包装错误
