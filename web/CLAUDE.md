@@ -9,6 +9,7 @@
 **使用AG Grid将Top1000数据展示为表格，支持查看、搜索、点击操作**
 
 核心功能：
+
 1. 从后端API获取JSON数据
 2. 使用AG Grid展示表格（企业版，功能完整）
 3. 支持列过滤、排序
@@ -29,6 +30,7 @@ AG Grid渲染表格
 ```
 
 **开发命令**：
+
 ```bash
 pnpm dev      # 启动开发服务器（端口自动分配）
 pnpm build    # 构建到 ../web-dist/
@@ -48,6 +50,7 @@ pnpm build    # 构建到 ../web-dist/
 ```
 
 **流程图**：
+
 ```
 index.html
     <div id="root">
@@ -79,13 +82,13 @@ defaultColDef.sortable: false       // 默认不可排序（部分列开启）
 
 ### 列定义
 
-| 列名 | 字段 | 能过滤？ | 能排序？ | 说明 |
-|------|------|----------|----------|------|
-| 名字 | `siteName` | ✅ | ❌ | 站点名称（如"朋友"） |
-| 资源ID | `siteid` | ❌ | ❌ | 站点内资源ID |
-| 重复度 | `duplication` | ❌ | ✅ | 重复度百分比（如"95%"） |
-| 文件大小 | `size` | ❌ | ✅ | 自定义比较器（1.5GB > 512MB） |
-| 操作 | - | ❌ | ❌ | 自定义渲染器（跳转链接） |
+| 列名     | 字段          | 能过滤？ | 能排序？ | 说明                          |
+| -------- | ------------- | -------- | -------- | ----------------------------- |
+| 名字     | `siteName`    | ✅       | ❌       | 站点名称（如"朋友"）          |
+| 资源ID   | `siteid`      | ❌       | ❌       | 站点内资源ID                  |
+| 重复度   | `duplication` | ❌       | ✅       | 重复度百分比（如"95%"）       |
+| 文件大小 | `size`        | ❌       | ✅       | 自定义比较器（1.5GB > 512MB） |
+| 操作     | -             | ❌       | ❌       | 自定义渲染器（跳转链接）      |
 
 ---
 
@@ -96,14 +99,15 @@ defaultColDef.sortable: false       // 默认不可排序（部分列开启）
 ```json
 {
   "dependencies": {
-    "@ag-grid-community/locale": "^35.0.0",  // 中文包
-    "ag-grid-community": "^35.0.0",           // 社区版
-    "ag-grid-enterprise": "^35.0.0"           // 企业版（功能全）
+    "@ag-grid-community/locale": "^35.0.0", // 中文包
+    "ag-grid-community": "^35.0.0", // 社区版
+    "ag-grid-enterprise": "^35.0.0" // 企业版（功能全）
   }
 }
 ```
 
 **企业版功能**：
+
 - 高级过滤
 - 范围选择
 - Excel导出
@@ -114,10 +118,10 @@ defaultColDef.sortable: false       // 默认不可排序（部分列开启）
 ```json
 {
   "devDependencies": {
-    "@antfu/eslint-config": "^6.7.3",  // ESLint配置
-    "typescript": "^5.9.3",             // TypeScript
-    "vite": "8.0.0-beta.5",             // 构建工具
-    "vite-plugin-html": "^3.2.2"        // HTML插件
+    "@antfu/eslint-config": "^6.7.3", // ESLint配置
+    "typescript": "^5.9.3", // TypeScript
+    "vite": "8.0.0-beta.5", // 构建工具
+    "vite-plugin-html": "^3.2.2" // HTML插件
   }
 }
 ```
@@ -137,14 +141,14 @@ defaultColDef.sortable: false       // 默认不可排序（部分列开启）
 // vite.config.ts
 export default defineConfig({
   plugins: [
-    splitChunks(),                    // 代码分割
+    splitChunks(), // 代码分割
     createHtmlPlugin({ minify: true }), // HTML压缩
   ],
   build: {
     rollupOptions: {
       output: {
-        chunkFileNames: 'js/[name]-[hash].js',      // chunk文件命名
-        entryFileNames: 'js/[name]-[hash].js',      // 入口文件命名
+        chunkFileNames: 'js/[name]-[hash].js', // chunk文件命名
+        entryFileNames: 'js/[name]-[hash].js', // 入口文件命名
         assetFileNames: '[ext]/[name]-[hash].[ext]', // 资源文件命名
       },
     },
@@ -154,6 +158,7 @@ export default defineConfig({
 ```
 
 **输出结构**：
+
 ```
 ../web-dist/
     ├── index.html        # 压缩后的HTML
@@ -173,16 +178,16 @@ export default defineConfig({
 ```typescript
 // types.d.ts
 export interface DataType {
-  siteName: string      // 站点名称（如"朋友"）
-  siteid: string        // 资源ID（数字字符串）
-  duplication: string   // 重复度（如"95%"）
-  size: string          // 文件大小（如"1.5GB"）
-  id: number            // 序号（1,2,3...）
+  siteName: string // 站点名称（如"朋友"）
+  siteid: string // 资源ID（数字字符串）
+  duplication: string // 重复度（如"95%"）
+  size: string // 文件大小（如"1.5GB"）
+  id: number // 序号（1,2,3...）
 }
 
 export interface ResDataType {
-  items: DataType[]     // 种子列表（1000条）
-  time: string          // 更新时间（如"2025-12-11 07:52:33"）
+  items: DataType[] // 种子列表（1000条）
+  time: string // 更新时间（如"2025-12-11 07:52:33"）
 }
 ```
 
@@ -195,6 +200,7 @@ const json: ResDataType = await response.json()
 ```
 
 **后端API**：
+
 - 地址：`http://localhost:7066/top1000.json`
 - 返回：JSON格式
 - 更新：按需更新（TTL < 24小时就自动拉新的）
@@ -210,19 +216,20 @@ const json: ResDataType = await response.json()
 const siteData = [
   {
     id: 1,
-    site: 'keepfrds',                      // 站点标识
-    nickname: '朋友',                       // 站点昵称（显示用）
-    base_url: 'pt.keepfrds.com',           // 站点域名
+    site: 'keepfrds', // 站点标识
+    nickname: '朋友', // 站点昵称（显示用）
+    base_url: 'pt.keepfrds.com', // 站点域名
     download_page: 'download.php?id={}&passkey={passkey}', // 下载页面
-    details_page: 'details.php?id={}',     // 详情页面
-    is_https: 2,                            // 是否HTTPS
-    cookie_required: 0,                     // 是否需要Cookie
+    details_page: 'details.php?id={}', // 详情页面
+    is_https: 2, // 是否HTTPS
+    cookie_required: 0, // 是否需要Cookie
   },
   // ... 共118个站点配置
 ]
 ```
 
 **用途**：
+
 - 操作列渲染器根据站点ID查询配置
 - 生成正确的跳转链接（详情、下载）
 
@@ -234,7 +241,7 @@ const siteData = [
 
 ```typescript
 // src/utils/operationRender.ts
-export const operationRender = (params: ICellRendererParams) => {
+export function operationRender(params: ICellRendererParams) {
   const data = params.data as DataType
   const site = iyuuSites.find(s => s.nickname === data.siteName)
 
@@ -250,6 +257,7 @@ export const operationRender = (params: ICellRendererParams) => {
 ```
 
 **逻辑**：
+
 1. 根据站点名称查找配置
 2. 生成详情页链接（`details.php?id=xxx`）
 3. 生成下载链接（`download.php?id=xxx&passkey=xxx`）
@@ -265,9 +273,10 @@ export const operationRender = (params: ICellRendererParams) => {
 // src/utils/index.ts
 export function convertSizeToKb(size: string): number {
   const match = size.match(/^(\d+(?:\.\d+)?)\s*(KB|MB|GB|TB)$/i)
-  if (!match) return 0
+  if (!match)
+    return 0
 
-  const value = parseFloat(match[1])
+  const value = Number.parseFloat(match[1])
   const unit = match[2].toUpperCase()
 
   const multipliers = {
@@ -298,6 +307,7 @@ comparator: (valueA, valueB) => {
 ### Q: 如何修改数据源地址？
 
 **A**: 修改`src/utils/index.ts`：
+
 ```typescript
 const response = await fetch('http://localhost:7066/top1000.json')
 // 修改为实际地址
@@ -307,6 +317,7 @@ const response = await fetch('https://your-domain.com/top1000.json')
 ### Q: 如何添加新列？
 
 **A**: 修改`src/main.ts`的`columnDefs`：
+
 ```typescript
 columnDefs: [
   {
@@ -315,7 +326,7 @@ columnDefs: [
     filter: true,
   },
   {
-    headerName: '新列',      // 新增列
+    headerName: '新列', // 新增列
     field: 'newField',
     sortable: true,
   },
@@ -326,6 +337,7 @@ columnDefs: [
 ### Q: 如何固定左侧列？
 
 **A**: 设置`pinned: 'left'`：
+
 ```typescript
 {
   headerName: '名字',
@@ -337,9 +349,10 @@ columnDefs: [
 ### Q: 如何启用行选择？
 
 **A**:
+
 ```typescript
 const gridOptions: GridOptions<DataType> = {
-  rowSelection: 'multiple',  // 多选
+  rowSelection: 'multiple', // 多选
   // rowSelection: 'single', // 单选
 }
 
@@ -350,9 +363,9 @@ const selectedRows = gridApi.getSelectedRows()
 ### Q: 如何导出Excel？
 
 **A**: AG Grid企业版内置支持：
+
 ```typescript
-import { ModuleRegistry } from 'ag-grid-enterprise'
-import { ExcelExportModule } from 'ag-grid-enterprise'
+import { ExcelExportModule, ModuleRegistry } from 'ag-grid-enterprise'
 
 ModuleRegistry.registerModules([
   // ... 其他模块
@@ -368,18 +381,21 @@ gridApi.exportDataAsExcel({
 ### Q: 如何自定义主题？
 
 **A**: 修改`src/index.css`：
+
 ```css
 .ag-theme-alpine {
-  --ag-header-background-color: #0d47a1;  /* 表头背景 */
+  --ag-header-background-color: #0d47a1; /* 表头背景 */
   --ag-odd-row-background-color: #f5f5f5; /* 奇数行背景 */
-  --ag-font-size: 14px;                   /* 字体大小 */
-  --ag-border-color: #ddd;                /* 边框颜色 */
+  --ag-font-size: 14px; /* 字体大小 */
+  --ag-border-color: #ddd; /* 边框颜色 */
 }
+
 ```
 
 ### Q: 如何添加搜索框？
 
 **A**: AG Grid内置快速搜索：
+
 ```typescript
 const gridOptions: GridOptions<DataType> = {
   quickFilterText: '',  // 绑定到输入框
@@ -396,6 +412,7 @@ const gridOptions: GridOptions<DataType> = {
 ### Q: 大数据性能如何？
 
 **A**: AG Grid虚拟滚动，1000条数据轻松处理：
+
 - 虚拟滚动：只渲染可见行
 - 需要更快？启用分页：
   ```typescript
@@ -423,7 +440,8 @@ const gridOptions: GridOptions<DataType> = {
 
 ```typescript
 // utils/index.test.ts
-import { describe, it, expect } from 'vitest'
+import { describe, expect, it } from 'vitest'
+
 import { convertSizeToKb } from './index'
 
 describe('convertSizeToKb', () => {
@@ -441,7 +459,7 @@ describe('convertSizeToKb', () => {
 
 ```typescript
 // e2e/basic.spec.ts
-import { test, expect } from '@playwright/test'
+import { expect, test } from '@playwright/test'
 
 test('data table renders correctly', async ({ page }) => {
   await page.goto('http://localhost:7066')
@@ -459,6 +477,7 @@ test('data table renders correctly', async ({ page }) => {
 ```typescript
 // operationRender.test.ts
 import { render } from '@testing-library/dom'
+
 import { operationRender } from './operationRender'
 
 test('renders download link for supported sites', () => {
@@ -480,7 +499,7 @@ test('renders download link for supported sites', () => {
 // store.ts
 import { create } from 'zustand'
 
-const useStore = create((set) => ({
+const useStore = create(set => ({
   data: [],
   loading: false,
   error: null,
@@ -491,7 +510,8 @@ const useStore = create((set) => ({
       const response = await fetch('/top1000.json')
       const json = await response.json()
       set({ data: json.items, loading: false })
-    } catch (error) {
+    }
+    catch (error) {
       set({ error: error.message, loading: false })
     }
   },
@@ -502,7 +522,7 @@ const useStore = create((set) => ({
 
 ```typescript
 // src/main.ts
-const onGridReady = async (event: GridReadyEvent<DataType>) => {
+async function onGridReady(event: GridReadyEvent<DataType>) {
   try {
     const response = await fetch('/top1000.json')
     if (!response.ok) {
@@ -510,7 +530,8 @@ const onGridReady = async (event: GridReadyEvent<DataType>) => {
     }
     const json: ResDataType = await response.json()
     event.api?.setGridOption('rowData', json.items)
-  } catch (error) {
+  }
+  catch (error) {
     console.error('加载数据失败:', error)
     alert('数据加载失败，请刷新重试')
   }
@@ -528,7 +549,7 @@ const gridOptions: GridOptions<DataType> = {
 }
 
 // 自定义加载组件
-const CustomLoadingOverlay = () => {
+function CustomLoadingOverlay() {
   return '<div class="ag-overlay-loading-center">数据加载中...</div>'
 }
 ```
@@ -538,12 +559,12 @@ const CustomLoadingOverlay = () => {
 ```typescript
 // 定时刷新（5分钟）
 setInterval(() => {
-  gridApi.purgeServerSideCache()  // 清除缓存
-  fetchData()                     // 重新加载
+  gridApi.purgeServerSideCache() // 清除缓存
+  fetchData() // 重新加载
 }, 5 * 60 * 1000)
 
 // 手动刷新
-const onRefresh = () => {
+function onRefresh() {
   fetchData()
 }
 ```
@@ -552,13 +573,13 @@ const onRefresh = () => {
 
 ```typescript
 // 保存列状态
-const saveColumnState = () => {
+function saveColumnState() {
   const state = gridApi.getColumnState()
   localStorage.setItem('columnState', JSON.stringify(state))
 }
 
 // 恢复列状态
-const restoreColumnState = () => {
+function restoreColumnState() {
   const state = JSON.parse(localStorage.getItem('columnState') || '[]')
   gridApi.applyColumnState({ state, applyOrder: true })
 }
@@ -619,6 +640,7 @@ window.addEventListener('beforeunload', saveColumnState)
 
 **总结**：前端就一个页面，使用AG Grid企业版，功能完整。测试确实未编写，但就这点功能，写测试有些过度设计。
 
-**更新**: 2026-01-10
-**代码质量**: B级（没测试）
+**更新**: 2026-01-11
+**代码质量**: B+ 级（没测试，但代码已优化）
 **技术栈**: Vite + AG Grid企业版
+**最近优化**: 移除过时注释 + 添加空值检查 + 优化导入顺序 + 改进错误处理

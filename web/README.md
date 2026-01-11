@@ -9,6 +9,7 @@
 前端页面，主要功能：**展示Top1000的PT资源数据**
 
 技术栈：
+
 - **Vite** - 构建工具
 - **TypeScript** - 类型安全
 - **AG Grid企业版** - 表格组件，功能完整
@@ -111,7 +112,7 @@ comparator: (valueA, valueB) => {
 ```typescript
 export default defineConfig({
   plugins: [
-    splitChunks(),                    // 代码分割
+    splitChunks(), // 代码分割
     createHtmlPlugin({ minify: true }), // HTML压缩
   ],
   build: {
@@ -150,6 +151,7 @@ export default defineConfig({
 ### Q: 如何修改数据源地址？
 
 **A**: 修改`src/utils/index.ts`：
+
 ```typescript
 const response = await fetch('http://localhost:7066/top1000.json')
 // 修改为实际地址
@@ -159,6 +161,7 @@ const response = await fetch('https://your-domain.com/top1000.json')
 ### Q: 如何添加新列？
 
 **A**: 修改`src/main.ts`的`columnDefs`：
+
 ```typescript
 columnDefs: [
   {
@@ -167,7 +170,7 @@ columnDefs: [
     filter: true,
   },
   {
-    headerName: '新列',      // 新增列
+    headerName: '新列', // 新增列
     field: 'newField',
     sortable: true,
   },
@@ -177,6 +180,7 @@ columnDefs: [
 ### Q: 如何导出Excel？
 
 **A**: AG Grid企业版内置支持：
+
 ```typescript
 gridApi.exportDataAsExcel({
   fileName: 'top1000.xlsx',
