@@ -12,9 +12,6 @@ const SIZE_UNITS = {
   TB: 1024 * 1024 * 1024,
 } as const
 
-// API 地址（支持环境变量配置）
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:7066'
-
 // 文件大小正则
 const SIZE_PATTERN = /([\d.]+)\s*(KB|MB|GB|TB)/i
 
@@ -38,7 +35,8 @@ export function convertSizeToKb(sizeStr: string): number {
  */
 export async function fetchData(event: GridReadyEvent<DataType>): Promise<void> {
   try {
-    const response = await fetch(`${API_URL}/top1000.json`)
+    // 使用相对路径，因为前端由 Go 后端提供
+    const response = await fetch('/top1000.json')
     if (!response.ok) {
       throw new Error(`HTTP ${response.status}: ${response.statusText}`)
     }
