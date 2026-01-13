@@ -1,6 +1,7 @@
 package api
 
 import (
+	"fmt"
 	"log"
 	"sync"
 	"time"
@@ -58,8 +59,7 @@ func tryGetFromCache() (*model.ProcessedData, bool) {
 	defer cacheMutex.RUnlock()
 
 	if cacheData != nil {
-		data := *cacheData
-		return &data, true
+		return cacheData, true
 	}
 
 	if loadingFlag && loadDone != nil {
@@ -68,8 +68,7 @@ func tryGetFromCache() (*model.ProcessedData, bool) {
 		cacheMutex.RLock()
 
 		if cacheData != nil {
-			data := *cacheData
-			return &data, true
+			return cacheData, true
 		}
 	}
 
@@ -80,8 +79,7 @@ func tryGetFromCache() (*model.ProcessedData, bool) {
 func checkDataStatus() (bool, error) {
 	exists, err := storage.DataExists()
 	if err != nil {
-		log.Printf("⚠️ 检查数据是否存在失败: %v", err)
-		return true, err
+		return true, fmt.Errorf("检查数据存在性失败: %w", err)
 	}
 
 	if !exists {
@@ -90,8 +88,7 @@ func checkDataStatus() (bool, error) {
 
 	isExpired, err := storage.IsDataExpired()
 	if err != nil {
-		log.Printf("⚠️ 检查数据是否过期失败: %v，将重新获取", err)
-		return true, nil
+		return true, fmt.Errorf("检查数据过期失败: %w", err)
 	}
 
 	return isExpired, nil
@@ -111,7 +108,12 @@ func waitForDataUpdate(c *fiber.Ctx) (*model.ProcessedData, bool) {
 		select {
 		case <-ticker.C:
 			if !storage.IsUpdating() {
-				if dataExists, _ := storage.DataExists(); dataExists {
+				dataExists, err := storage.DataExists()
+				if err != nil {
+					log.Printf("⚠️ 检查数据存在性失败: %v", err)
+					continue
+				}
+				if dataExists {
 					data, err := storage.LoadData()
 					if err == nil && data != nil {
 						updateMemoryCache(data)
@@ -156,8 +158,7 @@ func loadDataFromStorage() (*model.ProcessedData, error) {
 	defer cacheMutex.Unlock()
 
 	if cacheData != nil {
-		data := *cacheData
-		return &data, nil
+		return cacheData, nil
 	}
 
 	loadingFlag = true
