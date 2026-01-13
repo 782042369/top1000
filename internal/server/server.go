@@ -3,7 +3,7 @@ package server
 import (
 	"log"
 	"os"
-	"strings"
+	"path/filepath"
 	"time"
 
 	"top1000/internal/api"
@@ -25,14 +25,12 @@ const (
 	corsMaxAge         = 86400 // 24小时
 )
 
-var corsOrigins = getCorsOrigins()
-
-func getCorsOrigins() string {
+var corsOrigins = func() string {
 	if origins := os.Getenv("CORS_ORIGINS"); origins != "" {
 		return origins
 	}
 	return "*"
-}
+}()
 
 // StartWatcher 启动Web服务器
 func StartWatcher() {
@@ -57,6 +55,17 @@ func StartWatcher() {
 	initStorage()
 
 	printStartupInfo(cfg)
+
+	// 确保程序退出时关闭Redis连接
+	defer func() {
+		log.Println("🔌 正在关闭Redis连接...")
+		if err := storage.CloseRedis(); err != nil {
+			log.Printf("❌ 关闭Redis连接失败: %v", err)
+		} else {
+			log.Println("✅ Redis连接已关闭")
+		}
+	}()
+
 	log.Fatal(app.Listen(":" + cfg.Port))
 }
 
@@ -140,7 +149,7 @@ func staticFileCacheHeaders(c *fiber.Ctx) error {
 	)
 
 	path := c.Path()
-	isHTML := strings.HasSuffix(path, ".html") || strings.HasSuffix(path, "/")
+	isHTML := filepath.Ext(path) == ".html" || path == "/"
 
 	if !isHTML && c.Response().StatusCode() == fiber.StatusOK {
 		c.Response().Header.Set("Cache-Control", oneYearMaxAge)
