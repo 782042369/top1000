@@ -1,0 +1,319 @@
+{
+  "metadata": {
+    "version": "2.1.0",
+    "generatedAt": "2026-01-11T14:25:20+08:00",
+    "tool": "Claude Code (Sonnet 4.5)",
+    "projectName": "top1000"
+  },
+  "summary": {
+    "totalFiles": 18,
+    "scannedFiles": 18,
+    "coveragePercent": 100,
+    "truncated": false,
+    "lastOptimization": "2026-01-11 - 代码质量分析和简化建议"
+  },
+  "modules": [
+    {
+      "path": "cmd/top1000",
+      "name": "应用程序入口",
+      "language": "Go",
+      "entryPoint": "main.go",
+      "responsibilities": [
+        "加载环境变量",
+        "验证配置",
+        "启动 HTTP 服务器"
+      ],
+      "hasTests": false,
+      "coverage": "完整",
+      "keyFiles": ["main.go"],
+      "documentation": "cmd/top1000/CLAUDE.md"
+    },
+    {
+      "path": "internal/api",
+      "name": "API 处理层",
+      "language": "Go",
+      "entryPoint": "handlers.go",
+      "responsibilities": [
+        "处理 HTTP 请求",
+        "三层缓存策略",
+        "返回 JSON 数据"
+      ],
+      "hasTests": false,
+      "coverage": "完整",
+      "keyFiles": ["handlers.go"],
+      "documentation": "internal/api/CLAUDE.md",
+      "optimizations": [
+        "函数拆分（180行→64行）",
+        "panic 恢复机制",
+        "并发控制优化"
+      ],
+      "simplificationOpportunities": [
+        "可以考虑将缓存逻辑抽象为独立的缓存管理器",
+        "可以添加更多的监控指标（缓存命中率等）"
+      ]
+    },
+    {
+      "path": "internal/config",
+      "name": "配置管理模块",
+      "language": "Go",
+      "entryPoint": "config.go",
+      "responsibilities": [
+        "从环境变量读取配置",
+        "提供默认值",
+        "启动时验证配置"
+      ],
+      "hasTests": false,
+      "coverage": "完整",
+      "keyFiles": ["config.go"],
+      "documentation": "internal/config/CLAUDE.md",
+      "optimizations": [
+        "移除硬编码密码",
+        "配置验证功能",
+        "单例模式"
+      ]
+    },
+    {
+      "path": "internal/crawler",
+      "name": "数据爬取模块",
+      "language": "Go",
+      "entryPoint": "scheduler.go",
+      "responsibilities": [
+        "从 IYUU API 爬取数据",
+        "解析文本数据",
+        "按需更新"
+      ],
+      "hasTests": false,
+      "coverage": "完整",
+      "keyFiles": ["scheduler.go"],
+      "documentation": "internal/crawler/CLAUDE.md",
+      "optimizations": [
+        "移除定时任务",
+        "重试机制",
+        "常量提取"
+      ]
+    },
+    {
+      "path": "internal/model",
+      "name": "数据模型模块",
+      "language": "Go",
+      "entryPoint": "types.go",
+      "responsibilities": [
+        "定义数据结构",
+        "数据验证功能"
+      ],
+      "hasTests": false,
+      "coverage": "完整",
+      "keyFiles": ["types.go"],
+      "documentation": "internal/model/CLAUDE.md",
+      "optimizations": [
+        "数据验证方法",
+        "正则表达式验证",
+        "详细错误提示"
+      ]
+    },
+    {
+      "path": "internal/server",
+      "name": "HTTP 服务器模块",
+      "language": "Go",
+      "entryPoint": "server.go",
+      "responsibilities": [
+        "配置 HTTP 服务器",
+        "注册中间件和路由",
+        "优雅关闭"
+      ],
+      "hasTests": false,
+      "coverage": "完整",
+      "keyFiles": ["server.go"],
+      "documentation": "internal/server/CLAUDE.md",
+      "optimizations": [
+        "手动配置安全头",
+        "CORS 动态配置",
+        "优雅关闭"
+      ]
+    },
+    {
+      "path": "internal/storage",
+      "name": "Redis 存储层",
+      "language": "Go",
+      "entryPoint": "redis.go",
+      "responsibilities": [
+        "管理 Redis 连接",
+        "存储和读取数据",
+        "TTL 管理",
+        "数据验证"
+      ],
+      "hasTests": false,
+      "coverage": "完整",
+      "keyFiles": ["redis.go"],
+      "documentation": "internal/storage/CLAUDE.md",
+      "simplificationOpportunities": [
+        "可以考虑将 Context 作为参数传递，而不是使用全局变量",
+        "可以添加连接池监控指标"
+      ]
+    },
+    {
+      "path": "web",
+      "name": "Web 前端应用",
+      "language": "TypeScript",
+      "entryPoint": "src/main.ts",
+      "framework": "Vite 8.0 + AG Grid 35.0",
+      "responsibilities": [
+        "使用 AG Grid 展示数据表格",
+        "支持列过滤、排序",
+        "跳转站点详情和下载种子"
+      ],
+      "hasTests": false,
+      "coverage": "完整",
+      "keyFiles": [
+        "src/main.ts",
+        "src/types.d.ts",
+        "src/utils/index.ts"
+      ],
+      "documentation": "web/CLAUDE.md",
+      "optimizations": [
+        "代码分割",
+        "中文本地化",
+        "自定义排序"
+      ]
+    }
+  ],
+  "gaps": [
+    {
+      "module": "全部模块",
+      "missing": "单元测试、集成测试、E2E 测试",
+      "recommendation": "当前代码质量 90.5/100，但测试覆盖率为 0。建议优先为核心模块添加测试。"
+    }
+  ],
+  "nextSteps": [
+    "添加核心 Go 模块单元测试",
+    "添加 web 前端单元测试",
+    "添加 API 文档（Swagger/OpenAPI）",
+    "改进 Context 使用（storage 层）",
+    "添加基础监控指标"
+  ],
+  "codeQuality": {
+    "score": 90.5,
+    "grade": "A",
+    "breakdown": {
+      "架构": 88,
+      "代码": 90,
+      "性能": 92,
+      "并发": 95,
+      "安全": 95,
+      "维护": 92,
+      "测试": 10,
+      "错误处理": 92,
+      "部署": 95,
+      "最佳实践": 92
+    },
+    "recentOptimizations": [
+      "函数拆分（180行→64行）",
+      "常量提取",
+      "panic 恢复机制",
+      "锁的正确使用",
+      "配置验证",
+      "数据验证",
+      "移除硬编码密码",
+      "CORS 优化",
+      "手动安全头配置"
+    ],
+    "simplificationOpportunities": [
+      "可以考虑将 Context 作为参数传递到 Redis 操作函数",
+      "可以考虑将缓存逻辑抽象为独立的缓存管理器",
+      "可以添加更多的监控指标（缓存命中率、连接池状态等）",
+      "可以考虑使用依赖注入来提高可测试性"
+    ]
+  },
+  "languageStats": {
+    "Go": {
+      "fileCount": 7,
+      "percentage": 43.75,
+      "modules": ["cmd/top1000", "internal/config", "internal/model", "internal/api", "internal/storage", "internal/crawler", "internal/server"]
+    },
+    "TypeScript": {
+      "fileCount": 7,
+      "percentage": 43.75,
+      "modules": ["web"]
+    },
+    "HTML": {
+      "fileCount": 1,
+      "percentage": 6.25,
+      "modules": ["web"]
+    },
+    "CSS": {
+      "fileCount": 1,
+      "percentage": 6.25,
+      "modules": ["web"]
+    }
+  },
+  "documentation": {
+    "rootLevel": {
+      "path": "CLAUDE.md",
+      "status": "已存在，最新"
+    },
+    "moduleLevel": [
+      {
+        "path": "cmd/top1000/CLAUDE.md",
+        "status": "已存在"
+      },
+      {
+        "path": "internal/api/CLAUDE.md",
+        "status": "已存在"
+      },
+      {
+        "path": "internal/config/CLAUDE.md",
+        "status": "已存在"
+      },
+      {
+        "path": "internal/crawler/CLAUDE.md",
+        "status": "已存在"
+      },
+      {
+        "path": "internal/model/CLAUDE.md",
+        "status": "已存在"
+      },
+      {
+        "path": "internal/server/CLAUDE.md",
+        "status": "已存在"
+      },
+      {
+        "path": "internal/storage/CLAUDE.md",
+        "status": "已存在"
+      },
+      {
+        "path": "web/CLAUDE.md",
+        "status": "已存在"
+      }
+    ],
+    "coveragePercent": 100
+  },
+  "techStack": {
+    "backend": {
+      "language": "Go 1.25.5",
+      "framework": "Fiber v2.52.10",
+      "database": "Redis 5.0+",
+      "dependencies": [
+        "github.com/gofiber/fiber/v2",
+        "github.com/redis/go-redis/v9",
+        "github.com/joho/godotenv"
+      ]
+    },
+    "frontend": {
+      "language": "TypeScript 5.9.3",
+      "framework": "Vite 8.0.0-beta.5",
+      "ui": "AG Grid Enterprise 35.0.0",
+      "packageManager": "pnpm 10.12.4+",
+      "dependencies": [
+        "ag-grid-community",
+        "ag-grid-enterprise",
+        "@ag-grid-community/locale"
+      ]
+    },
+    "deployment": {
+      "container": "Docker",
+      "baseImage": "alpine:3.19 / scratch",
+      "ports": [7066],
+      "ci": "GitHub Actions"
+    }
+  }
+}

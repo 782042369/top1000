@@ -2,200 +2,203 @@ package crawler
 
 import (
 	"context"
-	"encoding/json"
+	"fmt"
 	"io"
 	"log"
 	"net/http"
-	"os"
 	"regexp"
 	"strings"
+	"sync"
 	"time"
 	"top1000/internal/config"
 	"top1000/internal/model"
+	"top1000/internal/storage"
 )
-
-var siteRegex = regexp.MustCompile(`站名：(.*?) 【ID：(\d+)】`)
 
 const (
-	// HTTP请求超时时间
-	httpTimeout = 30 * time.Second
+	httpTimeout          = 30 * time.Second
+	maxRetries           = 1 // 小项目不需要太多重试
+	retryInterval        = 2 * time.Second // 缩短重试间隔
+	linesPerItem         = 3
+	timeLineIndex        = 0
+	dataStartLineIndex   = 2
+	timePrefix           = "create time "
+	timeSuffix           = " by "
+	fieldSeparator       = "："
+	sitePattern          = `站名：(.*?) 【ID：(\d+)】`
 )
 
-// InitializeData 创建public目录和初始数据文件（如果不存在）
-func InitializeData() error {
-	cfg := config.Get()
+var (
+	siteRegex = regexp.MustCompile(sitePattern)
+	taskMutex sync.Mutex
+)
 
-	// 如果public目录不存在则创建
-	if err := os.MkdirAll(cfg.DataDir, 0755); err != nil {
-		log.Printf("创建数据目录失败: %v", err)
-		return err
+// FetchData 从IYUU获取数据，带重试机制
+func FetchData() error {
+	if !taskMutex.TryLock() {
+		log.Println("任务正在执行中，跳过本次调度")
+		return fmt.Errorf("任务正在执行中")
 	}
+	defer taskMutex.Unlock()
 
-	// 检查数据文件是否存在
-	if _, err := os.Stat(cfg.DataFilePath); err != nil {
-		if os.IsNotExist(err) {
-			return ScheduleJob()
+	storage.SetUpdating(true)
+	defer storage.SetUpdating(false)
+
+	var lastErr error
+	for attempt := 0; attempt < maxRetries; attempt++ {
+		if attempt > 0 {
+			log.Printf("第 %d 次重试中...", attempt)
+			time.Sleep(retryInterval)
 		}
-		// 如果是其他错误，记录但不中断程序
-		log.Printf("检查数据文件时发生错误: %v", err)
-		return ScheduleJob()
+
+		if err := doFetch(); err == nil {
+			return nil
+		} else {
+			lastErr = err
+			log.Printf("第 %d 次尝试失败: %v", attempt+1, err)
+		}
 	}
 
-	// 检查数据是否过期
-	return checkExpired()
+	log.Printf("重试 %d 次后仍失败，终止", maxRetries)
+	return lastErr
 }
 
-// ScheduleJob 从远程API获取并处理数据
-func ScheduleJob() error {
+// doFetch 执行HTTP请求获取数据
+func doFetch() error {
 	cfg := config.Get()
+	log.Println("开始获取数据...")
 
-	// 创建带超时的context
 	ctx, cancel := context.WithTimeout(context.Background(), httpTimeout)
 	defer cancel()
 
-	// 创建HTTP请求
 	req, err := http.NewRequestWithContext(ctx, http.MethodGet, cfg.Top1000APIURL, nil)
 	if err != nil {
-		log.Printf("创建HTTP请求失败: %v", err)
-		return err
+		return fmt.Errorf("创建HTTP请求失败: %w", err)
 	}
 
-	// 执行请求
-	client := &http.Client{
-		Timeout: httpTimeout,
-	}
-	resp, err := client.Do(req)
+	resp, err := http.DefaultClient.Do(req)
 	if err != nil {
-		log.Printf("获取数据失败: %v", err)
-		return err
+		return fmt.Errorf("获取数据失败: %w", err)
 	}
 	defer resp.Body.Close()
 
-	// 检查响应状态码
 	if resp.StatusCode != http.StatusOK {
-		log.Printf("API返回错误状态码: %d", resp.StatusCode)
-		return err
+		return fmt.Errorf("API返回错误状态码: %d", resp.StatusCode)
 	}
 
 	body, err := io.ReadAll(resp.Body)
 	if err != nil {
-		log.Printf("读取响应体失败: %v", err)
-		return err
+		return fmt.Errorf("读取响应体失败: %w", err)
 	}
+
+	log.Printf("✅ 数据获取成功（大小: %d 字节）", len(body))
 
 	processed := processData(string(body))
-
-	file, err := os.Create(cfg.DataFilePath)
-	if err != nil {
-		log.Printf("创建文件失败: %v", err)
-		return err
-	}
-	defer file.Close()
-
-	// 不使用缩进以减小文件大小
-	encoder := json.NewEncoder(file)
-	if err := encoder.Encode(processed); err != nil {
-		log.Printf("写入JSON数据失败: %v", err)
+	if err := storage.SaveData(processed); err != nil {
+		log.Printf("❌ 保存数据到Redis失败: %v", err)
 		return err
 	}
 
-	log.Println("数据更新成功")
+	log.Println("✅ 数据更新完成")
 	return nil
 }
 
-// processData 将原始数据转换为结构化格式
+// processData 解析原始文本为结构化数据
 func processData(rawData string) model.ProcessedData {
-	lines := strings.Split(strings.ReplaceAll(rawData, "\r\n", "\n"), "\n")
+	lines := strings.Split(normalizeLineEndings(rawData), "\n")
+
 	timeLine := ""
 	dataLines := []string{}
-
 	if len(lines) > 0 {
-		timeLine = lines[0]
+		timeLine = lines[timeLineIndex]
 	}
-	if len(lines) > 2 {
-		dataLines = lines[2:]
-	}
-
-	var items []model.SiteItem
-
-	// 以3行为一组处理数据
-	for i := 0; i <= len(dataLines)-3; i += 3 {
-		group := dataLines[i : i+3]
-		siteLine := group[0]
-		dupLine := group[1]
-		sizeLine := group[2]
-
-		match := siteRegex.FindStringSubmatch(siteLine)
-		if len(match) < 3 {
-			continue
-		}
-
-		siteName := match[1]
-		siteID := match[2]
-
-		duplication := ""
-		size := ""
-
-		dupParts := strings.Split(dupLine, "：")
-		if len(dupParts) > 1 {
-			duplication = strings.TrimSpace(dupParts[1])
-		}
-
-		sizeParts := strings.Split(sizeLine, "：")
-		if len(sizeParts) > 1 {
-			size = strings.TrimSpace(sizeParts[1])
-		}
-
-		items = append(items, model.SiteItem{
-			SiteName:    siteName,
-			SiteID:      siteID,
-			Duplication: duplication,
-			Size:        size,
-			ID:          len(items) + 1,
-		})
+	if len(lines) > dataStartLineIndex {
+		dataLines = lines[dataStartLineIndex:]
 	}
 
-	return model.ProcessedData{
+	items, skippedCount := parseDataLines(dataLines)
+
+	logWarnings(dataLines, skippedCount)
+	log.Printf("数据处理完成：共 %d 条记录", len(items))
+
+	result := model.ProcessedData{
 		Time:  parseTime(timeLine),
 		Items: items,
 	}
+
+	if err := result.Validate(); err != nil {
+		log.Printf("⚠️ 数据验证失败: %v", err)
+	}
+
+	return result
 }
 
-// parseTime 提取并格式化时间字符串
+// normalizeLineEndings 统一换行符为\n
+func normalizeLineEndings(s string) string {
+	return strings.ReplaceAll(s, "\r\n", "\n")
+}
+
+// parseDataLines 解析数据行
+func parseDataLines(dataLines []string) ([]model.SiteItem, int) {
+	var items []model.SiteItem
+	skippedCount := 0
+
+	for i := 0; i <= len(dataLines)-linesPerItem; i += linesPerItem {
+		group := dataLines[i : i+linesPerItem]
+
+		item, ok := parseItemGroup(group)
+		if !ok {
+			skippedCount++
+			continue
+		}
+
+		item.ID = len(items) + 1
+		items = append(items, item)
+	}
+
+	return items, skippedCount
+}
+
+// parseItemGroup 解析单组数据（3行）
+func parseItemGroup(group []string) (model.SiteItem, bool) {
+	match := siteRegex.FindStringSubmatch(group[0])
+	if len(match) < 3 {
+		return model.SiteItem{}, false
+	}
+
+	return model.SiteItem{
+		SiteName:    match[1],
+		SiteID:      match[2],
+		Duplication: extractFieldValue(group[1]),
+		Size:        extractFieldValue(group[2]),
+	}, true
+}
+
+// extractFieldValue 从"字段名：值"格式中提取值
+func extractFieldValue(line string) string {
+	parts := strings.Split(line, fieldSeparator)
+	if len(parts) > 1 {
+		return strings.TrimSpace(parts[1])
+	}
+	return ""
+}
+
+// logWarnings 记录解析警告
+func logWarnings(dataLines []string, skippedCount int) {
+	remainingLines := len(dataLines) % linesPerItem
+	if remainingLines != 0 {
+		log.Printf("警告：数据行数不是%d的倍数，剩余 %d 行未处理", linesPerItem, remainingLines)
+	}
+	if skippedCount > 0 {
+		log.Printf("警告：跳过了 %d 条格式不正确的数据", skippedCount)
+	}
+}
+
+// parseTime 提取时间字符串，去除前缀和后缀
 func parseTime(rawTime string) string {
-	rawTime = strings.Replace(rawTime, "create time ", "", 1)
-	rawTime = strings.Replace(rawTime, " by http://api.iyuu.cn/ptgen/", "", 1)
-	// 修改: 支持新的时间格式 '2025-12-11 07:52:33 by https://api.iyuu.cn/'
-	rawTime = strings.Split(rawTime, " by ")[0]
+	rawTime = strings.TrimPrefix(rawTime, timePrefix)
+	if idx := strings.Index(rawTime, timeSuffix); idx != -1 {
+		rawTime = rawTime[:idx]
+	}
 	return rawTime
-}
-
-// checkExpired 验证数据是否超过配置的过期时间，如果需要则更新
-func checkExpired() error {
-	cfg := config.Get()
-
-	file, err := os.Open(cfg.DataFilePath)
-	if err != nil {
-		return ScheduleJob()
-	}
-	defer file.Close()
-
-	var data model.ProcessedData
-	decoder := json.NewDecoder(file)
-	if err := decoder.Decode(&data); err != nil {
-		return ScheduleJob()
-	}
-
-	// 使用正确的布局格式解析时间 "2025-12-11 07:52:33"
-	dataTime, err := time.Parse("2006-01-02 15:04:05", data.Time)
-	if err != nil {
-		return ScheduleJob()
-	}
-
-	// 比较时间差是否超过配置的过期时间
-	if time.Since(dataTime) > cfg.DataExpireDuration {
-		return ScheduleJob()
-	}
-
-	return nil
 }

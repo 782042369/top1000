@@ -29,6 +29,8 @@ export default antfu({
   ignores: [
     '**/node_modules/**',
     'pnpm-lock.yaml',
+    '**/*.md',
   ],
   formatters: true,
+
 })

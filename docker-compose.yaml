@@ -1,0 +1,15 @@
+# Docker Compose 配置 - Top1000 服务
+# 版本：Scratch 极简版（6-8MB）
+# Redis：使用外部实例（不在容器内启动）
+# 访问量：每日约100访问（已优化）
+version: '3.8'
+
+services:
+  top1000-iyuu:
+    container_name: top1000-iyuu
+    image: 782042369/top1000-iyuu:latest
+    ports:
+      - 7066:7066
+    restart: always
+    volumes:
+      - ./.env:/app/.env:ro
