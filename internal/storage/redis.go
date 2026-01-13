@@ -20,6 +20,10 @@ const (
 	writeTimeout  = 5 * time.Second
 	poolSize      = 3
 	minIdleConns  = 1
+
+	// Redis TTL 特殊返回值
+	ttlKeyNotExist = -2 * time.Second // key 不存在（已过期删除）
+	ttlKeyNoExpire = -1 * time.Second // key 存在但没有过期时间
 )
 
 var (
@@ -132,6 +136,17 @@ func IsDataExpired() (bool, error) {
 			return true, nil
 		}
 		return false, fmt.Errorf("获取TTL失败: %w", err)
+	}
+
+	// 处理特殊返回值
+	if ttl == ttlKeyNotExist {
+		log.Printf("⚠️ 数据不存在（已过期删除）")
+		return true, nil
+	}
+
+	if ttl == ttlKeyNoExpire {
+		log.Printf("⚠️ 数据没有设置过期时间（异常）")
+		return true, nil // 强制更新
 	}
 
 	isExpired := ttl < cfg.DataExpireDuration
