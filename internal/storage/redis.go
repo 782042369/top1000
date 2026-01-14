@@ -24,6 +24,9 @@ const (
 	// Redis TTL 特殊返回值
 	ttlKeyNotExist = -2 * time.Second // key 不存在（已过期删除）
 	ttlKeyNoExpire = -1 * time.Second // key 存在但没有过期时间
+
+	// 时间格式常量
+	timeFormat = "2006-01-02 15:04:05" // 数据时间字段格式
 )
 
 var (
@@ -86,14 +89,13 @@ func SaveData(data model.ProcessedData) error {
 	defer cancel()
 
 	key := cfg.RedisKeyPrefix + dataKeySuffix
-	expiration := 2 * cfg.DataExpireDuration
-
-	if err := redisClient.Set(ctx, key, jsonData, expiration).Err(); err != nil {
+	// 不设置TTL，数据永久存储
+	if err := redisClient.Set(ctx, key, jsonData, 0).Err(); err != nil {
 		log.Printf("❌ 保存数据到Redis失败: %v", err)
 		return fmt.Errorf("保存数据到Redis失败: %w", err)
 	}
 
-	log.Printf("✅ 数据已保存到Redis（过期时间: %v）", expiration)
+	log.Printf("✅ 数据已保存到Redis（永久存储，过期判断基于数据time字段）")
 	return nil
 }
 
@@ -122,41 +124,38 @@ func LoadData() (*model.ProcessedData, error) {
 	return &data, nil
 }
 
-// IsDataExpired 检查数据是否过期
+// IsDataExpired 检查数据是否过期（基于数据time字段）
 func IsDataExpired() (bool, error) {
-	cfg := config.Get()
-	key := cfg.RedisKeyPrefix + dataKeySuffix
-
-	ctx, cancel := context.WithTimeout(context.Background(), readTimeout)
-	defer cancel()
-
-	ttl, err := redisClient.TTL(ctx, key).Result()
+	// 读取数据
+	data, err := LoadData()
 	if err != nil {
-		if err == redis.Nil {
-			return true, nil
-		}
-		return false, fmt.Errorf("获取TTL失败: %w", err)
+		return true, nil // 数据不存在或读取失败，认为过期
 	}
 
-	// 处理特殊返回值
-	if ttl == ttlKeyNotExist {
-		log.Printf("⚠️ 数据不存在（已过期删除）")
-		return true, nil
+	// 解析时间字段
+	dataTime, err := time.Parse(timeFormat, data.Time)
+	if err != nil {
+		log.Printf("⚠️ 解析数据时间失败: %v", err)
+		return true, nil // 解析失败，认为过期，强制更新
 	}
 
-	if ttl == ttlKeyNoExpire {
-		log.Printf("⚠️ 数据没有设置过期时间（异常）")
-		return true, nil // 强制更新
-	}
+	// 计算时间差并判断
+	cfg := config.Get()
+	age := time.Now().Sub(dataTime)
+	isExpired := age > cfg.DataExpireDuration
 
-	isExpired := ttl < cfg.DataExpireDuration
-	if isExpired {
-		log.Printf("⚠️ 数据过期了（剩余时间: %v，阈值: %v）", ttl, cfg.DataExpireDuration)
-	} else {
-		log.Printf("✅ 数据还新鲜（剩余时间: %v）", ttl)
-	}
-
+	// 统一日志输出
+	logDataStatus(data.Time, age.Round(time.Minute), isExpired, cfg.DataExpireDuration)
 	return isExpired, nil
+}
+
+// logDataStatus 记录数据状态日志
+func logDataStatus(dataTime string, age time.Duration, isExpired bool, threshold time.Duration) {
+	if isExpired {
+		log.Printf("⚠️ 数据过期了（数据时间: %v, 距今: %v，阈值: %v）", dataTime, age, threshold)
+	} else {
+		log.Printf("✅ 数据还新鲜（数据时间: %v, 距今: %v）", dataTime, age)
+	}
 }
 
 // DataExists 检查数据是否存在

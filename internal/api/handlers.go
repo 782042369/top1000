@@ -107,33 +107,50 @@ func waitForDataUpdate(c *fiber.Ctx) (*model.ProcessedData, bool) {
 	for {
 		select {
 		case <-ticker.C:
-			if !storage.IsUpdating() {
-				dataExists, err := storage.DataExists()
-				if err != nil {
-					log.Printf("⚠️ 检查数据存在性失败: %v", err)
-					continue
-				}
-				if dataExists {
-					data, err := storage.LoadData()
-					if err == nil && data != nil {
-						updateMemoryCache(data)
-						return data, true
-					}
-				}
+			if data := tryLoadAndUpdate(); data != nil {
+				return data, true
 			}
 		case <-timeout:
 			log.Println("⚠️ 等待数据更新超时，尝试返回旧数据")
-			data, err := storage.LoadData()
-			if err == nil && data != nil {
-				updateMemoryCache(data)
+			if data := tryLoadAndUpdate(); data != nil {
+				log.Println("✅ 返回旧数据成功")
 				return data, true
 			}
+			log.Println("❌ 无法加载旧数据，返回错误")
 			c.Status(fiber.StatusServiceUnavailable).JSON(fiber.Map{
-				"error": "数据正在更新中，请稍后再试",
+				"error": "数据加载失败，请稍后再试",
 			})
 			return nil, false
 		}
 	}
+}
+
+// tryLoadAndUpdate 尝试加载数据并更新缓存
+func tryLoadAndUpdate() *model.ProcessedData {
+	// 检查是否还在更新
+	if storage.IsUpdating() {
+		return nil
+	}
+
+	// 检查数据是否存在
+	dataExists, err := storage.DataExists()
+	if err != nil {
+		log.Printf("⚠️ 检查数据存在性失败: %v", err)
+		return nil
+	}
+	if !dataExists {
+		return nil
+	}
+
+	// 加载数据
+	data, err := storage.LoadData()
+	if err != nil || data == nil {
+		return nil
+	}
+
+	// 更新缓存并返回
+	updateMemoryCache(data)
+	return data
 }
 
 // triggerDataUpdate 触发数据更新

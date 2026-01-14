@@ -296,6 +296,106 @@ func Validate() error {
 
 ## 变更记录 (Changelog)
 
+### 2026-01-14 - TTL机制移除与容错优化
+
+**核心改动**：
+- ✅ **移除48小时TTL机制**：数据永久存储，不再自动过期
+- ✅ **新增容错机制**：更新失败时返回Redis旧数据，保证服务可用
+- ✅ **优化用户体验**：即使API故障，用户也能看到旧数据，不会遇到503错误
+
+**修改文件**：
+- `internal/storage/redis.go`：修改`SaveData()`，TTL改为0（永久存储）
+- `internal/api/handlers.go`：修改`waitForDataUpdate()`，更新失败时返回旧数据
+- `internal/storage/CLAUDE.md`：更新TTL管理说明
+- `internal/api/CLAUDE.md`：添加容错机制说明
+
+**技术细节**：
+
+**1. 存储逻辑变更**：
+```go
+// 旧逻辑：设置48小时TTL
+expiration := 2 * cfg.DataExpireDuration
+redisClient.Set(ctx, key, jsonData, expiration)
+
+// 新逻辑：不设置TTL（永久存储）
+redisClient.Set(ctx, key, jsonData, 0)
+```
+
+**2. 容错逻辑**：
+```go
+// 旧逻辑：超时后返回503错误
+case <-timeout:
+    c.Status(fiber.StatusServiceUnavailable).JSON(fiber.Map{
+        "error": "数据正在更新中，请稍后再试",
+    })
+    return nil, false
+
+// 新逻辑：超时后返回旧数据
+case <-timeout:
+    data, err := storage.LoadData()
+    if err == nil && data != nil {
+        log.Println("✅ 返回旧数据成功")
+        return data, true  // 返回旧数据
+    }
+    // 只有加载失败才返回503
+```
+
+**容错流程**：
+```
+数据过期，触发更新
+    ↓
+更新成功？
+  ├─ 是 → 返回最新数据，更新Redis ✅
+  └─ 否 → 返回Redis旧数据 ✅（容错）
+         ├─ 旧数据存在 → 返回旧数据
+         └─ 旧数据不存在 → 返回503（极少数情况）
+```
+
+**优点**：
+- 数据永久存储，不会因TTL过期而丢失
+- 更新失败时有兜底方案，保证服务可用
+- 用户体验更好，不会遇到503错误
+- 过期判断完全基于数据time字段，逻辑清晰
+
+**运维注意事项**：
+- 数据永久存储，需要定期清理（可选）
+- 清理命令：`redis-cli DEL top1000:data`
+- 删除后会自动获取新数据
+
+---
+
+### 2026-01-14 - 数据过期判断逻辑优化
+
+**核心改动**：
+- ✅ **过期判断改为基于time字段**：不再使用Redis key的TTL，改为解析数据中的time字段
+- ✅ **更准确的数据年龄判断**：计算当前时间与数据time字段的差值
+- ✅ **48小时TTL作为兜底**：Redis key仍设置48小时TTL，防止数据永久存储
+
+**修改文件**：
+- `internal/storage/redis.go`：修改`IsDataExpired()`函数逻辑
+- `internal/storage/CLAUDE.md`：更新过期判断说明
+
+**技术细节**：
+```go
+// 旧逻辑：基于Redis key TTL
+ttl := redisClient.TTL(key).Result()
+isExpired := ttl < 24 * time.Hour
+
+// 新逻辑：基于数据time字段
+data, _ := LoadData()
+dataTime, _ := time.Parse("2006-01-02 15:04:05", data.Time)
+age := time.Now().Sub(dataTime)
+isExpired := age > 24 * time.Hour
+```
+
+**优点**：
+- 更准确的数据年龄判断
+- 不依赖Redis key的TTL机制
+- 可精确控制数据更新时机
+- 48小时TTL作为兜底清理机制
+
+---
+
 ### 2026-01-11 - 代码简化建议
 
 **新增**：

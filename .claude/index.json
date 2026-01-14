@@ -1,8 +1,8 @@
 {
   "metadata": {
-    "version": "2.3.0",
-    "generatedAt": "2026-01-13T16:50:00+08:00",
-    "tool": "Claude Code (Sonnet 4.5, 深度扫描初始化)",
+    "version": "3.0.0",
+    "generatedAt": "2026-01-14T09:25:11+08:00",
+    "tool": "Claude Code (Sonnet 4.5, 增量扫描初始化)",
     "projectName": "top1000",
     "description": "PT站点资源追踪系统 - Go + Fiber + Redis + AG Grid 小型Web应用"
   },
@@ -11,7 +11,7 @@
     "scannedFiles": 18,
     "coveragePercent": 100,
     "truncated": false,
-    "lastUpdate": "2026-01-13 - 深度扫描完成，时间戳更新"
+    "lastUpdate": "2026-01-14 - TTL机制移除与容错优化"
   },
   "modules": [
     {
@@ -42,6 +42,7 @@
         "处理HTTP请求（/top1000.json）",
         "三层缓存策略（内存 → Redis → 触发更新）",
         "并发控制（读写锁、加载标记）",
+        "容错机制（更新失败时返回旧数据，保证服务可用）",
         "返回JSON数据"
       ],
       "hasTests": false,
@@ -49,14 +50,14 @@
       "keyFiles": ["handlers.go"],
       "documentation": "internal/api/CLAUDE.md",
       "quality": "A+",
-      "linesOfCode": 210,
+      "linesOfCode": 227,
       "interfaces": [
         {
           "name": "GetTop1000Data",
           "type": "HTTP Handler",
           "method": "GET",
           "path": "/top1000.json",
-          "description": "获取Top1000数据的API接口，支持三层缓存和按需更新"
+          "description": "获取Top1000数据的API接口，支持三层缓存、按需更新、容错机制"
         }
       ],
       "dependencies": ["internal/crawler", "internal/storage", "internal/model", "github.com/gofiber/fiber/v2"],
@@ -65,7 +66,8 @@
         "panic恢复机制（goroutine安全）",
         "超时保护（10秒等待，小项目优化）",
         "双重检查模式（防止重复加载）",
-        "读写锁优化（RLock/Lock正确使用）"
+        "读写锁优化（RLock/Lock正确使用）",
+        "容错机制（更新失败时返回Redis旧数据，2026-01-14新增）"
       ],
       "simplificationOpportunities": [
         "缓存逻辑可抽象为独立的缓存管理器（约2小时）",
@@ -214,7 +216,7 @@
       "dependencies": ["internal/api", "internal/config", "internal/storage", "github.com/gofiber/fiber/v2"],
       "optimizations": [
         "移除健康检查路由（小项目不需要）",
-        "移除优雅关闭代码（小项目直接退出）",
+        "Redis优雅关闭（defer确保资源释放）",
         "API超时优化（30秒→10秒）",
         "速率限制优化（60次/小时，小访问量）",
         "手动安全头配置（替代Helmet，支持CSP白名单）",
@@ -229,9 +231,9 @@
       "entryPoint": "redis.go",
       "responsibilities": [
         "管理Redis连接（连接池：3个连接，小项目优化）",
-        "存储数据（SaveData，48小时TTL）",
+        "存储数据（SaveData，永久存储，不设置TTL）",
         "读取数据（LoadData）",
-        "TTL管理（IsDataExpired，24小时阈值）",
+        "TTL管理（IsDataExpired，基于数据time字段判断，24小时阈值）",
         "数据验证（存前检查）",
         "并发控制（isUpdating标记+互斥锁）"
       ],
@@ -240,7 +242,7 @@
       "keyFiles": ["redis.go"],
       "documentation": "internal/storage/CLAUDE.md",
       "quality": "A+",
-      "linesOfCode": 203,
+      "linesOfCode": 202,
       "interfaces": [
         {
           "name": "InitRedis",
@@ -250,7 +252,7 @@
         {
           "name": "SaveData",
           "type": "Function",
-          "description": "存储数据到Redis（含验证、48小时TTL）"
+          "description": "存储数据到Redis（含验证、永久存储，2026-01-14移除TTL）"
         },
         {
           "name": "LoadData",
@@ -260,7 +262,7 @@
         {
           "name": "IsDataExpired",
           "type": "Function",
-          "description": "检查数据是否过期（TTL < 24小时）"
+          "description": "检查数据是否过期（基于数据time字段，超过24小时即为过期，2026-01-14重构）"
         },
         {
           "name": "DataExists",
@@ -277,7 +279,27 @@
         "Redis连接池优化（10→3个连接，小项目优化）",
         "提取常量（dialTimeout、readTimeout、writeTimeout、poolSize、minIdleConns）",
         "使用%w包装错误（保留错误链）",
-        "isUpdating标记加锁保护（并发安全）"
+        "isUpdating标记加锁保护（并发安全）",
+        "TTL机制移除（2026-01-14：数据永久存储，过期判断完全基于time字段）",
+        "过期判断重构（2026-01-14：不再使用Redis key TTL，改为解析数据time字段）",
+        "TTL特殊返回值常量（2026-01-14：ttlKeyNotExist、ttlKeyNoExpire）"
+      ],
+      "recentChanges": [
+        {
+          "date": "2026-01-14",
+          "change": "TTL机制移除：数据永久存储（SaveData不再设置TTL）",
+          "impact": "数据不会因TTL过期而丢失，更新失败时可以返回旧数据"
+        },
+        {
+          "date": "2026-01-14",
+          "change": "过期判断重构：基于数据time字段，不再使用Redis key TTL",
+          "impact": "更准确的数据年龄判断，不依赖Redis key的TTL机制"
+        },
+        {
+          "date": "2026-01-14",
+          "change": "新增TTL特殊返回值常量（ttlKeyNotExist、ttlKeyNoExpire）",
+          "impact": "代码可读性提升，明确Redis TTL返回值的含义"
+        }
       ]
     },
     {
@@ -331,9 +353,8 @@
         "代码分割（vendor、main分离）",
         "中文本地化（AG_GRID_LOCALE_CN）",
         "自定义排序（文件大小比较器）",
-        "移除VITE_API_URL（使用相对路径）",
-        "删除web/.env.example（简化部署）",
-        "模块化注册AG Grid（仅导入实际使用的模块）"
+        "使用相对路径请求后端（/top1000.json）",
+        "模块化注册AG Grid（仅导入实际使用的模块：ClientSideRowModelModule、TextFilterModule、LocaleModule）"
       ]
     }
   ],
@@ -341,14 +362,14 @@
     {
       "module": "全部模块",
       "missing": "单元测试、集成测试、E2E测试",
-      "recommendation": "当前代码质量95/100（S级），但测试覆盖率仅10%。小型项目可不追求高测试覆盖，建议为核心模块添加基础测试，优先级：crawler（数据解析）、model（数据验证）。",
+      "recommendation": "当前代码质量95/100（S级），但测试覆盖率仅10%。小型项目可不追求高测试覆盖，建议为核心模块添加基础测试，优先级：crawler（数据解析）、model（数据验证）、api（缓存策略）。",
       "estimatedEffort": "4-6小时（基础测试覆盖，小项目标准）"
     }
   ],
   "nextSteps": [
     "Context使用优化（storage层，每个操作独立超时5秒，⭐⭐⭐高优先级，约30分钟）",
     "错误包装和上下文改进（全项目，使用fmt.Errorf包装错误，⭐⭐⭐高优先级，约1小时）",
-    "添加核心Go模块单元测试（crawler数据解析、model数据验证，⭐⭐中优先级，约4-6小时）",
+    "添加核心Go模块单元测试（crawler数据解析、model数据验证、api缓存策略，⭐⭐中优先级，约4-6小时）",
     "缓存逻辑抽象化（api层，独立缓存管理器，⭐低优先级，约2小时）",
     "添加基础监控指标（可选，生产环境推荐，约2-3小时）"
   ],
@@ -378,7 +399,10 @@
       "CORS优化（动态AllowCredentials）",
       "手动安全头配置（CSP白名单，支持跨域监控）",
       "小项目优化（连接池3个、超时10秒、重试1次）",
-      "Docker镜像优化（10.2MB→4.5-5MB，-51%，UPX压缩）"
+      "Docker镜像优化（10.2MB→4.5-5MB，-51%，UPX压缩）",
+      "TTL机制移除（2026-01-14：数据永久存储）",
+      "容错机制（2026-01-14：更新失败时返回旧数据）",
+      "过期判断重构（2026-01-14：基于数据time字段）"
     ],
     "simplificationOpportunities": [
       {
@@ -418,14 +442,14 @@
       "fileCount": 7,
       "percentage": 43.75,
       "modules": ["cmd/top1000", "internal/config", "internal/model", "internal/api", "internal/storage", "internal/crawler", "internal/server"],
-      "totalLines": 1028
+      "totalLines": 1044
     },
     "TypeScript": {
-      "fileCount": 5,
-      "percentage": 31.25,
+      "fileCount": 6,
+      "percentage": 37.5,
       "modules": ["web"],
       "framework": "Vite + AG Grid",
-      "totalLines": 150
+      "totalLines": 180
     },
     "Markdown": {
       "fileCount": 9,
@@ -436,12 +460,22 @@
       "fileCount": 3,
       "percentage": 18.75,
       "description": "配置文件（package.json、go.mod、index.json）"
+    },
+    "YAML": {
+      "fileCount": 2,
+      "percentage": 12.5,
+      "description": "Docker配置（docker-compose.yaml、GitHub Actions）"
+    },
+    "Dockerfile": {
+      "fileCount": 1,
+      "percentage": 6.25,
+      "description": "Scratch极简版（4.5-5MB，UPX压缩）"
     }
   },
   "documentation": {
     "rootLevel": {
       "path": "CLAUDE.md",
-      "status": "已存在，最新（2026-01-13更新）",
+      "status": "已存在，最新（2026-01-14更新）",
       "sections": [
         "项目状态总结（已完成工作、小型项目不需要的）",
         "代码简化建议（6项优化建议，含优先级和工作量）",
@@ -469,7 +503,7 @@
       },
       {
         "path": "internal/api/CLAUDE.md",
-        "status": "已存在",
+        "status": "已存在，2026-01-14更新（容错机制）",
         "breadcrumb": "[根目录](../../CLAUDE.md) > [internal](../) > **api**"
       },
       {
@@ -494,7 +528,7 @@
       },
       {
         "path": "internal/storage/CLAUDE.md",
-        "status": "已存在",
+        "status": "已存在，2026-01-14更新（TTL机制重构）",
         "breadcrumb": "[根目录](../../CLAUDE.md) > [internal](../) > **storage**"
       },
       {
@@ -510,7 +544,8 @@
       "模块索引表格（路径、名称、职责、文档链接）",
       "代码简化建议（6项优化，含优先级、工作量、影响）",
       "变更记录（Changelog）",
-      "优化历史记录"
+      "优化历史记录",
+      "容错机制说明（2026-01-14新增）"
     ]
   },
   "techStack": {
@@ -549,16 +584,16 @@
     "apiResponseTime": "内存缓存<10ms，Redis<50ms",
     "dailyVisits": "约100访问（小流量场景优化）",
     "redisConnections": "3个连接池（小项目优化）",
-    "dataUpdateStrategy": "按需更新（TTL < 24小时触发）"
+    "dataUpdateStrategy": "按需更新（数据time字段超过24小时触发）",
+    "dataStorage": "永久存储（不设置TTL，过期判断基于数据time字段）"
   },
   "ignores": {
     "patterns": [
       "node_modules/**",
       ".git/**",
-      ".github/**",
       "dist/**",
       "build/**",
-      ".next/**",
+      "web-dist/**",
       "__pycache__/**",
       "*.lock",
       "*.log",
@@ -574,24 +609,30 @@
       "*.gz",
       ".env",
       ".env.local",
-      ".env.production",
-      "web-dist/**"
+      ".env.production"
     ],
-    "description": "基于.gitignore和默认忽略规则"
+    "description": "基于.gitignore规则（合并默认规则）"
   },
   "scanDetails": {
-    "strategy": "深度扫描（阶段C）",
-    "reason": "小型项目，可以做得更详尽",
+    "strategy": "增量扫描（阶段B+C）",
+    "reason": "已有完整索引，本次增量更新重点模块",
     "stages": [
       "阶段A：全仓清点（Glob获取文件清单，语言统计，模块识别）",
       "阶段B：模块优先扫描（读取所有核心Go文件、前端TypeScript文件、配置文件）",
-      "阶段C：深度补捞（读取工具函数、Vite配置、验证完整性）"
+      "阶段C：深度补捞（读取工具函数、验证完整性，确认最新代码变更）"
     ],
-    "scanDuration": "约2分钟",
+    "scanDuration": "约3分钟",
     "filesRead": 18,
     "modulesIdentified": 8,
-    "interfacesDocumented": 15,
-    "optimizationsIdentified": 6,
-    "gapsIdentified": 1
+    "interfacesDocumented": 16,
+    "optimizationsIdentified": 13,
+    "gapsIdentified": 1,
+    "recentChanges": [
+      "2026-01-14: TTL机制移除（数据永久存储）",
+      "2026-01-14: 容错机制（更新失败时返回旧数据）",
+      "2026-01-14: 过期判断重构（基于数据time字段）",
+      "2026-01-11: 小项目优化（连接池3个、超时10秒、重试1次）",
+      "2026-01-11: Docker镜像优化（UPX压缩，-51%）"
+    ]
   }
 }
