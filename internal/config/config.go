@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"os"
 	"strconv"
+	"strings"
 	"time"
 )
 
@@ -54,13 +55,39 @@ func Load() *Config {
 	return appConfig
 }
 
-// Validate 验证配置的有效性
+// ValidationError 配置验证错误（收集所有错误）
+type ValidationError struct {
+	errors []string
+}
+
+// Error 实现 error 接口
+func (e *ValidationError) Error() string {
+	return fmt.Sprintf("配置验证失败: %s", strings.Join(e.errors, "、"))
+}
+
+// Add 添加验证错误
+func (e *ValidationError) Add(field string) {
+	e.errors = append(e.errors, field)
+}
+
+// IsValid 检查是否有错误
+func (e *ValidationError) IsValid() bool {
+	return len(e.errors) == 0
+}
+
+// Validate 验证配置的有效性（返回所有错误）
 func Validate() error {
+	var errs ValidationError
+
 	if appConfig.RedisAddr == "" {
-		return fmt.Errorf("REDIS_ADDR 环境变量未设置")
+		errs.Add("REDIS_ADDR")
 	}
 	if appConfig.RedisPassword == "" {
-		return fmt.Errorf("REDIS_PASSWORD 环境变量未设置")
+		errs.Add("REDIS_PASSWORD")
+	}
+
+	if !errs.IsValid() {
+		return &errs
 	}
 	return nil
 }
