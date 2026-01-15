@@ -71,8 +71,15 @@ func CloseRedis() error {
 	return nil
 }
 
-// SaveData 存储数据到Redis
+// SaveData 存储数据到Redis（向后兼容，使用默认超时）
 func SaveData(data model.ProcessedData) error {
+	ctx, cancel := context.WithTimeout(context.Background(), writeTimeout)
+	defer cancel()
+	return SaveDataWithContext(ctx, data)
+}
+
+// SaveDataWithContext 存储数据到Redis（支持外部传入context）
+func SaveDataWithContext(ctx context.Context, data model.ProcessedData) error {
 	cfg := config.Get()
 
 	if err := data.Validate(); err != nil {
@@ -85,9 +92,6 @@ func SaveData(data model.ProcessedData) error {
 		return fmt.Errorf("序列化数据失败: %w", err)
 	}
 
-	ctx, cancel := context.WithTimeout(context.Background(), writeTimeout)
-	defer cancel()
-
 	key := cfg.RedisKeyPrefix + dataKeySuffix
 	// 不设置TTL，数据永久存储
 	if err := redisClient.Set(ctx, key, jsonData, 0).Err(); err != nil {
@@ -99,13 +103,17 @@ func SaveData(data model.ProcessedData) error {
 	return nil
 }
 
-// LoadData 从Redis读取数据
+// LoadData 从Redis读取数据（向后兼容，使用默认超时）
 func LoadData() (*model.ProcessedData, error) {
-	cfg := config.Get()
-	key := cfg.RedisKeyPrefix + dataKeySuffix
-
 	ctx, cancel := context.WithTimeout(context.Background(), readTimeout)
 	defer cancel()
+	return LoadDataWithContext(ctx)
+}
+
+// LoadDataWithContext 从Redis读取数据（支持外部传入context）
+func LoadDataWithContext(ctx context.Context) (*model.ProcessedData, error) {
+	cfg := config.Get()
+	key := cfg.RedisKeyPrefix + dataKeySuffix
 
 	jsonData, err := redisClient.Get(ctx, key).Bytes()
 	if err != nil {
@@ -124,10 +132,17 @@ func LoadData() (*model.ProcessedData, error) {
 	return &data, nil
 }
 
-// IsDataExpired 检查数据是否过期（基于数据time字段）
+// IsDataExpired 检查数据是否过期（基于数据time字段，向后兼容）
 func IsDataExpired() (bool, error) {
-	// 读取数据
-	data, err := LoadData()
+	ctx, cancel := context.WithTimeout(context.Background(), readTimeout)
+	defer cancel()
+	return IsDataExpiredWithContext(ctx)
+}
+
+// IsDataExpiredWithContext 检查数据是否过期（支持外部传入context）
+func IsDataExpiredWithContext(ctx context.Context) (bool, error) {
+	// 读取数据（使用传入的context）
+	data, err := LoadDataWithContext(ctx)
 	if err != nil {
 		return true, nil // 数据不存在或读取失败，认为过期
 	}
@@ -158,13 +173,17 @@ func logDataStatus(dataTime string, age time.Duration, isExpired bool, threshold
 	}
 }
 
-// DataExists 检查数据是否存在
+// DataExists 检查数据是否存在（向后兼容，使用默认超时）
 func DataExists() (bool, error) {
-	cfg := config.Get()
-	key := cfg.RedisKeyPrefix + dataKeySuffix
-
 	ctx, cancel := context.WithTimeout(context.Background(), readTimeout)
 	defer cancel()
+	return DataExistsWithContext(ctx)
+}
+
+// DataExistsWithContext 检查数据是否存在（支持外部传入context）
+func DataExistsWithContext(ctx context.Context) (bool, error) {
+	cfg := config.Get()
+	key := cfg.RedisKeyPrefix + dataKeySuffix
 
 	exists, err := redisClient.Exists(ctx, key).Result()
 	if err != nil {

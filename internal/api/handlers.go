@@ -1,226 +1,87 @@
 package api
 
 import (
-	"fmt"
+	"context"
 	"log"
-	"sync"
 	"time"
 	"top1000/internal/crawler"
-	"top1000/internal/model"
 	"top1000/internal/storage"
 
 	"github.com/gofiber/fiber/v2"
 )
 
 const (
-	maxUpdateWaitTime   = 10 * time.Second // 小项目不需要等太久
-	updateCheckInterval = 200 * time.Millisecond // 降低检查频率
-)
-
-var (
-	cacheData  *model.ProcessedData
-	cacheMutex sync.RWMutex
-	loadingFlag bool
-	loadDone    chan struct{}
+	dataUpdateLogPrefix = "📊 Top1000"
+	defaultAPITimeout   = 15 * time.Second // API默认超时时间
 )
 
 // GetTop1000Data 提供Top1000数据的API接口
 func GetTop1000Data(c *fiber.Ctx) error {
-	if data, found := tryGetFromCache(); found {
-		return c.JSON(data)
+	// 从Fiber的context提取标准的context.Context
+	// 设置超时保护（如果客户端没设置超时）
+	ctx, cancel := context.WithTimeout(c.Context(), defaultAPITimeout)
+	defer cancel()
+
+	// 检查数据是否需要更新
+	if shouldUpdateData(ctx) {
+		refreshData(ctx)
 	}
 
-	needsUpdate, err := checkDataStatus()
+	// 从Redis读取数据并返回（传递context）
+	data, err := storage.LoadDataWithContext(ctx)
 	if err != nil {
-		log.Printf("⚠️ 检查数据状态失败: %v", err)
-	}
-
-	if needsUpdate {
-		if data, ok := waitForDataUpdate(c); ok {
-			return c.JSON(data)
-		}
-	}
-
-	data, err := loadDataFromStorage()
-	if err != nil {
-		log.Printf("❌ 从存储加载数据失败: %v", err)
+		log.Printf("[%s] ❌ 加载数据失败: %v", dataUpdateLogPrefix, err)
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
 			"error": "无法加载数据",
 		})
 	}
 
-	updateMemoryCache(data)
 	return c.JSON(data)
 }
 
-// tryGetFromCache 尝试从内存缓存读取数据
-func tryGetFromCache() (*model.ProcessedData, bool) {
-	cacheMutex.RLock()
-	defer cacheMutex.RUnlock()
-
-	if cacheData != nil {
-		return cacheData, true
+// shouldUpdateData 检查数据是否需要更新
+func shouldUpdateData(ctx context.Context) bool {
+	// 数据不存在或出错时,需要更新
+	exists, err := storage.DataExistsWithContext(ctx)
+	if err != nil || !exists {
+		return true
 	}
 
-	if loadingFlag && loadDone != nil {
-		cacheMutex.RUnlock()
-		<-loadDone
-		cacheMutex.RLock()
-
-		if cacheData != nil {
-			return cacheData, true
-		}
-	}
-
-	return nil, false
+	// 数据过期时,需要更新
+	isExpired, err := storage.IsDataExpiredWithContext(ctx)
+	return err != nil || isExpired
 }
 
-// checkDataStatus 检查数据是否过期
-func checkDataStatus() (bool, error) {
-	exists, err := storage.DataExists()
-	if err != nil {
-		return true, fmt.Errorf("检查数据存在性失败: %w", err)
-	}
-
-	if !exists {
-		return true, nil
-	}
-
-	isExpired, err := storage.IsDataExpired()
-	if err != nil {
-		return true, fmt.Errorf("检查数据过期失败: %w", err)
-	}
-
-	return isExpired, nil
-}
-
-// waitForDataUpdate 等待数据更新完成
-func waitForDataUpdate(c *fiber.Ctx) (*model.ProcessedData, bool) {
-	log.Println("⚠️ 数据不存在或已过期，触发实时更新...")
-
-	go triggerDataUpdate()
-
-	timeout := time.After(maxUpdateWaitTime)
-	ticker := time.NewTicker(updateCheckInterval)
-	defer ticker.Stop()
-
-	for {
-		select {
-		case <-ticker.C:
-			if data := tryLoadAndUpdate(); data != nil {
-				return data, true
-			}
-		case <-timeout:
-			log.Println("⚠️ 等待数据更新超时，尝试返回旧数据")
-			if data := tryLoadAndUpdate(); data != nil {
-				log.Println("✅ 返回旧数据成功")
-				return data, true
-			}
-			log.Println("❌ 无法加载旧数据，返回错误")
-			c.Status(fiber.StatusServiceUnavailable).JSON(fiber.Map{
-				"error": "数据加载失败，请稍后再试",
-			})
-			return nil, false
-		}
-	}
-}
-
-// tryLoadAndUpdate 尝试加载数据并更新缓存
-func tryLoadAndUpdate() *model.ProcessedData {
-	// 检查是否还在更新
+// refreshData 刷新数据（带容错机制）
+func refreshData(ctx context.Context) {
+	// 防止并发更新
 	if storage.IsUpdating() {
-		return nil
+		log.Printf("[%s] ⏸️ 正在更新中，跳过", dataUpdateLogPrefix)
+		return
 	}
 
-	// 检查数据是否存在
-	dataExists, err := storage.DataExists()
+	storage.SetUpdating(true)
+	defer storage.SetUpdating(false)
+
+	// 保存旧数据用于容错（传递context）
+	oldData, _ := storage.LoadDataWithContext(ctx)
+
+	log.Printf("[%s] 🔍 开始爬取新数据...", dataUpdateLogPrefix)
+	newData, err := crawler.FetchTop1000WithContext(ctx)
 	if err != nil {
-		log.Printf("⚠️ 检查数据存在性失败: %v", err)
-		return nil
-	}
-	if !dataExists {
-		return nil
-	}
-
-	// 加载数据
-	data, err := storage.LoadData()
-	if err != nil || data == nil {
-		return nil
-	}
-
-	// 更新缓存并返回
-	updateMemoryCache(data)
-	return data
-}
-
-// triggerDataUpdate 触发数据更新
-func triggerDataUpdate() {
-	defer func() {
-		if r := recover(); r != nil {
-			log.Printf("❌ 数据更新panic: %v", r)
+		// 爬取失败，如果有旧数据则使用旧数据（容错）
+		if oldData != nil {
+			log.Printf("[%s] ✅ 爬取失败，使用旧数据: %v", dataUpdateLogPrefix, err)
+			return
 		}
-	}()
-
-	if err := crawler.FetchData(); err != nil {
-		log.Printf("❌ 实时更新失败: %v", err)
-	} else {
-		InvalidateCache()
-		log.Println("✅ 实时更新成功，缓存已失效")
-	}
-}
-
-// loadDataFromStorage 从存储加载数据
-func loadDataFromStorage() (*model.ProcessedData, error) {
-	cacheMutex.Lock()
-	defer cacheMutex.Unlock()
-
-	if cacheData != nil {
-		return cacheData, nil
+		log.Printf("[%s] ❌ 爬取失败且无旧数据: %v", dataUpdateLogPrefix, err)
+		return
 	}
 
-	loadingFlag = true
-	loadDone = make(chan struct{})
-
-	cacheMutex.Unlock()
-	data, err := storage.LoadData()
-	cacheMutex.Lock()
-
-	if err != nil {
-		clearLoadingFlag()
-		return nil, err
+	if err := storage.SaveDataWithContext(ctx, *newData); err != nil {
+		log.Printf("[%s] ❌ 保存数据失败: %v", dataUpdateLogPrefix, err)
+		return
 	}
 
-	clearLoadingFlag()
-	return data, nil
-}
-
-// updateMemoryCache 更新内存缓存
-func updateMemoryCache(data *model.ProcessedData) {
-	cacheMutex.Lock()
-	defer cacheMutex.Unlock()
-
-	cacheData = data
-	if loadingFlag {
-		loadingFlag = false
-		if loadDone != nil {
-			close(loadDone)
-			loadDone = nil
-		}
-	}
-}
-
-// clearLoadingFlag 清除加载标记
-func clearLoadingFlag() {
-	loadingFlag = false
-	if loadDone != nil {
-		close(loadDone)
-		loadDone = nil
-	}
-}
-
-// InvalidateCache 使缓存失效
-func InvalidateCache() {
-	cacheMutex.Lock()
-	defer cacheMutex.Unlock()
-	cacheData = nil
+	log.Printf("[%s] ✅ 数据更新成功（%d 条）", dataUpdateLogPrefix, len(newData.Items))
 }
