@@ -3,12 +3,13 @@ name: CI/CD Pipeline
 on:
   push:
     branches: [ main ]
+    tags:
+      - 'v*.*.*'  # 匹配 v1.0.0, v2.1.3 等版本标签
     paths-ignore:
       - '**.md'
       - 'LICENSE'
       - '.gitignore'
-  pull_request:
-    branches: [ main ]
+  workflow_dispatch:  # 支持手动触发
 
 env:
   REGISTRY: docker.io
@@ -17,9 +18,13 @@ env:
 jobs:
   build-and-push:
     runs-on: ubuntu-latest
+    concurrency:
+      group: ${{ github.workflow }}-${{ github.ref }}
+      cancel-in-progress: true  # 取消正在进行的旧构建
     permissions:
       contents: read
       packages: write
+      actions: write  # 清理缓存需要的权限
 
     steps:
       - name: Checkout Code
@@ -44,8 +49,20 @@ jobs:
           images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
           tags: |
             type=raw,value=latest,enable={{is_default_branch}}
+            type=semver,pattern={{version}}
+            type=semver,pattern={{major}}.{{minor}}
+            type=sha,prefix={{branch}}-,format=short  # 添加 commit SHA 标签
+          labels: |
+            org.opencontainers.image.title=Top1000 PT资源追踪系统
+            org.opencontainers.image.description=PT站点资源追踪系统，极简架构，Docker镜像仅4.5-5MB
+            org.opencontainers.image.vendor=782042369
+            org.opencontainers.image.source=${{ github.repositoryUrl }}
+            org.opencontainers.image.revision=${{ github.sha }}
+            org.opencontainers.image.created=${{ github.event.head_commit.timestamp }}
+            org.opencontainers.image.licenses=MIT
 
       - name: Build and Push
+        id: build
         uses: docker/build-push-action@v5
         with:
           context: .
@@ -54,4 +71,34 @@ jobs:
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
           cache-from: type=gha
-          cache-to: type=gha,mode=max
+          cache-to: type=gha,mode=min  # 只缓存最终层，减少缓存大小
+          provenance: false  # 禁用证明（SBOM）
+          sbom: false  # 禁用 SBOM（个人项目不需要）
+
+      - name: Image digest
+        run: |
+          echo "镜像标签: ${{ steps.meta.outputs.tags }}"
+          echo "镜像摘要: ${{ steps.build.outputs.digest }}"
+
+      - name: Clean Old Cache
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const caches = await github.rest.actions.getActionsCacheList({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+            })
+            const now = new Date()
+            const thirtyDaysAgo = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000)
+
+            for (const cache of caches.data.actions_caches) {
+              const lastUsed = new Date(cache.last_accessed_at)
+              if (lastUsed < thirtyDaysAgo) {
+                console.log(`Deleting cache: ${cache.key} (last used: ${cache.last_accessed_at})`)
+                await github.rest.actions.deleteActionsCacheById({
+                  owner: context.repo.owner,
+                  repo: context.repo.repo,
+                  cache_id: cache.id,
+                })
+              }
+            }
