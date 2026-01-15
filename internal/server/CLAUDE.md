@@ -26,46 +26,43 @@
 ## 启动流程
 
 ```go
-func StartWatcher() {
+func Start() {
     cfg := config.Get()
 
-    // 1. 验证配置（新增）
+    // 1. 验证配置
     if err := config.Validate(); err != nil {
         log.Fatalf("❌ 配置验证失败: %v", err)
     }
 
-    // 2. 创建Fiber应用
-    app := fiber.New(...)
+    // 2. 打印启动横幅
+    printStartupBanner()
 
-    // 3. 配置中间件
-    app.Use(recover.New())      // 错误恢复
-    app.Use(logger.New())       // 日志
-    app.Use(cors.New())         // CORS
-    app.Use(helmet.New())        // 安全头
-    app.Use(limiter.New())      // 限流
-    app.Use(compress.New())      // 压缩
+    // 3. 创建Fiber应用
+    app := createApp(cfg)
 
-    // 4. 注册路由
-    app.Get("/top1000.json", api.GetTop1000Data)
-    app.Get("/health", healthHandler)
+    // 4. 初始化Redis
+    initStorage()
 
-    // 5. 静态文件服务
-    app.Static("/", cfg.WebDistDir, ...)
+    // 5. 启动时预加载数据（新增）⭐
+    preloadData()
 
-    // 6. 初始化Redis
-    if err := storage.InitRedis(); err != nil {
-        log.Fatalf("❌ Redis 初始化失败: %v", err)
-    }
+    // 6. 打印启动信息
+    printStartupInfo(cfg)
 
-    // 7. 监听关闭信号
-    go func() {
-        // 优雅关闭...
-    }()
+    // 7. 确保程序退出时关闭Redis连接
+    defer closeRedis()
 
     // 8. 启动服务
     log.Fatal(app.Listen(":" + cfg.Port))
 }
 ```
+
+**预加载功能**（2026-01-15 新增）：
+- 在Redis初始化之后，服务启动之前执行
+- 检查Redis中是否已有数据
+- 如果没有数据或数据过期，自动从API获取并存储
+- 预加载失败不影响服务启动（容错机制）
+- **避免首次访问超时问题**
 
 ---
 

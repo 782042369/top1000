@@ -389,54 +389,45 @@ func TestSaveAndLoad(t *testing.T) {
 
 ---
 
-## 代码优化建议
+## Context使用优化（已完成 2026-01-15）
 
-### Context 使用优化（高优先级）
+### ✅ 已完成的优化
 
-**当前问题**：
+**新增带context的函数**：
+- `SaveDataWithContext(ctx, data)` - 支持外部传入context
+- `LoadDataWithContext(ctx)` - 支持外部传入context
+- `DataExistsWithContext(ctx)` - 支持外部传入context
+- `IsDataExpiredWithContext(ctx)` - 支持外部传入context
+
+**向后兼容**：
+- 旧的函数（如`SaveData()`）保持不变，内部创建默认context
+- 新函数支持外部传入context，实现更好的超时控制和取消机制
+
+### 使用示例
+
+**方式一：使用默认超时（向后兼容）**
 ```go
-// internal/storage/redis.go
-var ctx = context.Background()  // 使用全局 context
+// 使用默认5秒超时
+err := storage.SaveData(data)
+data, err := storage.LoadData()
 ```
 
-**建议改进**：
+**方式二：使用自定义context（推荐）**
 ```go
-func SaveData(data model.ProcessedData) error {
-    ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
-    defer cancel()
+// API层从Fiber的context提取
+ctx, cancel := context.WithTimeout(c.Context(), 15*time.Second)
+defer cancel()
 
-    // ... 使用 ctx
-    if err := redisClient.Set(ctx, key, jsonData, ttl).Err(); err != nil {
-        return fmt.Errorf("保存数据到Redis失败: %w", err)
-    }
-    return nil
-}
-
-func LoadData() (*model.ProcessedData, error) {
-    ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
-    defer cancel()
-
-    // ... 使用 ctx
-    jsonData, err := redisClient.Get(ctx, key).Result()
-    if err != nil {
-        if err == redis.Nil {
-            return nil, fmt.Errorf("数据不存在")
-        }
-        return nil, fmt.Errorf("从Redis读取数据失败: %w", err)
-    }
-    // ...
-}
+// 传递给storage层
+data, err := storage.LoadDataWithContext(ctx)
 ```
 
-**优点**：
-- 每个操作有独立的超时控制（5秒）
-- 更好的取消和超时处理
-- 提高系统的健壮性
-- 避免一个慢操作影响整个系统
+### 优点
 
-**工作量**：约 30 分钟
-
-**优先级**：⭐⭐⭐ 高优先级
+1. **超时控制**：每个操作有独立的超时时间，调用方可根据需求调整
+2. **取消机制**：客户端断开连接时，可以取消正在执行的操作
+3. **调用链追踪**：为未来的分布式追踪预留了基础
+4. **向后兼容**：旧的调用方式不受影响
 
 ---
 

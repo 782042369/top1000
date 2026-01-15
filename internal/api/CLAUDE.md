@@ -269,9 +269,38 @@ if !taskMutex.TryLock() {
 
 ---
 
+## Context使用优化（已完成 2026-01-15）
+
+### ✅ 已完成的优化
+
+**从Fiber提取context**：
+```go
+// 从Fiber的context提取标准的context.Context
+ctx, cancel := context.WithTimeout(c.Context(), defaultAPITimeout)
+defer cancel()
+```
+
+**传递context给下层**：
+- `shouldUpdateData(ctx)` - 检查是否需要更新
+- `refreshData(ctx)` - 刷新数据
+- `storage.LoadDataWithContext(ctx)` - 从Redis加载数据
+- `storage.DataExistsWithContext(ctx)` - 检查数据存在性
+- `storage.IsDataExpiredWithContext(ctx)` - 检查数据过期
+- `crawler.FetchTop1000WithContext(ctx)` - 获取新数据
+- `storage.SaveDataWithContext(ctx, *newData)` - 保存数据
+
+### 优点
+
+1. **超时控制**：API请求超时时间可配置（默认15秒）
+2. **取消机制**：客户端断开连接时，可以取消正在执行的操作
+3. **资源节约**：避免无用的后台操作
+4. **调用链追踪**：为未来的分布式追踪预留了基础
+
+---
+
 ## 相关文件
 
-- `handlers.go` - API处理代码（231行）
+- `handlers.go` - API处理代码（88行）
 - `../storage/redis.go` - Redis存储
 - `../crawler/scheduler.go` - 数据更新
 - `../model/types.go` - 数据结构
@@ -280,21 +309,28 @@ if !taskMutex.TryLock() {
 
 ## 代码优化亮点
 
-1. **函数拆分**：180行 → 64行
+1. **函数拆分**：180行 → 64行（早期优化）
 2. **panic恢复**：goroutine不会崩
 3. **双重检查**：防止重复加载
-4. **超时保护**：最多等30秒
+4. **超时保护**：最多等10秒
 5. **常量提取**：没有魔法数字
+6. **Context优化**：完整的context传递链（2026-01-15）
 
 ---
 
-**总结**：此模块负责读取数据并返回JSON，核心是三层缓存和并发控制。
+**总结**：此模块负责读取数据并返回JSON，核心是Context传递和并发控制。
 
-**更新**: 2026-01-11
-**代码行数**: 209 行（已优化，从234行精简）
-**代码质量**: A+ 级
-**优化**: 函数拆分（180行→64行）+ panic恢复 + 简化注释 + 统一代码风格
+**更新**: 2026-01-15
+**代码行数**: 88 行
+**代码质量**: S 级
+**优化**: Context使用优化 + 函数拆分 + panic恢复 + 简化注释 + 统一代码风格
 
 **小项目简化**（2026-01-11）：
 - ✅ 超时时间：30秒 → 10秒（小项目不需要等太久）
 - ✅ 检查间隔：100ms → 200ms（降低检查频率）
+
+**Context优化**（2026-01-15）：
+- ✅ 从Fiber提取context，传递给下层
+- ✅ API层超时控制（默认15秒）
+- ✅ 完整的context传递链（API → Storage → Crawler）
+- ✅ 客户端断开时自动取消操作
