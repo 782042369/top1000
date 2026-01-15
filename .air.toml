@@ -1,0 +1,59 @@
+# Air配置文件 - Go热重载工具
+# 使用方法: air
+# 安装: go install github.com/air-verse/air@latest
+
+root = "."
+tmp_dir = "tmp"
+
+[build]
+# 要执行的构建命令
+cmd = "go build -o ./tmp/main ./cmd/top1000"
+
+# 构建的二进制文件路径（新版本使用entrypoint）
+entrypoint = "./tmp/main"
+
+# 要包含的文件扩展名
+include_ext = ["go", "toml"]
+
+# 要忽略的文件扩展名
+exclude_ext = ["tmp"]
+
+# 要包含的目录（空表示监控所有）
+include_dir = []
+
+# 要忽略的目录（这些目录的变化不会触发重新构建）
+exclude_dir = ["tmp", "vendor", "web-dist", "web"]
+
+# 要忽略的文件
+exclude_file = []
+
+# 延迟启动时间（毫秒）
+# 文件变化后等待1000ms再重新构建（避免频繁重新构建）
+delay = 1000
+
+# 停止旧进程后再启动新进程
+stop_on_root = false
+
+# 发送中断信号前先发送SIGTERM
+send_interrupt = false
+
+# 发送中断信号时的延迟
+kill_delay = "0s"
+
+[log]
+# 显示日志时间
+time = true
+
+# 只显示主要日志（简化输出）
+main_only = false
+
+[color]
+# 自定义每个部分显示的颜色
+main = "magenta"      # 主日志颜色
+watcher = "cyan"      # 监控日志颜色
+build = "yellow"      # 构建日志颜色
+runner = "green"      # 运行日志颜色
+
+[misc]
+# 删除每次构建的中间文件
+clean_on_exit = false
