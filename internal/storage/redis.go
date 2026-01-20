@@ -147,16 +147,21 @@ func IsDataExpiredWithContext(ctx context.Context) (bool, error) {
 		return true, nil // 数据不存在或读取失败，认为过期
 	}
 
-	// 解析时间字段
+	// 解析时间字段（API返回的是北京时间UTC+8，需要转换为UTC）
+	// 先解析为UTC时间（API返回的时间实际上是北京时间）
 	dataTime, err := time.Parse(timeFormat, data.Time)
 	if err != nil {
 		log.Printf("⚠️ 解析数据时间失败: %v", err)
 		return true, nil // 解析失败，认为过期，强制更新
 	}
 
+	// 北京时间是UTC+8，需要减8小时转换为UTC
+	// 例如：2026-01-19 07:50:56（北京时间）= 2026-01-18 23:50:56（UTC）
+	dataTime = dataTime.Add(-8 * time.Hour)
+
 	// 计算时间差并判断
 	cfg := config.Get()
-	age := time.Now().Sub(dataTime)
+	age := time.Since(dataTime)
 	isExpired := age > cfg.DataExpireDuration
 
 	// 统一日志输出
