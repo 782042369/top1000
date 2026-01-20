@@ -1,7 +1,12 @@
 # Docker Compose 配置 - Top1000 服务
-# 版本：Scratch 极简版（6-8MB）
+# 版本：Scratch 极简版（4.5-5MB）
 # Redis：使用外部实例（不在容器内启动）
 # 访问量：每日约100访问（已优化）
+#
+# 环境变量优先级：
+# 1. .env 文件（优先）
+# 2. 系统环境变量（覆盖 .env）
+# 3. environment 指令（最高优先级）
 version: '3.8'
 
 services:
@@ -9,7 +14,11 @@ services:
     container_name: top1000-iyuu
     image: 782042369/top1000-iyuu:latest
     ports:
-      - 7066:7066
+      - "${PORT:-7066}:7066"
     restart: always
-    volumes:
-      - ./.env:/app/.env:ro
+    # 优先从 .env 文件读取，其次从环境变量读取
+    env_file:
+      - .env
+    # 可选：在这里覆盖环境变量（最高优先级）
+    # environment:
+    #   - REDIS_ADDR=custom.redis.com:6379

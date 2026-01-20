@@ -210,7 +210,7 @@ app.Get("/health", func(c *fiber.Ctx) error {
 
 ```go
 app.Static("/", cfg.WebDistDir, fiber.Static{
-    CacheDuration: cfg.CacheDuration,
+    CacheDuration: 0, // Fiber内部缓存禁用，完全由ModifyResponse自定义
     Browse:        true,
     MaxAge:        0,
     ModifyResponse: func(c *fiber.Ctx) error {

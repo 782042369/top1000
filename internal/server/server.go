@@ -13,7 +13,6 @@ import (
 
 	"github.com/gofiber/fiber/v2"
 	"github.com/gofiber/fiber/v2/middleware/compress"
-	"github.com/gofiber/fiber/v2/middleware/cors"
 	"github.com/gofiber/fiber/v2/middleware/recover"
 )
 
@@ -40,7 +39,7 @@ func Start() {
 
 	printStartupBanner()
 
-	app := createApp(cfg)
+	app := createApp()
 	initStorage()
 	preloadData() // 启动时预加载数据
 	printStartupInfo(cfg)
@@ -48,11 +47,11 @@ func Start() {
 	// 确保程序退出时关闭Redis连接
 	defer closeRedis()
 
-	log.Fatal(app.Listen(":" + cfg.Port))
+	log.Fatal(app.Listen(":" + config.DefaultPort))
 }
 
 // createApp 创建Fiber应用并配置中间件和路由
-func createApp(cfg *config.Config) *fiber.App {
+func createApp() *fiber.App {
 	app := fiber.New(fiber.Config{
 		AppName:      appName,
 		StrictRouting: true,
@@ -62,7 +61,7 @@ func createApp(cfg *config.Config) *fiber.App {
 	})
 
 	setupMiddleware(app)
-	setupRoutes(app, cfg)
+	setupRoutes(app)
 
 	return app
 }
@@ -71,7 +70,6 @@ func createApp(cfg *config.Config) *fiber.App {
 func setupMiddleware(app *fiber.App) {
 	app.Use(recover.New())
 	app.Use(loggerMiddleware())
-	app.Use(cors.New())
 	app.Use(securityHeadersMiddleware())
 	app.Use(compress.New())
 }
@@ -104,11 +102,11 @@ func securityHeadersMiddleware() fiber.Handler {
 }
 
 // setupRoutes 配置路由
-func setupRoutes(app *fiber.App, cfg *config.Config) {
+func setupRoutes(app *fiber.App) {
 	app.Get("/top1000.json", api.GetTop1000Data)
 
-	app.Static("/", cfg.WebDistDir, fiber.Static{
-		CacheDuration:  cfg.CacheDuration,
+	app.Static("/", config.DefaultWebDistDir, fiber.Static{
+		CacheDuration:  0, // Fiber内部缓存禁用，完全由ModifyResponse自定义
 		Browse:         true,
 		MaxAge:         0,
 		ModifyResponse: setCacheHeaders,
@@ -161,10 +159,10 @@ func printStartupBanner() {
 // printStartupInfo 打印启动信息
 func printStartupInfo(cfg *config.Config) {
 	log.Println(strings.Repeat("=", 40))
-	log.Printf("✅ 服务已启动，监听端口: %s", cfg.Port)
+	log.Printf("✅ 服务已启动，监听端口: %s", config.DefaultPort)
 	log.Printf("📦 存储方式: Redis (%s)", cfg.RedisAddr)
 	log.Println("🔄 数据更新策略: 过期自动更新（容错机制）")
-	log.Println("🔒 安全措施: 速率限制、安全响应头、CORS 保护")
+	log.Println("🔒 安全措施: 速率限制、安全响应头")
 	log.Println(strings.Repeat("=", 40))
 }
 

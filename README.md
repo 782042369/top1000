@@ -44,10 +44,6 @@ Node.js 24.3.0+ (如果需要修改前端)
 REDIS_ADDR=127.0.0.1:26739
 REDIS_PASSWORD=你的Redis密码
 
-# 其他配置（可选）
-PORT=7066
-TOP1000_API_URL=https://api.iyuu.cn/top1000.php
-DATA_EXPIRE_DURATION=24h
 ```
 
 ### 3. 启动服务
@@ -151,15 +147,6 @@ top1000/
 - **并发支持**: 200次/小时
 
 ## 常见问题
-
-### Q: 如何修改数据更新频率？
-
-修改`.env`文件中的`DATA_EXPIRE_DURATION`：
-
-```bash
-# 12小时更新一次
-DATA_EXPIRE_DURATION=12h
-```
 
 ### Q: 爬取失败会影响服务吗？
 

@@ -68,10 +68,9 @@ func FetchTop1000WithContext(ctx context.Context) (*model.ProcessedData, error) 
 
 // doFetchWithContext 执行HTTP请求获取数据（支持外部传入context）
 func doFetchWithContext(ctx context.Context) (*model.ProcessedData, error) {
-	cfg := config.Get()
 	log.Printf("[%s] 开始爬取IYUU数据...", logPrefix)
 
-	req, err := http.NewRequestWithContext(ctx, http.MethodGet, cfg.Top1000APIURL, nil)
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, config.DefaultAPIURL, nil)
 	if err != nil {
 		return nil, fmt.Errorf("创建HTTP请求失败: %w", err)
 	}

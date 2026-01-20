@@ -38,7 +38,6 @@ Top1000APIURL string  // 数据源API，默认IYUU的
 ### 缓存配置
 
 ```go
-CacheDuration      time.Duration  // 静态文件缓存，默认24小时
 DataExpireDuration time.Duration  // 数据过期检测，默认24小时
 ```
 
@@ -164,12 +163,7 @@ RedisPassword: getEnv("REDIS_PASSWORD", ""),
 | `PORT` | `7066` | HTTP端口 |
 | `WEB_DIST_DIR` | `./web-dist` | 前端目录 |
 | `TOP1000_API_URL` | `https://api.iyuu.cn/top1000.php` | 数据源API |
-| `CACHE_DURATION` | `24h` | 静态文件缓存 |
 | `DATA_EXPIRE_DURATION` | `24h` | 数据过期检测 |
-| `REDIS_ENABLED` | `true` | 是否启用Redis |
-| `REDIS_DB` | `0` | Redis数据库编号 |
-| `REDIS_KEY_PREFIX` | `top1000:` | 键前缀 |
-| `CORS_ORIGINS` | `*` | CORS允许的来源 |
 
 ---
 

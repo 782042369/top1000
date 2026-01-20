@@ -259,10 +259,6 @@ top1000/
 REDIS_ADDR=127.0.0.1:26739
 REDIS_PASSWORD=填写Redis密码
 
-# 其他配置（有默认值，可选）
-PORT=7066
-TOP1000_API_URL=https://api.iyuu.cn/top1000.php
-DATA_EXPIRE_DURATION=24h
 ```
 
 ### 本地开发
@@ -506,10 +502,6 @@ docker logs -f top1000
 ### Q: 能否不使用Redis？
 
 **A**: 不能。此版本专为Redis设计，不使用Redis需要修改代码。
-
-### Q: 如何修改数据更新频率？
-
-**A**: 修改`.env`文件中的`DATA_EXPIRE_DURATION`，设置为`12h`表示12小时更新一次。
 
 ### Q: 为什么没有测试？
 

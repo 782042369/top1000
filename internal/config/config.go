@@ -3,33 +3,25 @@ package config
 import (
 	"fmt"
 	"os"
-	"strconv"
 	"strings"
 	"time"
 )
 
 // 默认值常量
 const (
-	DefaultPort            = "7066"
-	DefaultWebDistDir      = "./web-dist"
-	DefaultAPIURL          = "https://api.iyuu.cn/top1000.php"
-	DefaultCacheDuration   = 24 * time.Hour
-	DefaultDataExpire      = 24 * time.Hour
-	DefaultRedisDB         = 0
-	DefaultRedisKeyPrefix  = "top1000:"
+	DefaultPort       = "7066"
+	DefaultWebDistDir = "./web-dist"
+	DefaultAPIURL     = "https://api.iyuu.cn/top1000.php"
+	DefaultDataExpire = 24 * time.Hour // 数据过期检测阈值
+	DefaultRedisDB    = 0              // Redis数据库编号
+	DefaultRedisKey   = "top1000:data" // Redis key
 )
 
-// Config 应用程序配置
+// Config 应用程序配置（只保留必须从环境变量读取的配置）
 type Config struct {
-	Port               string        // 服务器端口
-	WebDistDir         string        // 前端构建目录
-	Top1000APIURL      string        // 数据源API地址
-	CacheDuration      time.Duration // 静态文件缓存时间
-	DataExpireDuration time.Duration // 数据过期检测阈值
-	RedisAddr          string        // Redis地址（必须配置）
-	RedisPassword      string        // Redis密码（必须配置）
-	RedisDB            int           // Redis数据库编号
-	RedisKeyPrefix     string        // Redis键前缀
+	RedisAddr     string // Redis地址（必须配置）
+	RedisPassword string // Redis密码（必须配置）
+	RedisDB       int    // Redis数据库编号（可选，默认0）
 }
 
 var appConfig *Config
@@ -41,15 +33,9 @@ func Load() *Config {
 	}
 
 	appConfig = &Config{
-		Port:               getEnv("PORT", DefaultPort),
-		WebDistDir:         getEnv("WEB_DIST_DIR", DefaultWebDistDir),
-		Top1000APIURL:      getEnv("TOP1000_API_URL", DefaultAPIURL),
-		CacheDuration:      getEnvDuration("CACHE_DURATION", DefaultCacheDuration),
-		DataExpireDuration: getEnvDuration("DATA_EXPIRE_DURATION", DefaultDataExpire),
-		RedisAddr:          getEnv("REDIS_ADDR", ""),
-		RedisPassword:      getEnv("REDIS_PASSWORD", ""),
-		RedisDB:            getEnvInt("REDIS_DB", DefaultRedisDB),
-		RedisKeyPrefix:     getEnv("REDIS_KEY_PREFIX", DefaultRedisKeyPrefix),
+		RedisAddr:     getEnv("REDIS_ADDR", ""),
+		RedisPassword: getEnv("REDIS_PASSWORD", ""),
+		RedisDB:       getEnvInt("REDIS_DB", DefaultRedisDB),
 	}
 
 	return appConfig
@@ -108,22 +94,16 @@ func getEnv(key, defaultValue string) string {
 	return defaultValue
 }
 
-// getEnvInt 获取整数环境变量
+// getEnvInt 获取整数环境变量，如果不存在或解析失败则返回默认值
 func getEnvInt(key string, defaultValue int) int {
 	if value := os.Getenv(key); value != "" {
-		if intVal, err := strconv.Atoi(value); err == nil {
-			return intVal
+		// 尝试解析为整数
+		var result int
+		if _, err := fmt.Sscanf(value, "%d", &result); err == nil {
+			return result
 		}
-	}
-	return defaultValue
-}
-
-// getEnvDuration 获取时长环境变量（支持30s、5m、24h等格式）
-func getEnvDuration(key string, defaultValue time.Duration) time.Duration {
-	if value := os.Getenv(key); value != "" {
-		if duration, err := time.ParseDuration(value); err == nil {
-			return duration
-		}
+		// 解析失败，返回默认值
+		return defaultValue
 	}
 	return defaultValue
 }

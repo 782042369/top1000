@@ -14,9 +14,8 @@ import (
 )
 
 const (
-	dataKeySuffix = "data"
-	dialTimeout   = 10 * time.Second
-	readTimeout   = 5 * time.Second
+	dialTimeout = 10 * time.Second
+	readTimeout = 5 * time.Second
 	writeTimeout  = 5 * time.Second
 	poolSize      = 3
 	minIdleConns  = 1
@@ -80,8 +79,6 @@ func SaveData(data model.ProcessedData) error {
 
 // SaveDataWithContext 存储数据到Redis（支持外部传入context）
 func SaveDataWithContext(ctx context.Context, data model.ProcessedData) error {
-	cfg := config.Get()
-
 	if err := data.Validate(); err != nil {
 		log.Printf("❌ 数据验证失败，拒绝保存: %v", err)
 		return fmt.Errorf("数据验证失败: %w", err)
@@ -92,7 +89,7 @@ func SaveDataWithContext(ctx context.Context, data model.ProcessedData) error {
 		return fmt.Errorf("序列化数据失败: %w", err)
 	}
 
-	key := cfg.RedisKeyPrefix + dataKeySuffix
+	key := config.DefaultRedisKey
 	// 不设置TTL，数据永久存储
 	if err := redisClient.Set(ctx, key, jsonData, 0).Err(); err != nil {
 		log.Printf("❌ 保存数据到Redis失败: %v", err)
@@ -112,8 +109,7 @@ func LoadData() (*model.ProcessedData, error) {
 
 // LoadDataWithContext 从Redis读取数据（支持外部传入context）
 func LoadDataWithContext(ctx context.Context) (*model.ProcessedData, error) {
-	cfg := config.Get()
-	key := cfg.RedisKeyPrefix + dataKeySuffix
+	key := config.DefaultRedisKey
 
 	jsonData, err := redisClient.Get(ctx, key).Bytes()
 	if err != nil {
@@ -160,12 +156,11 @@ func IsDataExpiredWithContext(ctx context.Context) (bool, error) {
 	dataTime = dataTime.Add(-8 * time.Hour)
 
 	// 计算时间差并判断
-	cfg := config.Get()
 	age := time.Since(dataTime)
-	isExpired := age > cfg.DataExpireDuration
+	isExpired := age > config.DefaultDataExpire
 
 	// 统一日志输出
-	logDataStatus(data.Time, age.Round(time.Minute), isExpired, cfg.DataExpireDuration)
+	logDataStatus(data.Time, age.Round(time.Minute), isExpired, config.DefaultDataExpire)
 	return isExpired, nil
 }
 
@@ -187,8 +182,7 @@ func DataExists() (bool, error) {
 
 // DataExistsWithContext 检查数据是否存在（支持外部传入context）
 func DataExistsWithContext(ctx context.Context) (bool, error) {
-	cfg := config.Get()
-	key := cfg.RedisKeyPrefix + dataKeySuffix
+	key := config.DefaultRedisKey
 
 	exists, err := redisClient.Exists(ctx, key).Result()
 	if err != nil {

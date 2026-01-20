@@ -168,7 +168,6 @@ redisClient = redis.NewClient(&redis.Options{
 | 操作 | TTL | 说明 |
 |------|-----|------|
 | **存数据** | **0（永久）** | 不设置TTL，数据永久存储 |
-| **检测阈值** | 24小时 | DATA_EXPIRE_DURATION（基于数据time字段判断） |
 
 ### 过期逻辑（已更新）
 
