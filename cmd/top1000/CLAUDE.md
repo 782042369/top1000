@@ -1,6 +1,6 @@
 # 程序入口
 
-> [根目录](../../CLAUDE.md) > **cmd/top1000**
+> [根目录](../CLAUDE.md) > **cmd/top1000**
 
 ---
 
@@ -132,7 +132,7 @@ if len(missingEnvs) > 0 {
 
 ### 源代码
 
-- `main.go` - 入口文件（34行）
+- `main.go` - 入口文件（18行）
 
 ### 配置文件
 
@@ -141,8 +141,8 @@ if len(missingEnvs) > 0 {
 
 ### 依赖模块
 
-- `../../internal/server` - HTTP 服务器模块
-- `../../internal/config` - 配置管理模块
+- `../internal/server` - HTTP 服务器模块
+- `../internal/config` - 配置管理模块
 
 ---
 
@@ -169,107 +169,7 @@ if len(missingEnvs) > 0 {
 - `config.Validate()` 检查**配置值的有效性**
 - 避免入口文件过于复杂
 
-### Q: 如何添加新的必需环境变量？
-
-**A**: 修改 `main.go`：
-```go
-requiredEnvs := []string{
-    "REDIS_ADDR",
-    "REDIS_PASSWORD",
-    "NEW_REQUIRED_VAR",  // 新增
-}
-```
-
-同时更新：
-- `internal/config/config.go`
-- `.env.example`
-- 相关文档
-
 ---
 
-## 代码特点
-
-1. **简洁明了**
-   - 仅 34 行代码
-   - 职责单一
-   - 易于理解
-
-2. **错误处理完善**
-   - .env 加载失败不中断
-   - 必需变量缺失才退出
-   - 友好的错误提示
-
-3. **日志清晰**
-   - 使用 emoji 增强可读性
-   - 中文提示
-   - 详细的错误信息
-
----
-
-## 扩展建议
-
-### 添加版本信息
-
-```go
-const (
-    Version = "1.0.0"
-    BuildTime = "2026-01-10"
-)
-
-func main() {
-    log.Printf("启动 Top1000 服务 v%s (构建时间: %s)", Version, BuildTime)
-    // ...
-}
-```
-
-### 添加启动参数
-
-```go
-var (
-    showVersion = flag.Bool("version", false, "显示版本信息")
-    configPath  = flag.String("config", ".env", "配置文件路径")
-)
-
-func main() {
-    flag.Parse()
-
-    if *showVersion {
-        fmt.Printf("Top1000 v%s\n", Version)
-        os.Exit(0)
-    }
-
-    // 使用自定义配置路径
-    godotenv.Load(*configPath)
-}
-```
-
-### 添加优雅关闭信号处理
-
-```go
-// 已在 server.StartWatcher() 中实现
-// 此处无需重复处理
-```
-
----
-
-## 总结
-
-程序入口模块简洁明了，主要职责是：
-
-1. ✅ 加载环境变量（.env 或系统变量）
-2. ✅ 验证必需配置（Redis 地址和密码）
-3. ✅ 启动 HTTP 服务器
-
-代码质量：**优秀**
-- 职责单一
-- 错误处理完善
-- 日志清晰
-- 易于维护
-
----
-
-**更新时间**: 2026-01-11
-**代码行数**: 40 行（已优化）
-**代码质量**: A+ 级
-**依赖模块**: internal/server
-**最近优化**: 提取 `checkRequiredEnvVars()` 函数，添加成功提示
+**更新时间**: 2026-01-20
+**代码行数**: 18行

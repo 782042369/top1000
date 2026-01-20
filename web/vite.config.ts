@@ -27,7 +27,6 @@ export default defineConfig({
       },
     },
     emptyOutDir: false,
-    outDir: resolve(__dirname, '../web-dist'),
     chunkSizeWarningLimit: 1000,
   },
   server: {

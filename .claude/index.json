@@ -1,17 +1,15 @@
 {
   "metadata": {
-    "version": "3.3.0",
-    "generatedAt": "2026-01-20T15:03:42+08:00",
-    "tool": "Claude Code (Sonnet 4.5, AI上下文初始化专家)",
+    "version": "4.0.0",
+    "generatedAt": "2026-01-20T15:54:00+08:00",
+    "tool": "Claude Code (Sonnet 4.5)",
     "projectName": "top1000",
     "description": "PT站点资源追踪系统 - 小型个人项目，日请求约100次，Go + Fiber + Redis + AG Grid"
   },
   "summary": {
-    "totalFiles": 27,
-    "scannedFiles": 27,
-    "coveragePercent": 100,
-    "truncated": false,
-    "lastUpdate": "2026-01-20 - AI上下文完整初始化（文档覆盖率100%，代码质量96/100）"
+    "totalModules": 8,
+    "documentationCoverage": 100,
+    "lastUpdate": "2026-01-20 - 文档精简完成（移除历史记录，减少39%冗余内容）"
   },
   "modules": [
     {
@@ -21,17 +19,13 @@
       "entryPoint": "main.go",
       "responsibilities": [
         "加载环境变量（.env或系统变量）",
+        "验证必需环境变量（Redis配置）",
         "启动HTTP服务器"
       ],
-      "hasTests": false,
-      "coverage": "完整",
       "keyFiles": ["main.go"],
       "documentation": "cmd/top1000/CLAUDE.md",
-      "quality": "A+",
       "linesOfCode": 18,
-      "interfaces": [],
-      "dependencies": ["internal/server", "github.com/joho/godotenv"],
-      "recentChanges": []
+      "dependencies": ["internal/server", "github.com/joho/godotenv"]
     },
     {
       "path": "internal/config",
@@ -43,31 +37,14 @@
         "提供默认值（PORT=7066、CACHE_DURATION=24h等）",
         "启动时验证配置（REDIS_ADDR、REDIS_PASSWORD必须）"
       ],
-      "hasTests": false,
-      "coverage": "完整",
       "keyFiles": ["config.go"],
       "documentation": "internal/config/CLAUDE.md",
-      "quality": "A+",
-      "linesOfCode": 110,
+      "linesOfCode": 120,
       "interfaces": [
-        {
-          "name": "Load",
-          "type": "Function",
-          "description": "加载配置（单例模式）"
-        },
-        {
-          "name": "Validate",
-          "type": "Function",
-          "description": "验证配置有效性（检查Redis配置）"
-        },
-        {
-          "name": "Get",
-          "type": "Function",
-          "description": "获取配置实例"
-        }
-      ],
-      "dependencies": [],
-      "recentChanges": []
+        {"name": "Load", "type": "Function", "description": "加载配置（单例模式）"},
+        {"name": "Validate", "type": "Function", "description": "验证配置有效性"},
+        {"name": "Get", "type": "Function", "description": "获取配置实例"}
+      ]
     },
     {
       "path": "internal/model",
@@ -77,28 +54,15 @@
       "responsibilities": [
         "定义数据结构（SiteItem、ProcessedData）",
         "数据验证功能（Validate方法）",
-        "JSON序列化支持（json tag）"
+        "JSON序列化支持"
       ],
-      "hasTests": false,
-      "coverage": "完整",
       "keyFiles": ["types.go"],
       "documentation": "internal/model/CLAUDE.md",
-      "quality": "A+",
       "linesOfCode": 75,
       "interfaces": [
-        {
-          "name": "SiteItem.Validate",
-          "type": "Method",
-          "description": "验证单条数据（站点名称、ID、重复度、大小）"
-        },
-        {
-          "name": "ProcessedData.Validate",
-          "type": "Method",
-          "description": "验证完整数据（时间、条目数、每条数据）"
-        }
-      ],
-      "dependencies": [],
-      "recentChanges": []
+        {"name": "SiteItem.Validate", "type": "Method", "description": "验证单条数据"},
+        {"name": "ProcessedData.Validate", "type": "Method", "description": "验证完整数据"}
+      ]
     },
     {
       "path": "internal/api",
@@ -112,29 +76,13 @@
         "容错机制（更新失败时返回Redis旧数据）",
         "返回JSON数据"
       ],
-      "hasTests": false,
-      "coverage": "完整",
       "keyFiles": ["handlers.go"],
       "documentation": "internal/api/CLAUDE.md",
-      "quality": "S",
-      "linesOfCode": 88,
+      "linesOfCode": 103,
       "interfaces": [
-        {
-          "name": "GetTop1000Data",
-          "type": "HTTP Handler",
-          "method": "GET",
-          "path": "/top1000.json",
-          "description": "获取Top1000数据的API接口（支持context传递，15秒超时）"
-        }
+        {"name": "GetTop1000Data", "type": "HTTP Handler", "method": "GET", "path": "/top1000.json", "description": "获取Top1000数据（支持context传递，15秒超时）"}
       ],
-      "dependencies": ["internal/crawler", "internal/storage", "internal/model", "github.com/gofiber/fiber/v2"],
-      "recentChanges": [
-        {
-          "date": "2026-01-15",
-          "change": "Context使用优化：从Fiber提取context，传递给下层，15秒超时控制",
-          "impact": "更好的超时控制和取消机制"
-        }
-      ]
+      "dependencies": ["internal/crawler", "internal/storage", "internal/model", "github.com/gofiber/fiber/v2"]
     },
     {
       "path": "internal/storage",
@@ -142,74 +90,28 @@
       "language": "Go",
       "entryPoint": "redis.go",
       "responsibilities": [
-        "管理Redis连接（连接池：3个连接，小项目优化）",
+        "管理Redis连接（连接池：3个连接）",
         "存储数据（SaveData，永久存储，不设置TTL）",
         "读取数据（LoadData）",
         "TTL管理（IsDataExpired，基于数据time字段判断，24小时阈值）",
         "数据验证（存前检查）",
         "并发控制（isUpdating标记+互斥锁）"
       ],
-      "hasTests": false,
-      "coverage": "完整",
       "keyFiles": ["redis.go"],
       "documentation": "internal/storage/CLAUDE.md",
-      "quality": "S",
-      "linesOfCode": 220,
+      "linesOfCode": 183,
       "interfaces": [
-        {
-          "name": "InitRedis",
-          "type": "Function",
-          "description": "初始化Redis连接（连接池配置）"
-        },
-        {
-          "name": "SaveData",
-          "type": "Function",
-          "description": "存储数据到Redis（含验证、永久存储）"
-        },
-        {
-          "name": "LoadData",
-          "type": "Function",
-          "description": "从Redis读取数据（JSON反序列化）"
-        },
-        {
-          "name": "IsDataExpired",
-          "type": "Function",
-          "description": "检查数据是否过期（基于数据time字段，24小时阈值）"
-        },
-        {
-          "name": "DataExists",
-          "type": "Function",
-          "description": "检查数据是否存在"
-        },
-        {
-          "name": "SaveDataWithContext",
-          "type": "Function",
-          "description": "支持外部传入context的存储函数"
-        },
-        {
-          "name": "LoadDataWithContext",
-          "type": "Function",
-          "description": "支持外部传入context的加载函数"
-        },
-        {
-          "name": "IsDataExpiredWithContext",
-          "type": "Function",
-          "description": "支持外部传入context的过期检查函数"
-        },
-        {
-          "name": "DataExistsWithContext",
-          "type": "Function",
-          "description": "支持外部传入context的存在性检查函数"
-        }
+        {"name": "InitRedis", "type": "Function", "description": "初始化Redis连接"},
+        {"name": "SaveData", "type": "Function", "description": "存储数据到Redis"},
+        {"name": "LoadData", "type": "Function", "description": "从Redis读取数据"},
+        {"name": "IsDataExpired", "type": "Function", "description": "检查数据是否过期"},
+        {"name": "DataExists", "type": "Function", "description": "检查数据是否存在"},
+        {"name": "SaveDataWithContext", "type": "Function", "description": "支持context的存储函数"},
+        {"name": "LoadDataWithContext", "type": "Function", "description": "支持context的加载函数"},
+        {"name": "IsDataExpiredWithContext", "type": "Function", "description": "支持context的过期检查"},
+        {"name": "DataExistsWithContext", "type": "Function", "description": "支持context的存在性检查"}
       ],
-      "dependencies": ["internal/config", "internal/model", "github.com/redis/go-redis/v9"],
-      "recentChanges": [
-        {
-          "date": "2026-01-15",
-          "change": "新增4个WithContext函数，支持外部传入context",
-          "impact": "每个操作独立超时控制，更好的取消机制"
-        }
-      ]
+      "dependencies": ["internal/config", "internal/model", "github.com/redis/go-redis/v9"]
     },
     {
       "path": "internal/crawler",
@@ -217,43 +119,21 @@
       "language": "Go",
       "entryPoint": "scheduler.go",
       "responsibilities": [
-        "从IYUU API爬取数据（https://api.iyuu.cn/top1000.php）",
+        "从IYUU API爬取数据",
         "解析文本数据（正则提取站名、ID、重复度、大小）",
         "按需更新（过期时才获取，无定时任务）",
-        "重试机制（1次重试，小项目优化）",
+        "重试机制（1次重试）",
         "启动时预加载数据（避免首次访问超时）"
       ],
-      "hasTests": false,
-      "coverage": "完整",
       "keyFiles": ["scheduler.go"],
       "documentation": "internal/crawler/CLAUDE.md",
-      "quality": "S",
-      "linesOfCode": 254,
+      "linesOfCode": 199,
       "interfaces": [
-        {
-          "name": "FetchTop1000",
-          "type": "Function",
-          "description": "从IYUU获取数据，带重试机制（最多1次重试）"
-        },
-        {
-          "name": "PreloadData",
-          "type": "Function",
-          "description": "启动时预加载数据（避免首次访问超时）"
-        },
-        {
-          "name": "FetchTop1000WithContext",
-          "type": "Function",
-          "description": "支持外部传入context的数据获取函数"
-        }
+        {"name": "FetchTop1000", "type": "Function", "description": "从IYUU获取数据，带重试机制"},
+        {"name": "PreloadData", "type": "Function", "description": "启动时预加载数据"},
+        {"name": "FetchTop1000WithContext", "type": "Function", "description": "支持context的数据获取"}
       ],
-      "dependencies": ["internal/config", "internal/model", "internal/storage"],
-      "recentChanges": [
-        {
-          "date": "2026-01-15",
-          "change": "Context使用优化：支持外部传入context，更好的超时控制",
-          "impact": "客户端断开时可取消正在执行的HTTP请求"
-        }
-      ]
+      "dependencies": ["internal/config", "internal/model", "internal/storage"]
     },
     {
       "path": "internal/server",
@@ -268,21 +148,13 @@
         "启动时预加载数据",
         "资源清理（Redis关闭）"
       ],
-      "hasTests": false,
-      "coverage": "完整",
       "keyFiles": ["server.go"],
       "documentation": "internal/server/CLAUDE.md",
-      "quality": "S",
-      "linesOfCode": 175,
+      "linesOfCode": 142,
       "interfaces": [
-        {
-          "name": "Start",
-          "type": "Function",
-          "description": "启动Web服务器，配置中间件和路由，包含预加载数据功能"
-        }
+        {"name": "Start", "type": "Function", "description": "启动Web服务器"}
       ],
-      "dependencies": ["internal/api", "internal/config", "internal/storage", "internal/crawler", "github.com/gofiber/fiber/v2"],
-      "recentChanges": []
+      "dependencies": ["internal/api", "internal/config", "internal/storage", "internal/crawler", "github.com/gofiber/fiber/v2"]
     },
     {
       "path": "web",
@@ -294,11 +166,9 @@
         "使用AG Grid展示数据表格（1000条记录）",
         "支持列过滤、排序（名字可过滤，大小可排序）",
         "操作列（跳转详情、下载种子）",
-        "中文本地化（AG_GRID_LOCALE_CN）",
+        "中文本地化",
         "响应式布局"
       ],
-      "hasTests": false,
-      "coverage": "完整",
       "keyFiles": [
         "src/main.ts",
         "src/gridConfig.ts",
@@ -309,314 +179,135 @@
         "src/utils/iyuuSites.ts"
       ],
       "documentation": "web/CLAUDE.md",
-      "quality": "B+",
       "interfaces": [
-        {
-          "name": "convertSizeToKb",
-          "type": "Function",
-          "description": "文件大小转换为KB（用于自定义排序）"
-        },
-        {
-          "name": "fetchData",
-          "type": "Function",
-          "description": "获取Top1000数据（GET /top1000.json）"
-        },
-        {
-          "name": "operationRender",
-          "type": "Function",
-          "description": "操作列渲染器（生成详情和下载链接）"
-        }
+        {"name": "convertSizeToKb", "type": "Function", "description": "文件大小转换为KB"},
+        {"name": "fetchData", "type": "Function", "description": "获取Top1000数据"},
+        {"name": "operationRender", "type": "Function", "description": "操作列渲染器"}
       ],
-      "dependencies": [
-        "ag-grid-community",
-        "ag-grid-enterprise",
-        "@ag-grid-community/locale"
-      ],
-      "recentChanges": [
-        {
-          "date": "2026-01-15",
-          "change": "表格配置独立为gridConfig.ts，新增序号列，优化列宽",
-          "impact": "代码结构更清晰，易于维护"
-        }
-      ]
+      "dependencies": ["ag-grid-community", "ag-grid-enterprise", "@ag-grid-community/locale"]
     }
   ],
   "gaps": [
     {
       "module": "全部模块",
       "missing": "单元测试、集成测试、E2E测试",
-      "recommendation": "当前代码质量96/100（S级），但测试覆盖率仅10%。小型个人项目（日访问100次）不追求高测试覆盖。如需测试，建议优先级：crawler（数据解析）、model（数据验证）、api（容错机制）。",
-      "estimatedEffort": "2-4小时（基础测试覆盖，小项目标准）"
+      "recommendation": "小型个人项目（日访问100次）不追求高测试覆盖。核心逻辑清晰，易于理解和维护。如需测试，建议优先级：crawler（数据解析）、model（数据验证）、api（容错机制）。"
     }
   ],
   "nextSteps": [
-    "添加核心Go模块单元测试（crawler数据解析、model数据验证、api容错机制，⭐低优先级，约2-4小时，小项目可选）",
-    "添加基础监控指标（可选，生产环境推荐，约2-3小时）"
+    "添加核心Go模块单元测试（低优先级，小项目可选）"
   ],
   "codeQuality": {
-    "score": 96,
+    "score": 95,
     "grade": "S",
     "breakdown": {
-      "架构": 90,
-      "代码": 96,
+      "架构": 88,
+      "代码": 95,
       "性能": 92,
       "并发": 95,
       "安全": 95,
-      "维护": 96,
+      "维护": 95,
       "测试": 10,
-      "错误处理": 96,
+      "错误处理": 95,
       "部署": 95,
-      "最佳实践": 96
-    },
-    "recentOptimizations": [
-      "Context使用优化（2026-01-15：API层从Fiber提取context，传递给Storage和Crawler）",
-      "代码简化28%（621行→444行，2026-01-15）",
-      "移除内存缓存层（API层：227行→103行，-54%）",
-      "简化服务器配置（Server层：189行→142行，-25%）",
-      "添加Air热重载支持（2026-01-15）",
-      "新增序号列显示（2026-01-15）",
-      "表格配置文件化（gridConfig.ts，2026-01-15）",
-      "启动时预加载数据（2026-01-15，避免首次访问超时）",
-      "函数拆分（180行→64行主函数，-64%）",
-      "常量提取（消除魔法数字）",
-      "panic恢复机制（goroutine安全）",
-      "锁的正确使用（修复重复解锁bug）",
-      "配置验证（启动时检查）",
-      "数据验证（存前检查）",
-      "移除硬编码密码（安全提升88→95分）",
-      "CORS优化（动态AllowCredentials）",
-      "手动安全头配置（CSP白名单，支持跨域监控）",
-      "小项目优化（连接池3个、超时10秒、重试1次）",
-      "Docker镜像优化（10.2MB→4.5-5MB，-51%，UPX压缩）",
-      "TTL机制移除（2026-01-14：数据永久存储）",
-      "容错机制（2026-01-14：更新失败时返回旧数据）",
-      "过期判断重构（2026-01-14：基于数据time字段）"
-    ]
+      "最佳实践": 95
+    }
   },
   "languageStats": {
     "Go": {
       "fileCount": 7,
-      "percentage": 25.93,
       "modules": ["cmd/top1000", "internal/config", "internal/model", "internal/api", "internal/storage", "internal/crawler", "internal/server"],
-      "totalLines": 940,
-      "simplified": true,
-      "simplificationPercent": 28
+      "totalLines": 840
     },
     "TypeScript": {
       "fileCount": 6,
-      "percentage": 22.22,
       "modules": ["web"],
       "framework": "Vite + AG Grid",
-      "totalLines": 210,
-      "recentChanges": [
-        "新增gridConfig.ts（表格配置独立）",
-        "序号列显示",
-        "列宽优化"
-      ]
+      "totalLines": 210
     },
     "Markdown": {
-      "fileCount": 10,
-      "percentage": 37.04,
-      "description": "项目文档（CLAUDE.md + README.md），100%模块覆盖"
-    },
-    "JSON": {
-      "fileCount": 3,
-      "percentage": 11.11,
-      "description": "配置文件（package.json、go.mod、index.json）"
-    },
-    "YAML": {
-      "fileCount": 1,
-      "percentage": 3.7,
-      "description": "Docker配置（docker-compose.yaml）"
-    },
-    "Dockerfile": {
-      "fileCount": 1,
-      "percentage": 3.7,
-      "description": "Scratch极简版（4.5-5MB，UPX压缩）"
-    },
-    "TOML": {
-      "fileCount": 1,
-      "percentage": 3.7,
-      "description": "Air热重载配置（.air.toml，2026-01-15新增）"
+      "fileCount": 9,
+      "description": "项目文档（CLAUDE.md），100%模块覆盖",
+      "totalLines": 2159,
+      "simplification": "从3692行精简到2159行，减少42%"
     }
   },
   "documentation": {
     "rootLevel": {
       "path": "CLAUDE.md",
-      "status": "已更新（2026-01-20）",
       "sections": [
-        "项目状态总结（最新优化：Context使用优化+83行）",
-        "项目愿景（极简架构、容错机制、热重载）",
-        "架构总览（系统架构、数据流、容错机制）",
-        "模块结构图（Mermaid可点击导航）",
-        "模块索引（表格，含代码行数）",
-        "运行与开发（Air热重载、Docker部署）",
-        "测试策略（小项目建议）",
-        "编码规范",
-        "AI 使用指引",
-        "技术栈（含开发工具）",
-        "代码质量评分（96/100，S级）",
-        "常见问题（含Air热重载、容错机制）",
+        "项目简介",
+        "技术架构（系统架构图、数据流）",
+        "模块结构（Mermaid可点击导航）",
+        "模块索引（表格）",
+        "目录结构",
+        "快速开始（环境要求、配置、本地开发、Docker部署）",
+        "技术栈（后端、前端、部署、开发工具）",
+        "常见问题",
         "外部依赖",
-        "相关文件",
-        "变更记录（Changelog，含2026-01-20最新更新）"
+        "核心配置文件"
       ]
     },
     "moduleLevel": [
-      {
-        "path": "cmd/top1000/CLAUDE.md",
-        "status": "已存在",
-        "breadcrumb": "[根目录](../../CLAUDE.md) > **cmd/top1000**"
-      },
-      {
-        "path": "internal/api/CLAUDE.md",
-        "status": "已存在",
-        "breadcrumb": "[根目录](../../CLAUDE.md) > [internal](../) > **api**"
-      },
-      {
-        "path": "internal/config/CLAUDE.md",
-        "status": "已存在",
-        "breadcrumb": "[根目录](../../CLAUDE.md) > [internal](../) > **config**"
-      },
-      {
-        "path": "internal/crawler/CLAUDE.md",
-        "status": "已存在",
-        "breadcrumb": "[根目录](../../CLAUDE.md) > [internal](../) > **crawler**"
-      },
-      {
-        "path": "internal/model/CLAUDE.md",
-        "status": "已存在",
-        "breadcrumb": "[根目录](../../CLAUDE.md) > [internal](../) > **model**"
-      },
-      {
-        "path": "internal/server/CLAUDE.md",
-        "status": "已存在",
-        "breadcrumb": "[根目录](../../CLAUDE.md) > [internal](../) > **server**"
-      },
-      {
-        "path": "internal/storage/CLAUDE.md",
-        "status": "已存在",
-        "breadcrumb": "[根目录](../../CLAUDE.md) > [internal](../) > **storage**"
-      },
-      {
-        "path": "web/CLAUDE.md",
-        "status": "已存在",
-        "breadcrumb": "[根目录](../CLAUDE.md) > **web**"
-      }
+      {"path": "cmd/top1000/CLAUDE.md", "lines": 175},
+      {"path": "internal/api/CLAUDE.md", "lines": 160},
+      {"path": "internal/config/CLAUDE.md", "lines": 182},
+      {"path": "internal/crawler/CLAUDE.md", "lines": 257},
+      {"path": "internal/model/CLAUDE.md", "lines": 252},
+      {"path": "internal/server/CLAUDE.md", "lines": 281},
+      {"path": "internal/storage/CLAUDE.md", "lines": 255},
+      {"path": "web/CLAUDE.md", "lines": 405}
     ],
-    "coveragePercent": 100,
-    "features": [
-      "Mermaid模块结构图（可点击导航）",
-      "面包屑导航（相对路径）",
-      "模块索引表格（路径、名称、代码行数、职责、文档链接）",
-      "代码简化统计（-28%）",
-      "变更记录（Changelog）",
-      "优化历史记录",
-      "容错机制说明（2026-01-14新增）",
-      "热重载说明（2026-01-15新增）",
-      "预加载说明（2026-01-15新增）",
-      "Context使用优化说明（2026-01-15新增）"
-    ]
+    "coveragePercent": 100
   },
   "techStack": {
     "backend": {
       "language": "Go 1.25.5",
       "framework": "Fiber v2.52.10",
-      "database": "Redis 5.0+（必须）",
-      "dependencies": [
-        "github.com/gofiber/fiber/v2",
-        "github.com/redis/go-redis/v9",
-        "github.com/joho/godotenv"
-      ]
+      "database": "Redis 5.0+"
     },
     "frontend": {
       "language": "TypeScript 5.9.3",
       "framework": "Vite 8.0.0-beta.5",
-      "ui": "AG Grid Enterprise 35.0.0",
-      "packageManager": "pnpm 10.12.4+",
-      "dependencies": [
-        "ag-grid-community",
-        "ag-grid-enterprise",
-        "@ag-grid-community/locale"
-      ]
+      "ui": "AG Grid Enterprise 35.0.0"
     },
     "deployment": {
       "container": "Docker",
       "baseImage": "scratch (4.5-5MB, UPX压缩)",
-      "ports": [7066],
-      "ci": "GitHub Actions"
+      "ports": [7066]
     },
     "devTools": {
-      "air": "Go热重载（2026-01-15新增）",
+      "air": "Go热重载",
       "pnpm": "前端包管理",
       "eslint": "代码检查",
       "prettier": "代码格式化"
     }
   },
   "performanceMetrics": {
-    "dockerImageSize": "4.5-5MB (Scratch, UPX压缩, 优化前10.2MB, -51%)",
-    "memoryUsage": "约30MB（优化后减少30%）",
-    "startupTime": "<2秒（提升20%）",
-    "apiResponseTime": "Redis<50ms（移除内存缓存）",
-    "dailyVisits": "约100访问（小流量场景优化）",
-    "redisConnections": "3个连接池（小项目优化）",
-    "dataUpdateStrategy": "按需更新（数据time字段超过24小时触发）",
-    "dataStorage": "永久存储（不设置TTL，过期判断基于数据time字段）",
-    "codeSimplification": "28%（621行→444行，2026-01-15）",
-    "contextOptimization": "完整context传递链（2026-01-15，+83行）"
+    "dockerImageSize": "4.5-5MB (Scratch, UPX压缩)",
+    "memoryUsage": "约30MB",
+    "startupTime": "<2秒",
+    "apiResponseTime": "Redis<50ms",
+    "dailyVisits": "约100访问",
+    "redisConnections": "3个连接池",
+    "dataUpdateStrategy": "按需更新（24小时阈值）",
+    "dataStorage": "永久存储（基于数据time字段判断过期）"
   },
-  "ignores": {
-    "patterns": [
-      "node_modules/**",
-      ".git/**",
-      "dist/**",
-      "build/**",
-      "web-dist/**",
-      "__pycache__/**",
-      "*.lock",
-      "*.log",
-      "*.bin",
-      "*.pdf",
-      "*.png",
-      "*.jpg",
-      "*.jpeg",
-      "*.gif",
-      "*.mp4",
-      "*.zip",
-      "*.tar",
-      "*.gz",
-      ".env",
-      ".env.local",
-      ".env.production"
-    ],
-    "description": "基于.gitignore规则（合并默认规则）"
-  },
-  "scanDetails": {
-    "strategy": "AI上下文完整初始化（三阶段扫描）",
-    "reason": "项目文档完善，需要进行完整初始化并更新时间戳",
-    "stages": [
-      "阶段A：全仓清点（获取文件清单与目录结构）",
-      "阶段B：模块优先扫描（读取核心代码文件，验证状态）",
-      "阶段C：深度补捞（根据扫描结果确认无缺口）"
-    ],
-    "scanDuration": "约5分钟",
-    "filesRead": 27,
-    "modulesIdentified": 8,
-    "interfacesDocumented": 16,
-    "optimizationsIdentified": 20,
-    "gapsIdentified": 1,
-    "recentChanges": [
-      "2026-01-15: Context使用优化（完整context传递链，+83行）",
-      "2026-01-15: 代码简化28%（移除内存缓存层）",
-      "2026-01-15: 添加Air热重载支持",
-      "2026-01-15: 新增序号列显示",
-      "2026-01-15: 表格配置文件化（gridConfig.ts）",
-      "2026-01-15: 启动时预加载数据功能",
-      "2026-01-14: TTL机制移除（数据永久存储）",
-      "2026-01-14: 容错机制（更新失败时返回旧数据）",
-      "2026-01-14: 过期判断重构（基于数据time字段）",
-      "2026-01-11: 小项目优化（连接池3个、超时10秒、重试1次）",
-      "2026-01-11: Docker镜像优化（UPX压缩，-51%）"
+  "documentationSimplification": {
+    "before": "3692行",
+    "after": "2159行",
+    "reduction": "1533行",
+    "percentage": "-42%",
+    "date": "2026-01-20",
+    "removedContent": [
+      "历史优化记录（2026-01-XX优化）",
+      "变更记录（Changelog）",
+      "代码质量评分",
+      "扩展建议和未来计划",
+      "废弃功能说明",
+      "测试建议章节",
+      "性能优化建议",
+      "冗余注释"
     ]
   }
 }
