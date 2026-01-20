@@ -1,48 +1,57 @@
-name: CI/CD Pipeline
+name: Docker 镜像构建与发布
 
 on:
   push:
     branches: [ main ]
     tags:
-      - 'v*.*.*'  # 匹配 v1.0.0, v2.1.3 等版本标签
+      - 'v*.*.*'
     paths-ignore:
       - '**.md'
       - 'LICENSE'
       - '.gitignore'
-  workflow_dispatch:  # 支持手动触发
+      - '.claude/**'
+  workflow_dispatch:
+  schedule:
+    # 每周日凌晨 2 点清理缓存
+    - cron: '0 2 * * 0'
 
 env:
   REGISTRY: docker.io
   IMAGE_NAME: 782042369/top1000-iyuu
+  # 最大缓存数量（保留最新的 N 个缓存）
+  MAX_CACHE_COUNT: 5
 
 jobs:
   build-and-push:
+    name: 构建并推送 Docker 镜像
     runs-on: ubuntu-latest
     concurrency:
       group: ${{ github.workflow }}-${{ github.ref }}
-      cancel-in-progress: true  # 取消正在进行的旧构建
+      cancel-in-progress: true
     permissions:
       contents: read
       packages: write
-      actions: write  # 清理缓存需要的权限
+      actions: write
 
     steps:
-      - name: Checkout Code
+      - name: 📥 检出代码
         uses: actions/checkout@v4
 
-      - name: Set up QEMU
-        uses: docker/setup-qemu-action@v3
-
-      - name: Set up Docker Buildx
+      - name: 🔧 设置 Docker Buildx（仅 AMD64）
         uses: docker/setup-buildx-action@v3
+        with:
+          # 启用构建缓存
+          driver-opts: |
+            image=moby/buildkit:latest
+            network=host
 
-      - name: Login to Docker Hub
+      - name: 🔐 登录 Docker Hub
         uses: docker/login-action@v3
         with:
           username: ${{ secrets.DOCKERUSERNAME }}
           password: ${{ secrets.DOCKERPASSWORD }}
 
-      - name: Extract metadata
+      - name: 📋 提取镜像元数据
         id: meta
         uses: docker/metadata-action@v5
         with:
@@ -51,7 +60,7 @@ jobs:
             type=raw,value=latest,enable={{is_default_branch}}
             type=semver,pattern={{version}}
             type=semver,pattern={{major}}.{{minor}}
-            type=sha,prefix={{branch}}-,format=short  # 添加 commit SHA 标签
+            type=sha,prefix={{branch}}-,format=short
           labels: |
             org.opencontainers.image.title=Top1000 PT资源追踪系统
             org.opencontainers.image.description=PT站点资源追踪系统，极简架构，Docker镜像仅4.5-5MB
@@ -61,66 +70,123 @@ jobs:
             org.opencontainers.image.created=${{ github.event.head_commit.timestamp }}
             org.opencontainers.image.licenses=MIT
 
-      - name: Build and Push
+      - name: 🏗️ 构建并推送镜像（AMD64）
         id: build
         uses: docker/build-push-action@v5
         with:
           context: .
           file: ./Dockerfile
+          platforms: linux/amd64
           push: true
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
-          cache-from: type=gha
-          cache-to: type=gha,mode=min  # 只缓存最终层，减少缓存大小
-          provenance: false  # 禁用证明（SBOM）
-          sbom: false  # 禁用 SBOM（个人项目不需要）
+          # 缓存配置：优化构建速度
+          cache-from: |
+            type=gha
+            type=local,src=/tmp/.buildx-cache
+          cache-to: |
+            type=gha,mode=max
+            type=local,dest=/tmp/.buildx-cache-new,mode=max
+          # 构建参数
+          build-args: |
+            BUILDKIT_INLINE_CACHE=1
+            GOMODCACHE=/go/pkg/mod
+          # 禁用不必要的功能
+          provenance: false
+          sbom: false
 
-      - name: Image digest
+      # 移动缓存（避免缓存无限增长）
+      - name: 🔄 优化本地缓存
         run: |
-          echo "镜像标签: ${{ steps.meta.outputs.tags }}"
-          echo "镜像摘要: ${{ steps.build.outputs.digest }}"
+          echo "🔧 优化构建缓存..."
+          if [ -d /tmp/.buildx-cache ]; then
+            echo "📊 当前缓存大小："
+            du -sh /tmp/.buildx-cache
+            # 备份旧缓存
+            rm -rf /tmp/.buildx-cache-backup || true
+            mv /tmp/.buildx-cache /tmp/.buildx-cache-backup || true
+          fi
+          # 使用新缓存
+          if [ -d /tmp/.buildx-cache-new ]; then
+            mv /tmp/.buildx-cache-new /tmp/.buildx-cache || true
+          fi
+          # 清理备份
+          rm -rf /tmp/.buildx-cache-backup || true
+          echo "✅ 缓存优化完成"
 
-      - name: Clean Old Cache
+      - name: 📊 显示镜像信息
+        run: |
+          echo "📦 镜像标签: ${{ steps.meta.outputs.tags }}"
+          echo "🔑 镜像摘要: ${{ steps.build.outputs.digest }}"
+          echo "⏰ 构建时间: $(date -u '+%Y-%m-%d %H:%M:%S UTC')"
+
+      - name: 🧹 清理旧缓存
+        if: github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'
         uses: actions/github-script@v7
         with:
           script: |
-            const now = new Date()
-            const thirtyDaysAgo = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000)
-            let page = 1
-            let deletedCount = 0
+            const maxCacheCount = ${{ env.MAX_CACHE_COUNT }};
 
-            // 循环处理所有页的缓存（每页最多100个）
+            console.log(`🧹 开始清理缓存...`);
+            console.log(`🔢 最大保留数量：${maxCacheCount} 个`);
+
+            let page = 1;
+            let allCaches = [];
+
+            // 收集所有缓存
             while (true) {
               const caches = await github.rest.actions.getActionsCacheList({
                 owner: context.repo.owner,
                 repo: context.repo.repo,
-                per_page: 100,  // 每页最多100个
+                per_page: 100,
                 page: page,
-              })
+              });
 
               if (!caches.data.actions_caches || caches.data.actions_caches.length === 0) {
-                break  // 没有更多缓存了
+                break;
               }
 
-              for (const cache of caches.data.actions_caches) {
-                const lastUsed = new Date(cache.last_accessed_at)
-                if (lastUsed < thirtyDaysAgo) {
-                  console.log(`Deleting cache: ${cache.key} (last used: ${cache.last_accessed_at})`)
-                  await github.rest.actions.deleteActionsCacheById({
-                    owner: context.repo.owner,
-                    repo: context.repo.repo,
-                    cache_id: cache.id,
-                  })
-                  deletedCount++
-                }
-              }
+              allCaches = allCaches.concat(caches.data.actions_caches);
 
-              // 如果当前页少于100个，说明已经是最后一页了
               if (caches.data.actions_caches.length < 100) {
-                break
+                break;
               }
 
-              page++
+              page++;
             }
 
-            console.log(`✅ 总共删除了 ${deletedCount} 个超过30天的缓存`)
+            console.log(`📦 总缓存数量：${allCaches.length}`);
+
+            // 按最后使用时间排序（最新的在前）
+            allCaches.sort((a, b) => new Date(b.last_accessed_at) - new Date(a.last_accessed_at));
+
+            // 只保留最新的 maxCacheCount 个缓存
+            const deletedCount = Math.max(0, allCaches.length - maxCacheCount);
+
+            if (deletedCount > 0) {
+              console.log(`🗑️  将删除 ${deletedCount} 个旧缓存...`);
+
+              for (let i = maxCacheCount; i < allCaches.length; i++) {
+                const cache = allCaches[i];
+                console.log(`🗑️  删除缓存: ${cache.key}`);
+                console.log(`   最后使用: ${cache.last_accessed_at}`);
+                console.log(`   大小: ${cache.size_in_bytes} bytes`);
+
+                await github.rest.actions.deleteActionsCacheById({
+                  owner: context.repo.owner,
+                  repo: context.repo.repo,
+                  cache_id: cache.id,
+                });
+              }
+
+              // 计算释放的空间
+              const deletedCaches = allCaches.slice(maxCacheCount);
+              const deletedSize = deletedCaches.reduce((sum, cache) => sum + (cache.size_in_bytes || 0), 0);
+              console.log(`💾 释放空间: ${(deletedSize / 1024 / 1024).toFixed(2)} MB`);
+            } else {
+              console.log(`✅ 缓存数量在限制范围内，无需清理`);
+            }
+
+            console.log(`\n✨ 清理完成！`);
+            console.log(`🗑️  删除数量: ${deletedCount} 个`);
+            console.log(`✅ 保留数量: ${Math.min(allCaches.length, maxCacheCount)} 个`);
