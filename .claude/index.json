@@ -1,313 +1,312 @@
 {
   "metadata": {
-    "version": "4.0.0",
-    "generatedAt": "2026-01-20T15:54:00+08:00",
-    "tool": "Claude Code (Sonnet 4.5)",
-    "projectName": "top1000",
-    "description": "PT站点资源追踪系统 - 小型个人项目，日请求约100次，Go + Fiber + Redis + AG Grid"
-  },
-  "summary": {
-    "totalModules": 8,
-    "documentationCoverage": 100,
-    "lastUpdate": "2026-01-20 - 文档精简完成（移除历史记录，减少39%冗余内容）"
+    "projectName": "Top1000",
+    "description": "PT站点资源追踪系统（小型个人项目，日请求约100次）",
+    "lastUpdated": "2026-01-26T20:07:32+08:00",
+    "version": "1.0.0",
+    "dockerImageSize": "4.5-5MB",
+    "coverage": "100%"
   },
   "modules": [
     {
       "path": "cmd/top1000",
       "name": "程序入口",
       "language": "Go",
+      "lines": 18,
       "entryPoint": "main.go",
       "responsibilities": [
-        "加载环境变量（.env或系统变量）",
-        "验证必需环境变量（Redis配置）",
-        "启动HTTP服务器"
+        "加载环境变量",
+        "启动服务器"
       ],
-      "keyFiles": ["main.go"],
       "documentation": "cmd/top1000/CLAUDE.md",
-      "linesOfCode": 18,
-      "dependencies": ["internal/server", "github.com/joho/godotenv"]
+      "dependencies": [
+        "internal/server",
+        "internal/config"
+      ]
     },
     {
       "path": "internal/config",
       "name": "配置管理",
       "language": "Go",
+      "lines": 115,
       "entryPoint": "config.go",
       "responsibilities": [
         "从环境变量读取配置",
-        "提供默认值（PORT=7066、CACHE_DURATION=24h等）",
-        "启动时验证配置（REDIS_ADDR、REDIS_PASSWORD必须）"
+        "启动时验证配置",
+        "提供配置访问接口"
       ],
-      "keyFiles": ["config.go"],
       "documentation": "internal/config/CLAUDE.md",
-      "linesOfCode": 120,
-      "interfaces": [
-        {"name": "Load", "type": "Function", "description": "加载配置（单例模式）"},
-        {"name": "Validate", "type": "Function", "description": "验证配置有效性"},
-        {"name": "Get", "type": "Function", "description": "获取配置实例"}
+      "dependencies": [],
+      "envVariables": [
+        "REDIS_ADDR",
+        "REDIS_PASSWORD",
+        "REDIS_DB",
+        "IYUU_SIGN"
       ]
     },
     {
       "path": "internal/model",
       "name": "数据模型",
       "language": "Go",
+      "lines": 78,
       "entryPoint": "types.go",
       "responsibilities": [
-        "定义数据结构（SiteItem、ProcessedData）",
-        "数据验证功能（Validate方法）",
-        "JSON序列化支持"
+        "定义数据结构",
+        "提供数据验证"
       ],
-      "keyFiles": ["types.go"],
       "documentation": "internal/model/CLAUDE.md",
-      "linesOfCode": 75,
-      "interfaces": [
-        {"name": "SiteItem.Validate", "type": "Method", "description": "验证单条数据"},
-        {"name": "ProcessedData.Validate", "type": "Method", "description": "验证完整数据"}
-      ]
+      "dependencies": []
     },
     {
       "path": "internal/api",
       "name": "API处理层",
       "language": "Go",
+      "lines": 202,
       "entryPoint": "handlers.go",
       "responsibilities": [
-        "处理HTTP请求（/top1000.json）",
-        "检查数据是否过期（基于time字段）",
-        "触发数据更新（按需更新）",
-        "容错机制（更新失败时返回Redis旧数据）",
-        "返回JSON数据"
+        "处理HTTP请求",
+        "实现容错机制",
+        "提供Top1000数据接口",
+        "提供站点配置接口"
       ],
-      "keyFiles": ["handlers.go"],
       "documentation": "internal/api/CLAUDE.md",
-      "linesOfCode": 103,
-      "interfaces": [
-        {"name": "GetTop1000Data", "type": "HTTP Handler", "method": "GET", "path": "/top1000.json", "description": "获取Top1000数据（支持context传递，15秒超时）"}
+      "dependencies": [
+        "internal/storage",
+        "internal/crawler",
+        "internal/config",
+        "internal/model"
       ],
-      "dependencies": ["internal/crawler", "internal/storage", "internal/model", "github.com/gofiber/fiber/v2"]
+      "routes": [
+        "/top1000.json",
+        "/sites.json"
+      ]
     },
     {
       "path": "internal/storage",
       "name": "Redis存储",
       "language": "Go",
+      "lines": 311,
       "entryPoint": "redis.go",
       "responsibilities": [
-        "管理Redis连接（连接池：3个连接）",
-        "存储数据（SaveData，永久存储，不设置TTL）",
-        "读取数据（LoadData）",
-        "TTL管理（IsDataExpired，基于数据time字段判断，24小时阈值）",
-        "数据验证（存前检查）",
-        "并发控制（isUpdating标记+互斥锁）"
+        "管理Redis连接",
+        "存储数据",
+        "读取数据",
+        "检查过期",
+        "支持Context传递"
       ],
-      "keyFiles": ["redis.go"],
       "documentation": "internal/storage/CLAUDE.md",
-      "linesOfCode": 183,
-      "interfaces": [
-        {"name": "InitRedis", "type": "Function", "description": "初始化Redis连接"},
-        {"name": "SaveData", "type": "Function", "description": "存储数据到Redis"},
-        {"name": "LoadData", "type": "Function", "description": "从Redis读取数据"},
-        {"name": "IsDataExpired", "type": "Function", "description": "检查数据是否过期"},
-        {"name": "DataExists", "type": "Function", "description": "检查数据是否存在"},
-        {"name": "SaveDataWithContext", "type": "Function", "description": "支持context的存储函数"},
-        {"name": "LoadDataWithContext", "type": "Function", "description": "支持context的加载函数"},
-        {"name": "IsDataExpiredWithContext", "type": "Function", "description": "支持context的过期检查"},
-        {"name": "DataExistsWithContext", "type": "Function", "description": "支持context的存在性检查"}
+      "dependencies": [
+        "internal/config",
+        "internal/model"
       ],
-      "dependencies": ["internal/config", "internal/model", "github.com/redis/go-redis/v9"]
+      "redisKeys": [
+        "top1000:data",
+        "top1000:sites"
+      ]
     },
     {
       "path": "internal/crawler",
       "name": "数据爬取",
       "language": "Go",
+      "lines": 254,
       "entryPoint": "scheduler.go",
       "responsibilities": [
-        "从IYUU API爬取数据",
-        "解析文本数据（正则提取站名、ID、重复度、大小）",
-        "按需更新（过期时才获取，无定时任务）",
-        "重试机制（1次重试）",
-        "启动时预加载数据（避免首次访问超时）"
+        "从IYUU API获取数据",
+        "解析文本数据",
+        "预加载数据",
+        "支持Context传递"
       ],
-      "keyFiles": ["scheduler.go"],
       "documentation": "internal/crawler/CLAUDE.md",
-      "linesOfCode": 199,
-      "interfaces": [
-        {"name": "FetchTop1000", "type": "Function", "description": "从IYUU获取数据，带重试机制"},
-        {"name": "PreloadData", "type": "Function", "description": "启动时预加载数据"},
-        {"name": "FetchTop1000WithContext", "type": "Function", "description": "支持context的数据获取"}
+      "dependencies": [
+        "internal/config",
+        "internal/model",
+        "internal/storage"
       ],
-      "dependencies": ["internal/config", "internal/model", "internal/storage"]
+      "apiEndpoints": [
+        "https://api.iyuu.cn/top1000.php"
+      ]
     },
     {
       "path": "internal/server",
       "name": "HTTP服务器",
       "language": "Go",
+      "lines": 176,
       "entryPoint": "server.go",
       "responsibilities": [
-        "配置HTTP服务器（Fiber框架）",
-        "注册中间件（日志、CORS、安全头、限流、压缩）",
-        "注册路由（/top1000.json、静态文件）",
-        "初始化Redis连接",
+        "配置Fiber应用",
+        "配置中间件和路由",
+        "初始化Redis",
         "启动时预加载数据",
-        "资源清理（Redis关闭）"
+        "配置安全响应头"
       ],
-      "keyFiles": ["server.go"],
       "documentation": "internal/server/CLAUDE.md",
-      "linesOfCode": 142,
-      "interfaces": [
-        {"name": "Start", "type": "Function", "description": "启动Web服务器"}
-      ],
-      "dependencies": ["internal/api", "internal/config", "internal/storage", "internal/crawler", "github.com/gofiber/fiber/v2"]
+      "dependencies": [
+        "internal/config",
+        "internal/api",
+        "internal/storage",
+        "internal/crawler"
+      ]
     },
     {
       "path": "web",
-      "name": "Web前端应用",
+      "name": "前端应用",
       "language": "TypeScript",
       "entryPoint": "src/main.ts",
-      "framework": "Vite 8.0 + AG Grid Enterprise 35.0",
       "responsibilities": [
-        "使用AG Grid展示数据表格（1000条记录）",
-        "支持列过滤、排序（名字可过滤，大小可排序）",
-        "操作列（跳转详情、下载种子）",
-        "中文本地化",
-        "响应式布局"
+        "AG Grid表格展示",
+        "站点配置动态加载",
+        "用户交互"
+      ],
+      "documentation": "web/CLAUDE.md",
+      "dependencies": [],
+      "techStack": [
+        "Vite 8.0.0-beta.5",
+        "AG Grid Community 35.0.0",
+        "TypeScript 5.9.3",
+        "pnpm 10.12.4+"
       ],
       "keyFiles": [
         "src/main.ts",
         "src/gridConfig.ts",
-        "src/types.d.ts",
-        "src/utils/index.ts",
-        "src/utils/operationRender.ts",
         "src/utils/config.ts",
-        "src/utils/iyuuSites.ts"
-      ],
-      "documentation": "web/CLAUDE.md",
-      "interfaces": [
-        {"name": "convertSizeToKb", "type": "Function", "description": "文件大小转换为KB"},
-        {"name": "fetchData", "type": "Function", "description": "获取Top1000数据"},
-        {"name": "operationRender", "type": "Function", "description": "操作列渲染器"}
-      ],
-      "dependencies": ["ag-grid-community", "ag-grid-enterprise", "@ag-grid-community/locale"]
-    }
-  ],
-  "gaps": [
-    {
-      "module": "全部模块",
-      "missing": "单元测试、集成测试、E2E测试",
-      "recommendation": "小型个人项目（日访问100次）不追求高测试覆盖。核心逻辑清晰，易于理解和维护。如需测试，建议优先级：crawler（数据解析）、model（数据验证）、api（容错机制）。"
-    }
-  ],
-  "nextSteps": [
-    "添加核心Go模块单元测试（低优先级，小项目可选）"
-  ],
-  "codeQuality": {
-    "score": 95,
-    "grade": "S",
-    "breakdown": {
-      "架构": 88,
-      "代码": 95,
-      "性能": 92,
-      "并发": 95,
-      "安全": 95,
-      "维护": 95,
-      "测试": 10,
-      "错误处理": 95,
-      "部署": 95,
-      "最佳实践": 95
-    }
-  },
-  "languageStats": {
-    "Go": {
-      "fileCount": 7,
-      "modules": ["cmd/top1000", "internal/config", "internal/model", "internal/api", "internal/storage", "internal/crawler", "internal/server"],
-      "totalLines": 840
-    },
-    "TypeScript": {
-      "fileCount": 6,
-      "modules": ["web"],
-      "framework": "Vite + AG Grid",
-      "totalLines": 210
-    },
-    "Markdown": {
-      "fileCount": 9,
-      "description": "项目文档（CLAUDE.md），100%模块覆盖",
-      "totalLines": 2159,
-      "simplification": "从3692行精简到2159行，减少42%"
-    }
-  },
-  "documentation": {
-    "rootLevel": {
-      "path": "CLAUDE.md",
-      "sections": [
-        "项目简介",
-        "技术架构（系统架构图、数据流）",
-        "模块结构（Mermaid可点击导航）",
-        "模块索引（表格）",
-        "目录结构",
-        "快速开始（环境要求、配置、本地开发、Docker部署）",
-        "技术栈（后端、前端、部署、开发工具）",
-        "常见问题",
-        "外部依赖",
-        "核心配置文件"
+        "src/utils/operationRender.ts"
       ]
-    },
-    "moduleLevel": [
-      {"path": "cmd/top1000/CLAUDE.md", "lines": 175},
-      {"path": "internal/api/CLAUDE.md", "lines": 160},
-      {"path": "internal/config/CLAUDE.md", "lines": 182},
-      {"path": "internal/crawler/CLAUDE.md", "lines": 257},
-      {"path": "internal/model/CLAUDE.md", "lines": 252},
-      {"path": "internal/server/CLAUDE.md", "lines": 281},
-      {"path": "internal/storage/CLAUDE.md", "lines": 255},
-      {"path": "web/CLAUDE.md", "lines": 405}
-    ],
-    "coveragePercent": 100
-  },
+    }
+  ],
   "techStack": {
     "backend": {
-      "language": "Go 1.25.5",
-      "framework": "Fiber v2.52.10",
+      "language": "Go",
+      "version": "1.25.5",
+      "framework": "Fiber",
+      "frameworkVersion": "v2.52.10",
       "database": "Redis 5.0+"
     },
     "frontend": {
-      "language": "TypeScript 5.9.3",
-      "framework": "Vite 8.0.0-beta.5",
-      "ui": "AG Grid Enterprise 35.0.0"
+      "language": "TypeScript",
+      "version": "5.9.3",
+      "framework": "Vite",
+      "frameworkVersion": "8.0.0-beta.5",
+      "uiLibrary": "AG Grid Community",
+      "uiVersion": "35.0.0",
+      "packageManager": "pnpm",
+      "packageVersion": "10.12.4+"
     },
     "deployment": {
       "container": "Docker",
-      "baseImage": "scratch (4.5-5MB, UPX压缩)",
-      "ports": [7066]
-    },
-    "devTools": {
-      "air": "Go热重载",
-      "pnpm": "前端包管理",
-      "eslint": "代码检查",
-      "prettier": "代码格式化"
+      "baseImage": "Scratch",
+      "imageSize": "4.5-5MB (UPX压缩)",
+      "port": 7066,
+      "ci": "GitHub Actions"
     }
   },
-  "performanceMetrics": {
-    "dockerImageSize": "4.5-5MB (Scratch, UPX压缩)",
-    "memoryUsage": "约30MB",
-    "startupTime": "<2秒",
-    "apiResponseTime": "Redis<50ms",
-    "dailyVisits": "约100访问",
-    "redisConnections": "3个连接池",
-    "dataUpdateStrategy": "按需更新（24小时阈值）",
-    "dataStorage": "永久存储（基于数据time字段判断过期）"
+  "externalDependencies": {
+    "redis": {
+      "required": true,
+      "purpose": "数据存储 + 过期检测",
+      "poolSize": 3,
+      "storageStrategy": "永久存储（不设置TTL）",
+      "updateThreshold": "24小时"
+    },
+    "iyuuApi": {
+      "top1000": {
+        "url": "https://api.iyuu.cn/top1000.php",
+        "timeout": "15秒",
+        "updateStrategy": "按需更新（过期才拉）"
+      },
+      "sites": {
+        "url": "https://api.iyuu.cn/index.php",
+        "auth": "需要IYUU_SIGN",
+        "ttl": "24小时"
+      }
+    }
   },
-  "documentationSimplification": {
-    "before": "3692行",
-    "after": "2159行",
-    "reduction": "1533行",
-    "percentage": "-42%",
-    "date": "2026-01-20",
-    "removedContent": [
-      "历史优化记录（2026-01-XX优化）",
-      "变更记录（Changelog）",
-      "代码质量评分",
-      "扩展建议和未来计划",
-      "废弃功能说明",
-      "测试建议章节",
-      "性能优化建议",
-      "冗余注释"
+  "fileStructure": {
+    "goModules": [
+      "cmd/top1000/main.go",
+      "internal/api/handlers.go",
+      "internal/config/config.go",
+      "internal/crawler/scheduler.go",
+      "internal/model/types.go",
+      "internal/server/server.go",
+      "internal/storage/redis.go"
+    ],
+    "frontendSource": [
+      "web/src/main.ts",
+      "web/src/gridConfig.ts",
+      "web/src/types.d.ts",
+      "web/src/utils/config.ts",
+      "web/src/utils/operationRender.ts",
+      "web/src/utils/index.ts",
+      "web/src/index.css"
+    ],
+    "configFiles": [
+      "go.mod",
+      ".env.example",
+      ".air.toml",
+      "Dockerfile",
+      "docker-compose.yaml",
+      "web/package.json",
+      "web/vite.config.ts"
     ]
-  }
+  },
+  "statistics": {
+    "totalGoLines": 1154,
+    "totalModules": 8,
+    "goModules": 7,
+    "frontendModules": 1,
+    "documentationCoverage": "100%",
+    "ignoredPatterns": [
+      "node_modules/**",
+      ".git/**",
+      ".github/**",
+      "dist/**",
+      "build/**",
+      ".next/**",
+      "__pycache__/**",
+      "*.lock",
+      "*.log",
+      "*.bin",
+      "*.pdf",
+      "*.png",
+      "*.jpg",
+      "*.jpeg",
+      "*.gif",
+      "*.mp4",
+      "*.zip",
+      "*.tar",
+      "*.gz",
+      "web-dist/**",
+      "tmp/**"
+    ]
+  },
+  "changelog": [
+    {
+      "date": "2026-01-26",
+      "version": "1.0.0",
+      "changes": [
+        "重大更新：站点配置动态加载",
+        "新增: /sites.json API接口",
+        "新增: IYUU_SIGN 环境变量配置",
+        "优化: 前端启动时自动加载站点配置",
+        "优化: 操作列渲染器改为动态查询站点配置",
+        "移除: 前端硬编码的iyuuSites.ts文件（118个站点配置）",
+        "优化: Context支持全面覆盖（API、Storage、Crawler）",
+        "优化: 时区处理修复（北京时间UTC+8转UTC）"
+      ]
+    },
+    {
+      "date": "2026-01-20",
+      "version": "0.9.0",
+      "changes": [
+        "初始化项目文档",
+        "完成模块划分和文档生成"
+      ]
+    }
+  ],
+  "gaps": [],
+  "nextSteps": [
+    "所有模块已完成扫描和文档化",
+    "文档覆盖率100%",
+    "无缺口需要补充"
+  ]
 }

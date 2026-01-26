@@ -2,7 +2,7 @@
 
 > PT站点资源追踪系统（小型个人项目，日请求约100次）
 >
-> Docker镜像：4.5-5MB（Scratch基础镜像）
+> Docker镜像：4.5-5MB（Scratch基础镜像 + UPX压缩）
 
 ---
 
@@ -12,7 +12,7 @@
 
 1. **极简架构**：去除过度设计，直接读Redis
 2. **容错机制**：爬取失败时返回Redis旧数据，保证服务可用
-3. **自动更新**：数据过期时自动爬取，无需定时任务
+3. **按需更新**：数据过期时自动爬取，无需定时任务
 4. **热重载开发**：使用Air实现Go代码热重载，提升开发体验
 5. **极简部署**：单Docker容器即可运行，镜像仅4.5-5MB
 
@@ -29,6 +29,7 @@
 │  ┌───────────────────────────────┐  │
 │  │   Go后端（Fiber框架）         │  │
 │  │   • /top1000.json - 数据接口  │  │
+│  │   • /sites.json - 站点接口    │  │
 │  │   • 静态文件服务              │  │
 │  └───────────────────────────────┘  │
 │             ↓                        │
@@ -36,6 +37,7 @@
 │  │   前端（AG Grid表格）         │  │
 │  │   • 显示1000个资源            │  │
 │  │   • 序号列、过滤、排序        │  │
+│  │   • 站点跳转、种子下载        │  │
 │  └───────────────────────────────┘  │
 └─────────────────────────────────────┘
              ↓
@@ -48,7 +50,8 @@
              ↓
 ┌─────────────────────────────────────┐
 │     IYUU API（数据源）               │
-│  api.iyuu.cn/top1000.php            │
+│  • api.iyuu.cn/top1000.php         │
+│  • api.iyuu.cn/index.php (站点)    │
 └─────────────────────────────────────┘
 ```
 
@@ -70,7 +73,7 @@
 
 ---
 
-## 模块结构
+## 模块结构图
 
 ```mermaid
 graph TD
@@ -113,13 +116,13 @@ graph TD
 | 模块路径 | 模块名称 | 语言 | 代码行数 | 职责 | 文档链接 |
 |---------|---------|------|---------|------|---------|
 | `cmd/top1000` | 程序入口 | Go | 18行 | 加载环境变量、启动服务器 | [查看](cmd/top1000/CLAUDE.md) |
-| `internal/config` | 配置管理 | Go | 120行 | 从环境变量读取配置、启动时验证 | [查看](internal/config/CLAUDE.md) |
-| `internal/model` | 数据模型 | Go | 75行 | 定义数据结构、提供数据验证 | [查看](internal/model/CLAUDE.md) |
-| `internal/api` | API处理层 | Go | 103行 | 处理HTTP请求、容错机制 | [查看](internal/api/CLAUDE.md) |
-| `internal/storage` | Redis存储 | Go | 183行 | 管理Redis连接、TTL管理 | [查看](internal/storage/CLAUDE.md) |
-| `internal/crawler` | 数据爬取 | Go | 199行 | 从IYUU API获取数据、解析文本 | [查看](internal/crawler/CLAUDE.md) |
-| `internal/server` | HTTP服务器 | Go | 142行 | 配置Fiber应用、中间件和路由 | [查看](internal/server/CLAUDE.md) |
-| `web` | 前端应用 | TypeScript | - | AG Grid表格展示、用户交互 | [查看](web/CLAUDE.md) |
+| `internal/config` | 配置管理 | Go | 115行 | 从环境变量读取配置、启动时验证 | [查看](internal/config/CLAUDE.md) |
+| `internal/model` | 数据模型 | Go | 78行 | 定义数据结构、提供数据验证 | [查看](internal/model/CLAUDE.md) |
+| `internal/api` | API处理层 | Go | 202行 | 处理HTTP请求、容错机制、站点接口 | [查看](internal/api/CLAUDE.md) |
+| `internal/storage` | Redis存储 | Go | 311行 | 管理Redis连接、TTL管理、Context支持 | [查看](internal/storage/CLAUDE.md) |
+| `internal/crawler` | 数据爬取 | Go | 254行 | 从IYUU API获取数据、解析文本、预加载 | [查看](internal/crawler/CLAUDE.md) |
+| `internal/server` | HTTP服务器 | Go | 176行 | 配置Fiber应用、中间件和路由、安全头 | [查看](internal/server/CLAUDE.md) |
+| `web` | 前端应用 | TypeScript | - | AG Grid表格展示、站点配置动态加载 | [查看](web/CLAUDE.md) |
 
 ---
 
@@ -132,22 +135,22 @@ top1000/
 │   └── CLAUDE.md         # 模块文档
 │
 ├── internal/             # 核心代码（Go）
-│   ├── api/              # API处理（103行）
+│   ├── api/              # API处理（202行）
 │   │   ├── handlers.go
 │   │   └── CLAUDE.md
-│   ├── config/           # 配置管理（120行）
+│   ├── config/           # 配置管理（115行）
 │   │   ├── config.go
 │   │   └── CLAUDE.md
-│   ├── crawler/          # 爬虫（199行）
+│   ├── crawler/          # 爬虫（254行）
 │   │   ├── scheduler.go
 │   │   └── CLAUDE.md
-│   ├── model/            # 数据结构（75行）
+│   ├── model/            # 数据结构（78行）
 │   │   ├── types.go
 │   │   └── CLAUDE.md
-│   ├── server/           # HTTP服务器（142行）
+│   ├── server/           # HTTP服务器（176行）
 │   │   ├── server.go
 │   │   └── CLAUDE.md
-│   └── storage/          # Redis存储（183行）
+│   └── storage/          # Redis存储（311行）
 │       ├── redis.go
 │       └── CLAUDE.md
 │
@@ -157,6 +160,9 @@ top1000/
 │   │   ├── gridConfig.ts # 表格配置
 │   │   ├── types.d.ts    # 类型定义
 │   │   └── utils/        # 工具函数
+│   │       ├── config.ts # 站点配置加载
+│   │       ├── operationRender.ts # 操作列渲染
+│   │       └── index.ts  # 数据获取
 │   ├── package.json
 │   ├── vite.config.ts
 │   └── CLAUDE.md
@@ -193,6 +199,10 @@ top1000/
 # Redis配置（必填，否则无法运行）
 REDIS_ADDR=127.0.0.1:26739
 REDIS_PASSWORD=填写Redis密码
+REDIS_DB=0
+
+# IYUU配置（可选，用于调用站点API）
+IYUU_SIGN=填写IYUU签名
 ```
 
 ### 本地开发
@@ -201,7 +211,7 @@ REDIS_PASSWORD=填写Redis密码
 
 ```bash
 # 1. 安装Air
-go install github.com/cosmtrek/air@latest
+go install github.com/air-verse/air@latest
 
 # 2. 启动服务（代码变更自动重启）
 air
@@ -232,7 +242,7 @@ cp .env.example .env
 docker-compose up -d
 
 # 3. 查看日志
-docker-compose logs -f top1000
+docker-compose logs -f top1000-iyuu
 
 # 4. 停止服务
 docker-compose down
@@ -274,7 +284,7 @@ docker logs -f top1000
 |------|------|------|
 | 语言 | TypeScript | 5.9.3 |
 | 框架 | Vite | 8.0.0-beta.5 |
-| UI库 | AG Grid Enterprise | 35.0.0 |
+| UI库 | AG Grid Community | 35.0.0 |
 | 包管理器 | pnpm | 10.12.4+ |
 
 ### 部署
@@ -323,7 +333,7 @@ docker logs -f top1000
 
 **A**: 确保安装了Air：
 ```bash
-go install github.com/cosmtrek/air@latest
+go install github.com/air-verse/air@latest
 ```
 
 ### Q: 爬取失败会影响服务吗？
@@ -339,6 +349,14 @@ redis-cli -h <host> -p <port> -a <password>
 ```
 删除后，下次访问会自动触发更新获取新数据。
 
+### Q: 站点配置如何加载？
+
+**A**: 前端启动时自动从`/sites.json`接口加载（需配置`IYUU_SIGN`），支持动态更新。
+
+### Q: 如何添加新的站点配置？
+
+**A**: 无需修改代码，配置`IYUU_SIGN`环境变量后，系统会自动从IYUU API获取最新的站点配置。
+
 ---
 
 ## 外部依赖
@@ -348,9 +366,10 @@ redis-cli -h <host> -p <port> -a <password>
   - 存储策略：永久存储（不设置TTL）
   - 更新检测：基于数据time字段，24小时阈值
 
-- **IYUU API**: `https://api.iyuu.cn/top1000.php`
-  - 超时：30秒
-  - 重试：1次（小项目简化）
+- **IYUU API**: 数据源
+  - Top1000: `https://api.iyuu.cn/top1000.php`
+  - 站点列表: `https://api.iyuu.cn/index.php`（需签名）
+  - 超时：15秒
   - 更新策略：按需更新（过期才拉）
 
 ---
@@ -369,6 +388,33 @@ redis-cli -h <host> -p <port> -a <password>
 
 ---
 
-**更新时间**: 2026-01-20
+## 变更记录
+
+### 2026-01-26
+
+**重大更新：站点配置动态加载**
+
+- **新增**: `/sites.json` API接口，支持从IYUU API动态获取站点配置
+- **新增**: `IYUU_SIGN` 环境变量配置
+- **优化**: 前端启动时自动加载站点配置
+- **优化**: 操作列渲染器改为动态查询站点配置
+- **移除**: 前端硬编码的`iyuuSites.ts`文件（118个站点配置）
+- **优化**: Context支持全面覆盖（API、Storage、Crawler）
+- **优化**: 时区处理修复（北京时间UTC+8转UTC）
+
+**影响**：
+- 站点配置不再需要维护硬编码
+- 新站点自动支持
+- 部署时需配置`IYUU_SIGN`才能使用站点跳转功能
+
+### 2026-01-20
+
+- 初始化项目文档
+- 完成模块划分和文档生成
+
+---
+
+**更新时间**: 2026-01-26
 **Docker镜像**: 4.5-5MB
 **文档覆盖率**: 100%
+**当前时间戳**: 2026-01-26 20:07:32
