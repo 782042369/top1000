@@ -26,7 +26,6 @@ RUN echo "📦 下载 Go 依赖..." && \
 # 复制源代码（从  目录）
 COPY cmd ./cmd
 COPY internal ./internal
-COPY pkg ./pkg
 
 # 安装 UPX 压缩工具
 RUN echo "🔧 安装 UPX 压缩工具..." && \
