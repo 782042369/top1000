@@ -14,11 +14,11 @@ import (
 )
 
 const (
-	dialTimeout = 10 * time.Second
-	readTimeout = 5 * time.Second
-	writeTimeout  = 5 * time.Second
-	poolSize      = 3
-	minIdleConns  = 1
+	dialTimeout  = 10 * time.Second
+	readTimeout  = 5 * time.Second
+	writeTimeout = 5 * time.Second
+	poolSize     = 3
+	minIdleConns = 1
 
 	// Redis TTL 特殊返回值
 	ttlKeyNotExist = -2 * time.Second // key 不存在（已过期删除）
@@ -32,6 +32,10 @@ var (
 	redisClient *redis.Client
 	isUpdating   bool
 	updateMutex sync.Mutex
+
+	// 站点数据的更新标记（独立于Top1000数据）
+	isSitesUpdating   bool
+	sitesUpdateMutex sync.Mutex
 )
 
 // InitRedis 连接Redis
@@ -216,4 +220,91 @@ func SetUpdating(updating bool) {
 	updateMutex.Lock()
 	defer updateMutex.Unlock()
 	isUpdating = updating
+}
+
+// SaveSitesData 存储站点数据到Redis（带TTL，24小时过期）
+func SaveSitesData(data interface{}) error {
+	ctx, cancel := context.WithTimeout(context.Background(), writeTimeout)
+	defer cancel()
+	return SaveSitesDataWithContext(ctx, data)
+}
+
+// SaveSitesDataWithContext 存储站点数据到Redis（支持外部传入context）
+func SaveSitesDataWithContext(ctx context.Context, data interface{}) error {
+	jsonData, err := json.Marshal(data)
+	if err != nil {
+		return fmt.Errorf("序列化站点数据失败: %w", err)
+	}
+
+	key := config.DefaultSitesKey
+	// 设置24小时TTL
+	ttl := config.DefaultSitesExpire
+	if err := redisClient.Set(ctx, key, jsonData, ttl).Err(); err != nil {
+		log.Printf("❌ 保存站点数据到Redis失败: %v", err)
+		return fmt.Errorf("保存站点数据到Redis失败: %w", err)
+	}
+
+	log.Printf("✅ 站点数据已保存到Redis（TTL: %v）", ttl)
+	return nil
+}
+
+// LoadSitesData 从Redis读取站点数据
+func LoadSitesData() (interface{}, error) {
+	ctx, cancel := context.WithTimeout(context.Background(), readTimeout)
+	defer cancel()
+	return LoadSitesDataWithContext(ctx)
+}
+
+// LoadSitesDataWithContext 从Redis读取站点数据（支持外部传入context）
+func LoadSitesDataWithContext(ctx context.Context) (interface{}, error) {
+	key := config.DefaultSitesKey
+
+	jsonData, err := redisClient.Get(ctx, key).Bytes()
+	if err != nil {
+		if err == redis.Nil {
+			return nil, fmt.Errorf("站点数据不存在")
+		}
+		return nil, fmt.Errorf("从Redis读取站点数据失败: %w", err)
+	}
+
+	var result interface{}
+	if err := json.Unmarshal(jsonData, &result); err != nil {
+		return nil, fmt.Errorf("解析站点数据JSON失败: %w", err)
+	}
+
+	log.Printf("✅ 从Redis加载站点数据成功")
+	return result, nil
+}
+
+// SitesDataExists 检查站点数据是否存在
+func SitesDataExists() (bool, error) {
+	ctx, cancel := context.WithTimeout(context.Background(), readTimeout)
+	defer cancel()
+	return SitesDataExistsWithContext(ctx)
+}
+
+// SitesDataExistsWithContext 检查站点数据是否存在（支持外部传入context）
+func SitesDataExistsWithContext(ctx context.Context) (bool, error) {
+	key := config.DefaultSitesKey
+
+	exists, err := redisClient.Exists(ctx, key).Result()
+	if err != nil {
+		return false, fmt.Errorf("检查站点数据存在性失败: %w", err)
+	}
+
+	return exists > 0, nil
+}
+
+// IsSitesUpdating 检查是否正在更新站点数据
+func IsSitesUpdating() bool {
+	sitesUpdateMutex.Lock()
+	defer sitesUpdateMutex.Unlock()
+	return isSitesUpdating
+}
+
+// SetSitesUpdating 设置站点数据更新标记
+func SetSitesUpdating(updating bool) {
+	sitesUpdateMutex.Lock()
+	defer sitesUpdateMutex.Unlock()
+	isSitesUpdating = updating
 }
