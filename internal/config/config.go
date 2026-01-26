@@ -9,12 +9,14 @@ import (
 
 // 默认值常量
 const (
-	DefaultPort       = "7066"
-	DefaultWebDistDir = "./web-dist"
-	DefaultAPIURL     = "https://api.iyuu.cn/top1000.php"
-	DefaultDataExpire = 24 * time.Hour // 数据过期检测阈值
-	DefaultRedisDB    = 0              // Redis数据库编号
-	DefaultRedisKey   = "top1000:data" // Redis key
+	DefaultPort         = "7066"
+	DefaultWebDistDir   = "./web-dist"
+	DefaultAPIURL       = "https://api.iyuu.cn/top1000.php"
+	DefaultDataExpire   = 24 * time.Hour // 数据过期检测阈值
+	DefaultRedisDB      = 0              // Redis数据库编号
+	DefaultRedisKey     = "top1000:data" // Redis key（Top1000数据）
+	DefaultSitesKey     = "top1000:sites" // Redis key（站点数据）
+	DefaultSitesExpire  = 24 * time.Hour // 站点数据过期时间
 )
 
 // Config 应用程序配置（只保留必须从环境变量读取的配置）
@@ -22,6 +24,7 @@ type Config struct {
 	RedisAddr     string // Redis地址（必须配置）
 	RedisPassword string // Redis密码（必须配置）
 	RedisDB       int    // Redis数据库编号（可选，默认0）
+	IYYUSign      string // IYUU签名（可选，用于调用站点API）
 }
 
 var appConfig *Config
@@ -36,6 +39,7 @@ func Load() *Config {
 		RedisAddr:     getEnv("REDIS_ADDR", ""),
 		RedisPassword: getEnv("REDIS_PASSWORD", ""),
 		RedisDB:       getEnvInt("REDIS_DB", DefaultRedisDB),
+		IYYUSign:      getEnv("IYUU_SIGN", ""),
 	}
 
 	return appConfig
@@ -96,14 +100,15 @@ func getEnv(key, defaultValue string) string {
 
 // getEnvInt 获取整数环境变量，如果不存在或解析失败则返回默认值
 func getEnvInt(key string, defaultValue int) int {
-	if value := os.Getenv(key); value != "" {
-		// 尝试解析为整数
-		var result int
-		if _, err := fmt.Sscanf(value, "%d", &result); err == nil {
-			return result
-		}
-		// 解析失败，返回默认值
+	value := os.Getenv(key)
+	if value == "" {
 		return defaultValue
 	}
+
+	var result int
+	if _, err := fmt.Sscanf(value, "%d", &result); err == nil {
+		return result
+	}
+
 	return defaultValue
 }

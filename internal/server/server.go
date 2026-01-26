@@ -104,6 +104,7 @@ func securityHeadersMiddleware() fiber.Handler {
 // setupRoutes 配置路由
 func setupRoutes(app *fiber.App) {
 	app.Get("/top1000.json", api.GetTop1000Data)
+	app.Get("/sites.json", api.GetSitesData) // IYUU站点列表接口
 
 	app.Static("/", config.DefaultWebDistDir, fiber.Static{
 		CacheDuration:  0, // Fiber内部缓存禁用，完全由ModifyResponse自定义

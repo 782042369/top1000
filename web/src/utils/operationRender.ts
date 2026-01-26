@@ -4,15 +4,6 @@ import type { DataType } from '../types'
 
 import { ptUrlConfig } from './config'
 
-// ptlsp 站点特殊 ID 映射
-const PTLSP_ID_MAP: Record<string, string> = {
-  649: '297203',
-  8667: '353903',
-  8765: '288867',
-}
-
-const PTLSP_DEFAULT_ID = '297203'
-
 /**
  * 操作列渲染器
  * 生成查看详情和下载种子链接
@@ -21,18 +12,13 @@ export function operationRender(params: ICellRendererParams): string | null {
   const data = params.data as DataType
   const { siteName, siteid } = data
 
-  // 处理 ptlsp 站点的特殊 ID 映射
-  const actualSiteId = siteName === 'ptlsp'
-    ? (PTLSP_ID_MAP[siteid] || PTLSP_DEFAULT_ID)
-    : siteid
-
-  const urlConfig = ptUrlConfig[siteName === 'ptlsp' ? 'audiences' : siteName]
+  const urlConfig = ptUrlConfig[siteName]
   if (!urlConfig) {
     return null
   }
 
-  const detailsUrl = urlConfig.details(actualSiteId)
-  const downloadUrl = urlConfig.download(actualSiteId)
+  const detailsUrl = urlConfig.details(siteid)
+  const downloadUrl = urlConfig.download(siteid)
 
   return renderLinks(detailsUrl, downloadUrl)
 }
