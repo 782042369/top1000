@@ -50,3 +50,4 @@ main
 .env
 .env.local
 .env.production
+web/dist

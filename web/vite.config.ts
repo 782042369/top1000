@@ -1,10 +1,3 @@
-/*
- * @Author: yanghongxuan
- * @Date: 2024-02-04 16:54:18
- * @Description:
- * @LastEditTime: 2025-05-13 15:00:00
- * @LastEditors: yanghongxuan
- */
 import { splitChunks } from '@xiaowaibuzheng/rolldown-vite-split-chunks'
 import { resolve } from 'node:path'
 import { defineConfig } from 'vite'
@@ -26,11 +19,21 @@ export default defineConfig({
         assetFileNames: '[ext]/[name]-[hash].[ext]', // 资源文件像 字体，图片等
       },
     },
-    emptyOutDir: false,
+    emptyOutDir: true,
     chunkSizeWarningLimit: 1000,
   },
   server: {
     open: true,
     host: '0.0.0.0',
+    proxy: {
+      '/sites.json': {
+        target: 'http://127.0.0.1:7066',
+        changeOrigin: true,
+      },
+      '/top1000.json': {
+        target: 'http://127.0.0.1:7066',
+        changeOrigin: true,
+      },
+    },
   },
 })
