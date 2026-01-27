@@ -1,256 +1,277 @@
-# 数据爬取
+# Crawler 模块
 
-> 从IYUU API获取数据并解析
+[根目录](../../CLAUDE.md) > [internal](../) > **crawler**
 
----
+## 模块职责
 
-## 模块功能
+Crawler 模块负责从 IYUU API 爬取 Top1000 数据，并进行解析和验证。它是系统数据源的唯一入口点。
 
-**调用IYUU API，获取Top1000数据，解析后存入Redis**
+## 入口与启动
 
-核心功能：
-1. 发送HTTP请求到IYUU API
-2. 解析返回的文本数据
-3. 转换成结构化数据
-4. 存入Redis（永久存储，不设置TTL）
-5. **启动时预加载数据**
+- **入口文件**: `scheduler.go`
+- **主要函数**:
+  - `FetchTop1000()` - 向后兼容的默认超时版本
+  - `FetchTop1000WithContext(ctx)` - 支持外部 context 的版本
+  - `PreloadData()` - 启动时预加载数据
+- **调用位置**:
+  - `internal/api/handlers.go` - API 层调用
+  - `internal/server/server.go` - 启动预加载
 
----
+## 对外接口
 
-## 核心函数
-
-### FetchTop1000 - 获取数据
+### 导出函数
 
 ```go
+// 向后兼容（使用默认超时）
 func FetchTop1000() (*model.ProcessedData, error)
-```
 
-**功能**：
-1. 加锁（防止并发更新）
-2. 调用doFetch()执行
-3. 解锁
+// 支持外部传入 context（推荐）
+func FetchTop1000WithContext(ctx context.Context) (*model.ProcessedData, error)
 
-**特点**：
-- TryLock（不会阻塞）
-- 失败记录详细日志
-
-### PreloadData - 启动时预加载 ⭐
-
-```go
+// 启动时预加载数据
 func PreloadData()
 ```
 
-**功能**：
-1. 检查Redis中是否已有数据
-2. 检查数据是否过期（基于time字段）
-3. 如果有数据且未过期，跳过预加载
-4. 如果没有数据或已过期，调用API获取新数据
-5. 存入Redis
-
-**优点**：
-- **避免首次访问超时**：服务启动时数据就准备好了
-- **提升用户体验**：用户访问时数据已经在Redis中
-- **容错机制**：预加载失败不影响服务启动，首次访问时自动重试
-
-**使用场景**：
-- 程序启动时自动调用
-- 首次部署时自动获取数据
-- 数据过期时自动更新
-
-### doFetch - 执行请求
+### 内部函数
 
 ```go
-func doFetch() error
+// 执行 HTTP 请求
+func doFetchWithContext(ctx context.Context) (*model.ProcessedData, error)
+
+// 解析原始文本
+func parseResponse(rawData string) model.ProcessedData
+
+// 解析数据行
+func parseDataLines(dataLines []string) ([]model.SiteItem, int)
+
+// 解析单组数据（3 行）
+func parseItemGroup(group []string) (model.SiteItem, bool)
 ```
 
-**流程**：
-```go
-1. 创建HTTP请求（30秒超时）
-2. 发送到IYUU API
-3. 检查状态码（200 OK）
-4. 读响应体
-5. 调用processData()解析
-6. 存到Redis
-```
+## 关键依赖与配置
 
-### processData - 解析数据
+### 依赖模块
 
-```go
-func processData(rawData string) model.ProcessedData
-```
+- `internal/config` - 配置管理（API URL）
+- `internal/model` - 数据模型
+- `internal/storage` - Redis 存储
+- `net/http` - HTTP 客户端
+- `context` - 超时控制
 
-**数据格式**：
-```
-create time 2025-12-11 07:52:33 by https://api.iyuu.cn/
-
-站名：朋友 【ID：123456】
-重复度：95%
-文件大小：1.5GB
-
-站名：馒头 【ID：789012】
-重复度：87%
-文件大小：2.3GB
-
-...
-```
-
-**解析规则**：
-- 第1行：时间
-- 第3行开始：每3行一条数据
-- 正则提取：`站名：(.*?) 【ID：(\d+)】`
-- 分割提取：重复度、文件大小
-
----
-
-## 常量定义
+### 常量配置
 
 ```go
 const (
-    httpTimeout     = 30 * time.Second  // HTTP超时
-    linesPerItem    = 3                 // 每3行一条数据
+    logPrefix       = "🔍 爬虫"
+    httpTimeout     = 10 * time.Second  // HTTP 超时
+    maxRetries      = 1                 // 最大重试次数
+    retryInterval   = 1 * time.Second   // 重试间隔
+    linesPerItem    = 3                 // 每条数据占 3 行
     timeLineIndex   = 0                 // 时间行索引
-    dataStartLineIndex = 2             // 数据起始行
+    dataStartLine   = 2                 // 数据开始行
+    timePrefix      = "create time "
+    timeSuffix      = " by "
+    fieldSeparator  = "："
+    sitePattern     = `站名：(.*?) 【ID：(\d+)】`
 )
 ```
 
-**设置原因**：
-- 30秒超时：API响应慢时不继续等待
-- 3行一组：数据格式固定
+### 环境变量
 
----
+| 变量 | 必需 | 默认值 | 描述 |
+|------|------|--------|------|
+| `API_URL` | 否 | `https://api.iyuu.cn/top1000.php` | IYUU API 地址 |
 
-## 并发控制
+## 数据模型
 
-### 防止并发更新
+### 输入格式（API 返回的纯文本）
+
+```
+create time 2026-01-19 07:50:56 by IYUU
+
+站名：站点名称 【ID：123】
+重复度：1.5
+文件大小：1.5 GB
+
+站名：站点名称2 【ID：456】
+重复度：2.0
+文件大小：2.3 GB
+...
+```
+
+### 输出格式（解析后）
 
 ```go
-var taskMutex sync.Mutex
+type ProcessedData struct {
+    Time  string     // "2026-01-19 07:50:56"
+    Items []SiteItem // 解析后的站点列表
+}
 
-func FetchData() error {
-    if !taskMutex.TryLock() {
-        return fmt.Errorf("任务正在执行中")
-    }
-    defer taskMutex.Unlock()
-    // ...
+type SiteItem struct {
+    SiteName    string // "站点名称"
+    SiteID      string // "123"
+    Duplication string // "1.5"
+    Size        string // "1.5 GB"
+    ID          int    // 自动递增
 }
 ```
 
-**特点**：
-- TryLock：不阻塞，直接返回
-- 友好提示："任务正在执行中"
-- API层也会检查IsUpdating()
+## 核心逻辑
 
----
+### 数据爬取流程
 
-## 数据验证
+```
+FetchTop1000WithContext(ctx)
+    ↓
+获取任务锁 (tryLock)
+    ↓
+循环重试（最多 maxRetries 次）
+    ↓
+doFetchWithContext(ctx)
+    ├─ 创建 HTTP 请求（带 ctx 超时）
+    ├─ 发送 GET 请求到 IYUU API
+    ├─ 读取响应体
+    └─ parseResponse(body)
+        ├─ 提取时间行
+        ├─ 分割数据行（每 3 行一条）
+        ├─ parseItemGroup() - 正则提取
+        ├─ 数据验证
+        └─ 返回 ProcessedData
+    ↓
+释放任务锁
+```
 
-解析完成后验证：
+### 解析逻辑
+
+1. **标准化换行符**: 将 `\r\n` 统一为 `\n`
+2. **提取时间**: 从第一行提取 `create time 2026-01-19 07:50:56 by IYUU`
+3. **分组解析**: 每 3 行为一组（站名行、重复度行、大小行）
+4. **正则提取**: 使用 `站名：(.*?) 【ID：(\d+)】` 提取站名和 ID
+5. **字段分割**: 使用 `：` 分割字段名和值
+6. **ID 赋值**: 按顺序自动递增
+
+### 并发控制
+
+使用 `sync.Mutex` 实现简单的任务锁：
+- `taskMutex.TryLock()` - 尝试获取锁，失败表示任务正在进行
+- `defer taskMutex.Unlock()` - 确保锁被释放
+
+### 预加载机制
+
+启动时检查 Redis 中是否有数据：
+```
+PreloadData()
+    ↓
+checkDataLoadRequired(ctx)
+    ├─ 检查数据是否存在 (storage.DataExistsWithContext)
+    └─ 检查数据是否过期 (storage.IsDataExpiredWithContext)
+    ↓
+需要加载？
+├─ 是 → FetchTop1000WithContext(ctx)
+│   └─ 保存到 Redis (storage.SaveDataWithContext)
+└─ 否 → 跳过
+```
+
+## 测试与质量
+
+### 当前状态
+- 无单元测试
+- 无集成测试
+- 依赖实际 API 验证
+
+### 测试建议
+
+**单元测试文件**: `scheduler_test.go`
 
 ```go
-result := model.ProcessedData{
-    Time:  parseTime(timeLine),
-    Items: items,
+func TestParseResponse_Success(t *testing.T)
+func TestParseResponse_EmptyData(t *testing.T)
+func TestParseItemGroup_ValidFormat(t *testing.T)
+func TestParseItemGroup_InvalidFormat(t *testing.T)
+func TestExtractTime_Valid(t *testing.T)
+func TestExtractTime_Invalid(t *testing.T)
+func TestParseDataLines_SkippedCount(t *testing.T)
+func TestFetchTop1000WithContext_Timeout(t *testing.T)
+func TestFetchTop1000WithContext_Retry(t *testing.T)
+```
+
+### 测试要点
+
+1. **解析逻辑测试** - 使用模拟数据验证各种格式
+2. **边界条件** - 空数据、格式错误、不完整数据
+3. **并发测试** - 验证任务锁正确工作
+4. **超时测试** - 验证 context 超时正确触发
+5. **重试逻辑** - 验证失败重试机制
+
+### Mock 建议
+
+使用 `httptest.Server` 模拟 IYUU API：
+```go
+func setupMockServer(response string) *httptest.Server {
+    return httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+        w.WriteHeader(http.StatusOK)
+        w.Write([]byte(response))
+    }))
 }
-
-// 验证一下
-if err := result.Validate(); err != nil {
-    log.Printf("⚠️ 数据验证失败: %v", err)
-    // 爬虫容错，还是会返回
-}
 ```
 
-**注意**：
-- 爬虫：验证失败记录警告，还是返回（容错）
-- 存储：验证失败直接拒绝（不保存）
+## 相关文件清单
 
----
+### 核心文件
+- `scheduler.go` - 爬虫调度器（254 行）
+  - `FetchTop1000()` - 向后兼容入口
+  - `FetchTop1000WithContext()` - 核心爬取逻辑
+  - `doFetchWithContext()` - HTTP 请求执行
+  - `parseResponse()` - 响应解析
+  - `parseDataLines()` - 数据行解析
+  - `parseItemGroup()` - 单组解析
+  - `extractTime()` - 时间提取
+  - `PreloadData()` - 启动预加载
+  - `checkDataLoadRequired()` - 加载检查
 
-## 正则表达式
+### 测试文件（待创建）
+- `scheduler_test.go` - 单元测试
 
-```go
-siteRegex = regexp.MustCompile(`站名：(.*?) 【ID：(\d+)】`)
-```
+### 依赖文件
+- `../config/config.go` - 配置管理
+- `../model/types.go` - 数据模型
+- `../storage/redis.go` - Redis 存储
 
-**匹配示例**：
-```
-输入: "站名：朋友 【ID：123456】"
-匹配:
-  - match[0]: "站名：朋友 【ID：123456】"
-  - match[1]: "朋友"
-  - match[2]: "123456"
-```
+## 性能优化
 
----
+### 已实现优化
+1. **并发控制** - 避免重复爬取
+2. **重试机制** - 提高成功率（最多 1 次重试）
+3. **Context 超时** - 防止请求挂起（10 秒）
+4. **正则预编译** - `siteRegex` 在包初始化时编译
 
-## Context使用优化
-
-### 新增带context的函数
-
-- `FetchTop1000WithContext(ctx)` - 支持外部传入context
-- `doFetchWithContext(ctx)` - 内部执行HTTP请求，使用传入的context
-- `checkDataLoadRequired(ctx)` - 检查数据加载需求，支持context
-
-**向后兼容**：
-- 旧的函数（如`FetchTop1000()`）保持不变，内部创建默认context
-- 新函数支持外部传入context，实现更好的超时控制和取消机制
-
-### 使用示例
-
-**方式一：使用默认超时**
-```go
-// 使用默认30秒超时
-data, err := crawler.FetchTop1000()
-```
-
-**方式二：使用自定义context**
-```go
-// API层从Fiber的context提取
-ctx, cancel := context.WithTimeout(c.Context(), 15*time.Second)
-defer cancel()
-
-// 传递给crawler层
-data, err := crawler.FetchTop1000WithContext(ctx)
-```
-
----
+### 可优化项
+1. **连接复用** - 使用全局 `http.Client` 连接池
+2. **压缩传输** - 启用 gzip 压缩（如果 API 支持）
+3. **并发爬取** - 如果需要爬取多个 API
+4. **缓存策略** - 失败时缓存响应，便于调试
 
 ## 常见问题
 
-### Q: 为何没有定时任务？
+### Q: 解析失败数据丢失？
+解析失败的行会被跳过，日志会记录跳过数量。不会影响其他数据的解析。
 
-**A**: 已改为按需更新。数据time字段超过24小时时自动获取新数据。
+### Q: 如何查看解析日志？
+查看日志输出，搜索 `🔍 爬虫` 前缀：
+```
+[🔍 爬虫] 数据获取成功（12345 字节）
+[🔍 爬虫] 数据解析完成（1000 条）
+[🔍 爬虫] 警告：跳过 5 条格式错误的数据
+```
 
-### Q: 数据解析失败会怎样？
+### Q: 爬取超时怎么办？
+调整 `httpTimeout` 常量，或检查网络连接和 IYUU API 状态。
 
-**A**: 跳过该条数据，记录警告。只要有一条成功就算成功。
-
-### Q: 为何使用TryLock？
-
-**A**: 防止并发更新。如果正在更新，直接返回错误，不阻塞。
+### Q: 如何禁用启动预加载？
+注释 `internal/server/server.go` 中的 `preloadData()` 调用。
 
 ---
 
-## 依赖配置
-
-### 环境变量
-
-```go
-cfg := config.Get()
-url := cfg.Top1000APIURL  // https://api.iyuu.cn/top1000.php
-```
-
-### 超时配置
-
-```go
-ctx, cancel := context.WithTimeout(context.Background(), httpTimeout)
-defer cancel()
-```
-
----
-
-## 相关文件
-
-- `scheduler.go` - 爬虫代码
-- `../storage/redis.go` - 数据存储
-- `../config/config.go` - 配置管理
-- `../model/types.go` - 数据结构
+**最后更新**: 2026-01-27
+**代码行数**: ~254 行
+**维护状态**: 活跃

@@ -1,404 +1,402 @@
-# Web 前端应用
+# Web 模块
 
-> 使用AG Grid展示Top1000数据的表格界面
+[根目录](../CLAUDE.md) > **web**
 
----
+## 模块职责
 
-## 模块功能
+Web 模块是 Top1000 系统的前端应用，提供用户界面和数据展示。采用 TypeScript + Vite + AG Grid 技术栈，实现简洁高效的数据浏览体验。
 
-**使用AG Grid将Top1000数据展示为表格，支持查看、搜索、点击操作**
+## 入口与启动
 
-核心功能：
-1. 从后端API获取JSON数据
-2. 使用AG Grid展示表格（企业版）
-3. 支持列过滤、排序
-4. 点击操作按钮跳转站点详情或下载种子
+- **入口文件**: `src/main.ts`
+- **HTML 模板**: `index.html`
+- **构建输出**: `dist/`（开发时）→ `../web-dist/`（生产构建）
 
----
+### 开发服务器
 
-## 入口文件
-
-```
-index.html (入口HTML)
-    ↓
-main.ts (入口TS)
-    ↓
-AG Grid渲染表格
-```
-
-**开发命令**：
 ```bash
-pnpm dev      # 启动开发服务器（端口自动分配）
-pnpm build    # 构建到 ../web-dist/
+cd web
+pnpm install
+pnpm dev  # 访问 http://localhost:5173
 ```
 
----
+### 生产构建
 
-## 启动流程
+```bash
+cd web
+pnpm build  # 输出到 ../web-dist/
+```
+
+## 技术栈
+
+### 核心框架
+- **TypeScript 5.9** - 类型安全
+- **Vite 8** - 构建工具和开发服务器
+- **AG Grid Community 35** - 表格组件
+
+### 开发工具
+- **ESLint** - 代码检查（@antfu/eslint-config）
+- **Prettier** - 代码格式化
+- **pnpm 10** - 包管理器
+
+### 构建优化
+- **@xiaowaibuzheng/rolldown-vite-split-chunks** - 代码分割
+- **vite-plugin-html** - HTML 模板处理
+
+## 项目结构
+
+```
+web/
+├── src/
+│   ├── main.ts              # 应用入口
+│   ├── types.d.ts           # TypeScript 类型定义
+│   ├── gridConfig.ts        # AG Grid 配置
+│   ├── utils/
+│   │   ├── index.ts         # 工具函数导出
+│   │   ├── config.ts        # 站点配置加载
+│   │   └── operationRender.ts  # 操作列渲染器
+│   ├── index.css            # 全局样式
+│   └── vite-env.d.ts        # Vite 类型声明
+├── index.html               # HTML 模板
+├── vite.config.ts           # Vite 配置
+├── tsconfig.json            # TypeScript 配置
+├── .prettierrc              # Prettier 配置
+├── package.json             # 依赖配置
+└── pnpm-lock.yaml           # 锁定文件
+```
+
+## 核心功能
+
+### 1. 表格展示
+
+使用 AG Grid 实现高性能数据表格：
+- **序号列** - 固定在左侧，显示行号
+- **名字列** - 站点名称，支持文本过滤
+- **资源 ID 列** - 站点 ID
+- **重复度列** - 数值排序
+- **文件大小列** - 大小排序（智能转换为 KB）
+- **操作列** - 固定在右侧，提供快捷操作
+
+### 2. 站点配置动态加载
+
+启动时预加载站点配置：
+```typescript
+async function initApp() {
+  await loadSitesConfig()  // 预加载站点配置
+  initGrid()               // 初始化表格
+}
+```
+
+### 3. 数据获取
 
 ```typescript
-// main.ts 的功能
-1. 注册AG Grid模块（企业版）
-2. 配置列定义（序号、名字、ID、重复度、大小、操作）
-3. 设置中文本地化
-4. 加载数据（fetch /top1000.json）
-5. 渲染表格
+export async function fetchData() {
+  const response = await fetch('/top1000.json')
+  const data: ResDataType = await response.json()
+  // 更新表格数据...
+}
 ```
 
-**流程图**：
-```
-index.html
-    <div id="root">
-        ↓
-    main.ts
-        ├── 注册 AG Grid
-        ├── 配置列定义
-        └── 加载数据
-            ↓
-        AG Grid 渲染
-            ├── 数据表格
-            ├── 过滤器
-            ├── 排序
-            └── 操作按钮
-```
-
----
-
-## AG Grid配置
-
-### 基本配置
+### 4. 中文本地化
 
 ```typescript
-localeText: AG_GRID_LOCALE_CN       // 中文界面
-getRowId: params => params.data.id  // 行ID用数据里的id字段
-defaultColDef.flex: 1               // 列宽度自适应
-defaultColDef.sortable: false       // 默认不可排序（部分列开启）
+import { AG_GRID_LOCALE_CN } from '@ag-grid-community/locale'
+
+const gridOptions: GridOptions<DataType> = {
+  localeText: AG_GRID_LOCALE_CN,
+  // ...
+}
 ```
 
-### 列定义
+## 关键依赖与配置
 
-| 列名     | 字段          | 能过滤？ | 能排序？ | 说明                          |
-| -------- | ------------- | -------- | -------- | ----------------------------- |
-| 序号     | `id`          | ❌       | ❌       | 序号（1,2,3...）              |
-| 名字     | `siteName`    | ✅       | ❌       | 站点名称（如"朋友"）          |
-| 资源ID   | `siteid`      | ❌       | ❌       | 站点内资源ID                  |
-| 重复度   | `duplication` | ❌       | ✅       | 重复度百分比（如"95%"）       |
-| 文件大小 | `size`        | ❌       | ✅       | 自定义比较器（1.5GB > 512MB） |
-| 操作     | -             | ❌       | ❌       | 自定义渲染器（跳转链接）      |
-
----
-
-## 核心依赖
-
-### AG Grid
+### 依赖包
 
 ```json
 {
   "dependencies": {
-    "@ag-grid-community/locale": "^35.0.0", // 中文包
-    "ag-grid-community": "^35.0.0", // 社区版
-    "ag-grid-enterprise": "^35.0.0" // 企业版（功能全）
-  }
-}
-```
-
-**企业版功能**：
-- 高级过滤
-- 范围选择
-- Excel导出
-- 更多主题
-
-### 开发工具
-
-```json
-{
+    "@ag-grid-community/locale": "^35.0.0",
+    "ag-grid-community": "^35.0.0"
+  },
   "devDependencies": {
-    "@antfu/eslint-config": "^6.7.3", // ESLint配置
-    "typescript": "^5.9.3", // TypeScript
-    "vite": "8.0.0-beta.5", // 构建工具
-    "vite-plugin-html": "^3.2.2" // HTML插件
+    "@antfu/eslint-config": "^6.7.3",
+    "typescript": "^5.9.3",
+    "vite": "8.0.0-beta.5",
+    "vite-plugin-html": "^3.2.2"
   }
 }
 ```
 
 ### 环境要求
 
-- **Node.js**: >=24.3.0
-- **pnpm**: >=10.12.4
+| 工具 | 版本 | 必需 |
+|------|------|------|
+| Node.js | >=24.3.0 | 是 |
+| pnpm | >=10.12.4 | 是 |
 
----
-
-## 构建配置
-
-### Vite配置
+### Vite 配置
 
 ```typescript
-// vite.config.ts
 export default defineConfig({
   plugins: [
-    splitChunks(), // 代码分割
-    createHtmlPlugin({ minify: true }), // HTML压缩
+    splitChunks(),  // 代码分割
+    createHtmlPlugin({ minify: true }),
   ],
   build: {
     rollupOptions: {
       output: {
-        chunkFileNames: 'js/[name]-[hash].js', // chunk文件命名
-        entryFileNames: 'js/[name]-[hash].js', // 入口文件命名
-        assetFileNames: '[ext]/[name]-[hash].[ext]', // 资源文件命名
+        chunkFileNames: 'js/[name]-[hash].js',
+        entryFileNames: 'js/[name]-[hash].js',
+        assetFileNames: '[ext]/[name]-[hash].[ext]',
       },
     },
-    outDir: resolve(__dirname, '../web-dist'), // 输出到项目根目录的web-dist
+    emptyOutDir: true,
+    chunkSizeWarningLimit: 1000,
+  },
+  server: {
+    open: true,
+    host: '0.0.0.0',
+    proxy: {
+      '/top1000.json': 'http://127.0.0.1:7066',
+      '/sites.json': 'http://127.0.0.1:7066',
+    },
   },
 })
 ```
-
-**输出结构**：
-```
-../web-dist/
-    ├── index.html        # 压缩后的HTML
-    ├── js/               # JS文件（带hash）
-    │   ├── main-abc123.js
-    │   └── vendor-def456.js
-    └── css/              # CSS文件（带hash）
-        └── style-ghi789.css
-```
-
----
 
 ## 数据模型
 
-### TypeScript类型
+### DataType（站点数据）
 
 ```typescript
-// types.d.ts
-export interface DataType {
-  siteName: string // 站点名称（如"朋友"）
-  siteid: string // 资源ID（数字字符串）
-  duplication: string // 重复度（如"95%"）
-  size: string // 文件大小（如"1.5GB"）
-  id: number // 序号（1,2,3...）
-}
-
-export interface ResDataType {
-  items: DataType[] // 种子列表（1000条）
-  time: string // 更新时间（如"2025-12-11 07:52:33"）
+interface DataType {
+  siteName: string      // 站点名称
+  siteid: string        // 资源 ID
+  duplication: string   // 重复度
+  size: string          // 文件大小
+  id: number            // 序号
 }
 ```
 
-### 数据来源
+### ResDataType（API 响应）
 
 ```typescript
-// src/utils/index.ts
-const response = await fetch('http://localhost:7066/top1000.json')
-const json: ResDataType = await response.json()
+interface ResDataType {
+  items: DataType[]     // 种子列表
+  time: string          // 更新时间
+}
 ```
 
-**后端API**：
-- 地址：`http://localhost:7066/top1000.json`
-- 返回：JSON格式
-- 更新：按需更新（超过24小时就自动拉新的）
-
----
-
-## 站点配置
-
-### 站点元数据
+### SitesConfig（站点配置）
 
 ```typescript
-// src/utils/iyuuSites.ts
-const siteData = [
-  {
-    id: 1,
-    site: 'keepfrds', // 站点标识
-    nickname: '朋友', // 站点昵称（显示用）
-    base_url: 'pt.keepfrds.com', // 站点域名
-    download_page: 'download.php?id={}&passkey={passkey}', // 下载页面
-    details_page: 'details.php?id={}', // 详情页面
-    is_https: 2, // 是否HTTPS
-    cookie_required: 0, // 是否需要Cookie
-  },
-  // ... 共118个站点配置
-]
-```
-
-**用途**：
-- 操作列渲染器根据站点ID查询配置
-- 生成正确的跳转链接（详情、下载）
-
----
-
-## 操作列渲染
-
-### 自定义渲染器
-
-```typescript
-// src/utils/operationRender.ts
-export function operationRender(params: ICellRendererParams) {
-  const data = params.data as DataType
-  const site = iyuuSites.find(s => s.nickname === data.siteName)
-
-  if (!site) {
-    return `<span style="color: #999">暂不支持</span>`
+interface SitesConfig {
+  [key: string]: {
+    url: string         // 站点 URL
+    name?: string       // 站点名称（可选）
   }
-
-  return `
-    <a href="${detailsUrl}" target="_blank">详情</a>
-    <a href="${downloadUrl}">下载种子</a>
-  `
 }
 ```
 
-**逻辑**：
-1. 根据站点名称查找配置
-2. 生成详情页链接（`details.php?id=xxx`）
-3. 生成下载链接（`download.php?id=xxx&passkey=xxx`）
-4. 不支持的站点显示"暂不支持"
+## 开发指南
 
----
+### 本地开发
 
-## 工具函数
+```bash
+# 1. 安装依赖
+cd web
+pnpm install
 
-### 大小转换
+# 2. 启动开发服务器
+pnpm dev
 
-```typescript
-// src/utils/index.ts
-export function convertSizeToKb(size: string): number {
-  const match = size.match(/^(\d+(?:\.\d+)?)\s*(KB|MB|GB|TB)$/i)
-  if (!match)
-    return 0
-
-  const value = Number.parseFloat(match[1])
-  const unit = match[2].toUpperCase()
-
-  const multipliers = {
-    KB: 1,
-    MB: 1024,
-    GB: 1024 * 1024,
-    TB: 1024 * 1024 * 1024,
-  }
-
-  return value * multipliers[unit]
-}
+# 3. 访问 http://localhost:5173
+#    - 前端运行在 5173 端口
+#    - API 请求代理到后端 7066 端口
 ```
 
-**用途**：AG Grid自定义排序比较器
+### 代码检查
 
-```typescript
-comparator: (valueA, valueB) => {
-  const kbA = convertSizeToKb(valueA)
-  const kbB = convertSizeToKb(valueB)
-  return kbA - kbB
-}
+```bash
+# ESLint 检查并修复
+pnpm lint
+
+# TypeScript 类型检查
+pnpm build  # 构建时自动检查
 ```
 
----
+### 代码格式化
 
-## 常见问题
-
-### Q: 如何修改数据源地址？
-
-**A**: 修改`src/utils/index.ts`：
-```typescript
-const response = await fetch('http://localhost:7066/top1000.json')
-// 修改为实际地址
-const response = await fetch('https://your-domain.com/top1000.json')
+```bash
+# Prettier 格式化（集成在 ESLint 中）
+pnpm lint
 ```
 
-### Q: 如何添加新列？
+### 生产构建
 
-**A**: 修改`src/main.ts`的`columnDefs`：
-```typescript
-columnDefs: [
-  {
-    headerName: '名字',
-    field: 'siteName',
-    filter: true,
-  },
-  {
-    headerName: '新列', // 新增列
-    field: 'newField',
-    sortable: true,
-  },
-  // ...
-]
+```bash
+# 构建到 ../web-dist/
+pnpm build
+
+# 构建产物
+# ../web-dist/
+# ├── index.html
+# ├── js/
+# │   ├── main-xxx.js
+# │   └── ...
+# └── assets/
+#     └── ...
 ```
 
-### Q: 如何固定左侧列？
+## 测试与质量
 
-**A**: 设置`pinned: 'left'`：
+### 当前状态
+- 无单元测试
+- 无集成测试
+- 依赖手动测试
+
+### 测试建议
+
+**单元测试文件**: `src/utils/index.test.ts`
+
 ```typescript
-{
-  headerName: '名字',
-  field: 'siteName',
-  pinned: 'left',  // 固定到左侧
-}
-```
+describe('convertSizeToKb', () => {
+  it('should convert GB to KB', () => {
+    expect(convertSizeToKb('1.5 GB')).toBe(1.5 * 1024 * 1024)
+  })
 
-### Q: 如何导出Excel？
+  it('should handle MB', () => {
+    expect(convertSizeToKb('500 MB')).toBe(500 * 1024)
+  })
 
-**A**: AG Grid企业版内置支持：
-```typescript
-import { ExcelExportModule, ModuleRegistry } from 'ag-grid-enterprise'
+  it('should handle invalid format', () => {
+    expect(convertSizeToKb('invalid')).toBe(0)
+  })
+})
 
-ModuleRegistry.registerModules([
-  // ... 其他模块
-  ExcelExportModule,
-])
-
-// 导出
-gridApi.exportDataAsExcel({
-  fileName: 'top1000.xlsx',
+describe('loadSitesConfig', () => {
+  it('should load sites config', async () => {
+    await loadSitesConfig()
+    expect(getSitesConfig()).toBeDefined()
+  })
 })
 ```
 
-### Q: 如何自定义主题？
+### E2E 测试建议
 
-**A**: 修改`src/index.css`：
-```css
-.ag-theme-alpine {
-  --ag-header-background-color: #0d47a1; /* 表头背景 */
-  --ag-odd-row-background-color: #f5f5f5; /* 奇数行背景 */
-  --ag-font-size: 14px; /* 字体大小 */
-  --ag-border-color: #ddd; /* 边框颜色 */
+使用 Playwright 或 Cypress：
+```typescript
+test('display table data', async ({ page }) => {
+  await page.goto('http://localhost:5173')
+  await expect(page.locator('.ag-root-wrapper')).toBeVisible()
+  await expect(page.locator('.ag-row')).toHaveCount(1000)
+})
+```
+
+## 性能优化
+
+### 已实现优化
+
+1. **按需导入** - 仅导入 AG Grid 必要模块
+2. **代码分割** - 使用 rolldown-vite-split-chunks
+3. **虚拟滚动** - AG Grid 内置虚拟滚动（rowBuffer: 10）
+4. **文件哈希** - 内容变化时 URL 变化，利用长缓存
+5. **压缩传输** - Vite 自动压缩，Gzip/Brotli
+
+### 可优化项
+
+1. **预加载关键资源** - 使用 `<link rel="modulepreload">`
+2. **CDN 加速** - 静态资源上传到 CDN
+3. **图片优化** - 使用 WebP 格式（如果有图片）
+4. **Service Worker** - 缓存静态资源，离线访问
+5. **懒加载** - 操作列渲染器可以懒加载
+
+## 相关文件清单
+
+### 核心文件
+- `src/main.ts` - 应用入口（90 行）
+- `src/types.d.ts` - 类型定义（29 行）
+- `src/gridConfig.ts` - 表格配置（90 行）
+- `src/utils/index.ts` - 工具函数
+- `src/utils/config.ts` - 站点配置加载
+- `src/utils/operationRender.ts` - 操作列渲染器
+- `src/index.css` - 全局样式
+- `index.html` - HTML 模板
+- `vite.config.ts` - Vite 配置
+- `package.json` - 依赖配置
+
+### 测试文件（待创建）
+- `src/utils/index.test.ts` - 工具函数测试
+- `src/e2e/` - E2E 测试
+
+## 常见问题
+
+### Q: 前端开发时 API 请求失败？
+确保后端服务运行在 7066 端口，检查 Vite proxy 配置。
+
+### Q: AG Grid 不显示数据？
+1. 检查 `/top1000.json` 是否返回数据
+2. 打开浏览器控制台查看错误
+3. 验证 `columnDefs` 配置是否正确
+
+### Q: 如何添加新列？
+编辑 `src/gridConfig.ts`：
+```typescript
+export const columnDefs = [
+  // 现有列...
+  {
+    headerName: '新列',
+    field: 'newField',
+    width: 100,
+  },
+]
+```
+
+### Q: 如何自定义样式？
+编辑 `src/index.css` 或使用 AG Grid 主题：
+```typescript
+import { themeAlpine, themeBalham, themeQuartz } from 'ag-grid-community'
+
+const gridOptions = {
+  theme: themeAlpine,  // 切换主题
 }
 ```
 
-### Q: 大数据性能如何？
+### Q: 构建产物过大？
+检查 `chunkSizeWarningLimit`，考虑代码分割：
+```typescript
+// vite.config.ts
+build: {
+  chunkSizeWarningLimit: 1000,
+  rollupOptions: {
+    output: {
+      manualChunks: {
+        'ag-grid': ['ag-grid-community'],
+      },
+    },
+  },
+}
+```
 
-**A**: AG Grid虚拟滚动，1000条数据轻松处理：
-- 虚拟滚动：只渲染可见行
-- 需要更快？启用分页：
-  ```typescript
-  pagination: true,
-  paginationPageSize: 50,
-  ```
+## 扩展建议
+
+### 功能扩展
+
+1. **数据导出** - 导出为 CSV/Excel
+2. **高级过滤** - 自定义过滤条件
+3. **列管理** - 显示/隐藏列，列顺序调整
+4. **数据刷新** - 手动刷新按钮，自动刷新间隔
+5. **主题切换** - 亮色/暗色主题
+
+### 技术升级
+
+1. **Vue/React 集成** - 如果需要更复杂的交互
+2. **状态管理** - 使用 Pinia/Zustand 管理状态
+3. **组件库** - 添加 Naive UI/Ant Design Vue
+4. **国际化** - 使用 vue-i18n 支持多语言
 
 ---
 
-## 相关文件
-
-### 源代码
-
-- `src/main.ts` - 入口文件（AG Grid配置）
-- `src/gridConfig.ts` - 表格配置（列定义）
-- `src/types.d.ts` - TypeScript类型定义
-- `src/utils/index.ts` - 工具函数（fetch、大小转换）
-- `src/utils/operationRender.ts` - 操作列渲染器
-- `src/utils/iyuuSites.ts` - 站点元数据（118个）
-- `src/index.css` - 全局样式
-
-### 配置文件
-
-- `index.html` - HTML模板
-- `package.json` - NPM依赖
-- `pnpm-lock.yaml` - PNPM锁定文件
-- `vite.config.ts` - Vite构建配置
-- `eslint.config.js` - ESLint配置
-
-### 构建产物
-
-- `../web-dist/` - 构建输出目录
-  - `index.html` - 压缩后的HTML
-  - `js/` - JS文件（带hash）
-  - `css/` - CSS文件（带hash）
-  - `assets/` - 其他资源
+**最后更新**: 2026-01-27
+**代码行数**: ~300 行（src/）
+**维护状态**: 活跃

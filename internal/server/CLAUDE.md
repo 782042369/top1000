@@ -1,280 +1,310 @@
-# HTTP 服务器
+# Server 模块
 
-> 启动HTTP服务器并配置路由
+[根目录](../../CLAUDE.md) > [internal](../) > **server**
 
----
+## 模块职责
 
-## 模块功能
+Server 模块负责 HTTP 服务器的创建、配置和启动，包括路由注册、中间件配置、静态文件服务和日志记录。
 
-**启动HTTP服务器，配置路由和中间件**
+## 入口与启动
 
-核心功能：
-1. 创建Fiber应用
-2. 配置中间件（日志、CORS、安全头、限流）
-3. 注册路由（API、静态文件）
-4. 初始化Redis
-5. 启动时预加载数据 ⭐
-6. 启动服务
+- **入口文件**: `server.go`
+- **入口函数**: `Start()`
+- **调用位置**: `cmd/top1000/main.go`
 
----
+## 对外接口
 
-## 启动流程
+### 导出函数
 
 ```go
-func Start() {
-    cfg := config.Get()
-
-    // 1. 验证配置
-    if err := config.Validate(); err != nil {
-        log.Fatalf("❌ 配置验证失败: %v", err)
-    }
-
-    // 2. 打印启动横幅
-    printStartupBanner()
-
-    // 3. 创建Fiber应用
-    app := createApp(cfg)
-
-    // 4. 初始化Redis
-    initStorage()
-
-    // 5. 启动时预加载数据 ⭐
-    preloadData()
-
-    // 6. 打印启动信息
-    printStartupInfo(cfg)
-
-    // 7. 确保程序退出时关闭Redis连接
-    defer closeRedis()
-
-    // 8. 启动服务
-    log.Fatal(app.Listen(":" + cfg.Port))
-}
+// 启动 Web 服务器（阻塞）
+func Start()
 ```
 
-**预加载功能**：
-- 在Redis初始化之后，服务启动之前执行
-- 检查Redis中是否已有数据
-- 如果没有数据或数据过期，自动从API获取并存储
-- 预加载失败不影响服务启动（容错机制）
-- **避免首次访问超时问题**
-
----
-
-## 中间件配置
-
-### 错误恢复
+### 内部函数
 
 ```go
-app.Use(recover.New())
+// 创建 Fiber 应用
+func createApp() *fiber.App
+
+// 配置中间件
+func setupMiddleware(app *fiber.App)
+
+// 日志中间件
+func loggerMiddleware() fiber.Handler
+
+// 安全响应头中间件
+func securityHeadersMiddleware() fiber.Handler
+
+// 配置路由
+func setupRoutes(app *fiber.App)
+
+// 设置静态文件缓存头
+func setCacheHeaders(c *fiber.Ctx) error
+
+// 初始化 Redis
+func initStorage()
+
+// 关闭 Redis
+func closeRedis()
+
+// 打印启动横幅
+func printStartupBanner()
+
+// 打印启动信息
+func printStartupInfo(cfg *config.Config)
+
+// 预加载数据
+func preloadData()
 ```
 
-**作用**：panic不会导致崩溃，会恢复并记录日志
+## 关键依赖与配置
 
-### 日志
+### 依赖模块
+
+- `internal/api` - API 处理器
+- `internal/config` - 配置管理
+- `internal/crawler` - 数据爬取
+- `internal/storage` - Redis 存储
+- `github.com/gofiber/fiber/v2` - Web 框架
+
+### 常量配置
 
 ```go
-app.Use(logger.New(logger.Config{
-    Format:     "[${time}] ${status} - ${method} ${path} - ${latency}\n",
-    TimeFormat: "2006-01-02 15:04:05",
-    TimeZone:   "Asia/Shanghai",
-}))
+const (
+    appName          = "Top1000"
+    requestBodyLimit = 4 * 1024 * 1024  // 4MB 请求体限制
+    oneYearMaxAge    = "public, max-age=31536000"  // 1 年缓存
+    noCache          = "no-cache, no-store, must-revalidate"
+    cspHeader        = "default-src 'self'; ..."  // CSP 策略
+)
 ```
 
-**格式**：`[2025-12-11 07:52:33] 200 - GET /top1000.json - 10ms`
+### 默认端口
 
-### CORS
-
-```go
-corsOrigins := os.Getenv("CORS_ORIGINS")
-if corsOrigins == "" {
-    corsOrigins = "*"
-}
-
-// 当使用通配符时，不能启用 AllowCredentials
-allowCredentials := corsOrigins != "*"
-
-app.Use(cors.New(cors.Config{
-    AllowOrigins:     corsOrigins,
-    AllowMethods:     "GET,OPTIONS",
-    AllowHeaders:     "Origin,Content-Type,Accept,Authorization",
-    ExposeHeaders:    "Content-Length,ETag,Cache-Control",
-    MaxAge:           86400,
-    AllowCredentials: allowCredentials,
-}))
-```
-
-**特点**：
-- 通配符（*）+ 携带凭证存在安全风险
-- 因此通配符时禁用AllowCredentials
-- 指定域名时才允许携带凭证
-
-### 安全头
-
-手动配置安全头（不使用Helmet，因为COEP无法禁用）：
-
-```go
-app.Use(func(c *fiber.Ctx) error {
-    // XSS保护
-    c.Set("X-XSS-Protection", "1; mode=block")
-    // 禁止MIME类型嗅探
-    c.Set("X-Content-Type-Options", "nosniff")
-    // 防止点击劫持
-    c.Set("X-Frame-Options", "DENY")
-    // CSP：允许外部监控脚本、图片、数据上报
-    c.Set("Content-Security-Policy", "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval' https://log.939593.xyz; img-src 'self' data: https: https://lsky.939593.xyz:11111; style-src 'self' 'unsafe-inline'; connect-src 'self' https://log.939593.xyz;")
-    // 不设置COEP和COOP，允许跨域资源加载
-    return c.Next()
-})
-```
-
-**作用**：
-- **防XSS攻击**：`X-XSS-Protection`
-- **防止MIME类型嗅探**：`X-Content-Type-Options`
-- **防止点击劫持**：`X-Frame-Options`
-- **CSP白名单**：允许监控脚本和图片加载
-- **禁用COEP/COOP**：让跨域能正常加载
-
-### 速率限制
-
-```go
-app.Use(limiter.New(limiter.Config{
-    Max:        200,  // 每小时最多200次（小项目）
-    Expiration: 1 * time.Hour,
-    KeyGenerator: func(c *fiber.Ctx) string {
-        return c.IP()  // 基于IP限流
-    },
-    LimitReached: func(c *fiber.Ctx) error {
-        return c.Status(fiber.StatusTooManyRequests).JSON(fiber.Map{
-            "error": "请求过于频繁，请稍后再试",
-        })
-    },
-}))
-```
-
-**作用**：防止DDoS，每个IP每小时最多200次请求
-
-### 响应压缩
-
-```go
-app.Use(compress.New(compress.Config{
-    Level: compress.LevelBestSpeed,
-}))
-```
-
-**作用**：压缩响应体，节省带宽
-
----
+| 变量 | 默认值 | 环境变量 |
+|------|--------|----------|
+| `PORT` | `7066` | `PORT` |
 
 ## 路由配置
 
-### API路由
+### API 路由
 
-```go
-app.Get("/top1000.json", api.GetTop1000Data)
-```
-
-**返回**：Top1000的JSON数据
+| 路径 | 方法 | 处理器 | 描述 |
+|------|------|--------|------|
+| `/top1000.json` | GET | `api.GetTop1000Data` | 获取 Top1000 数据 |
+| `/sites.json` | GET | `api.GetSitesData` | 获取站点列表 |
 
 ### 静态文件
 
+| 路径 | 目录 | 缓存策略 |
+|------|------|----------|
+| `/` | `./web-dist` | HTML: no-cache<br>其他资源: 1 年 |
+
+## 中间件栈
+
+```
+请求 → Recover → Logger → Security Headers → Compress → 路由处理
+         ↓         ↓           ↓              ↓           ↓
+      恢复异常   记录日志    安全响应头      响应压缩    业务逻辑
+```
+
+### 中间件详情
+
+#### 1. Recover（异常恢复）
+- 捕获 panic，返回 500 错误
+- 防止服务器崩溃
+
+#### 2. Logger（请求日志）
+- 记录每个请求的：
+  - 时间戳
+  - HTTP 方法
+  - 请求路径
+  - 响应状态码
+  - 处理耗时
+
+日志格式：
+```
+[2026-01-19 07:50:56] GET /top1000.json - 200 - 15ms
+```
+
+#### 3. Security Headers（安全响应头）
+- `X-XSS-Protection: 1; mode=block` - XSS 保护
+- `X-Content-Type-Options: nosniff` - 禁止 MIME 嗅探
+- `X-Frame-Options: DENY` - 禁止 iframe 嵌入
+- `Content-Security-Policy: ...` - CSP 策略
+
+#### 4. Compress（响应压缩）
+- 自动压缩文本响应（JSON、HTML、CSS、JS）
+- 减少传输体积
+
+## 启动流程
+
+```
+main.go
+    ↓
+server.Start()
+    ↓
+验证配置 (config.Validate)
+    ↓
+打印启动横幅
+    ↓
+创建 Fiber 应用 (createApp)
+    ├─ 配置中间件 (setupMiddleware)
+    └─ 配置路由 (setupRoutes)
+    ↓
+初始化 Redis (initStorage)
+    ↓
+预加载数据 (preloadData)
+    ↓
+打印启动信息
+    ↓
+监听端口 :7066（阻塞）
+    ↓
+程序退出 → 关闭 Redis (defer closeRedis)
+```
+
+## 缓存策略
+
+### 静态文件缓存
+
+| 文件类型 | Cache-Control | 原因 |
+|----------|---------------|------|
+| `.html` | `no-cache` | 频繁更新，确保获取最新版本 |
+| 其他资源 | `max-age=31536000` | 带文件名哈希，内容变化时 URL 变化 |
+
+### 实现逻辑
+
 ```go
-app.Static("/", cfg.WebDistDir, fiber.Static{
-    CacheDuration: 0, // Fiber内部缓存禁用，完全由ModifyResponse自定义
-    Browse:        true,
-    MaxAge:        0,
-    ModifyResponse: func(c *fiber.Ctx) error {
-        path := c.Path()
-        // 非HTML文件：长期缓存（1年）
-        if !strings.HasSuffix(path, ".html") && !strings.HasSuffix(path, "/") {
-            c.Response().Header.Set("Cache-Control", "public, max-age=31536000")
-        } else {
-            // HTML文件：不缓存
-            c.Response().Header.Set("Cache-Control", "no-cache, no-store, must-revalidate")
-        }
+func setCacheHeaders(c *fiber.Ctx) error {
+    path := c.Path()
+    isHTML := filepath.Ext(path) == ".html" || path == "/"
+
+    if !isHTML && c.Response().StatusCode() == fiber.StatusOK {
+        c.Response().Header.Set("Cache-Control", oneYearMaxAge)
         return nil
-    },
-})
+    }
+
+    // HTML 文件或错误状态：禁止缓存
+    c.Response().Header.Set("Cache-Control", noCache)
+    c.Response().Header.Set("Pragma", "no-cache")
+    c.Response().Header.Set("Expires", "0")
+    return nil
+}
 ```
 
-**缓存策略**：
-- HTML文件：不缓存（每次都请求最新的）
-- 其他文件：缓存1年（JS、CSS等）
+## 安全配置
 
----
-
-## Fiber配置
+### CSP 策略
 
 ```go
-app := fiber.New(fiber.Config{
-    AppName:      "Top1000 Service",
-    StrictRouting: true,        // 启用严格路由
-    BodyLimit:    4 * 1024 * 1024, // 限制请求体4MB
-    ReadTimeout:  10 * time.Second,
-    WriteTimeout: 10 * time.Second,
-})
+const cspHeader = "default-src 'self'; " +
+    "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://log.939593.xyz; " +
+    "img-src 'self' data: https: https://lsky.939593.xyz:11111; " +
+    "style-src 'self' 'unsafe-inline'; " +
+    "connect-src 'self' https://log.939593.xyz;"
 ```
 
-**说明**：
-- StrictRouting：`/api`和`/api/`不同（严格匹配）
-- BodyLimit：防止大文件攻击
-- 超时：10秒足够
+### 安全措施
 
----
+1. **请求体限制** - 4MB 防止大文件攻击
+2. **超时控制** - 读写超时 10 秒
+3. **XSS 保护** - 禁用内联脚本（除必要情况）
+4. **点击劫持防护** - 禁止 iframe 嵌入
+5. **MIME 嗅探防护** - 防止内容类型混淆
 
-## 启动日志
+## 测试与质量
 
+### 当前状态
+- 无单元测试
+- 无集成测试
+- 依赖手动测试
+
+### 测试建议
+
+**单元测试文件**: `server_test.go`
+
+```go
+func TestCreateApp(t *testing.T)
+func TestSetupMiddleware(t *testing.T)
+func TestSetupRoutes(t *testing.T)
+func TestSecurityHeadersMiddleware(t *testing.T)
+func TestLoggerMiddleware(t *testing.T)
+func TestSetCacheHeaders_HTML(t *testing.T)
+func TestSetCacheHeaders_Static(t *testing.T)
+func TestSetCacheHeaders_Error(t *testing.T)
 ```
-========================================
-   Top1000 服务正在启动...
-========================================
-正在初始化 Redis 连接...
-正在连接 Redis: 192.144.142.2:26739 (DB: 0)
-✅ Redis 连接成功
-✅ Redis 初始化成功
-========================================
-[🔍 爬虫] 检查是否需要预加载数据...
-[🔍 爬虫] ✅ 预加载成功，已存入Redis（共 1000 条记录）
-========================================
-✅ 服务已启动，监听端口: 7066
-📦 存储方式: Redis (192.144.142.2:26739)
-🔄 数据更新策略: 实时更新（过期时自动获取）
-🔒 安全措施: 速率限制、安全响应头、CORS 保护
-========================================
-```
 
----
+### 测试要点
+
+1. **中间件顺序** - 验证中间件执行顺序正确
+2. **路由注册** - 验证所有路由正确注册
+3. **缓存策略** - 验证不同文件类型的缓存头
+4. **安全头** - 验证安全响应头正确设置
+5. **错误处理** - 验证 panic 被正确捕获
+
+## 相关文件清单
+
+### 核心文件
+- `server.go` - 服务器配置（176 行）
+  - `Start()` - 启动服务器
+  - `createApp()` - 创建应用
+  - `setupMiddleware()` - 配置中间件
+  - `setupRoutes()` - 配置路由
+  - `loggerMiddleware()` - 日志中间件
+  - `securityHeadersMiddleware()` - 安全头中间件
+  - `setCacheHeaders()` - 缓存头设置
+  - `initStorage()` - 初始化存储
+  - `closeRedis()` - 关闭存储
+  - `printStartupBanner()` - 启动横幅
+  - `printStartupInfo()` - 启动信息
+  - `preloadData()` - 预加载数据
+
+### 测试文件（待创建）
+- `server_test.go` - 单元测试
+
+### 依赖文件
+- `../api/handlers.go` - API 处理器
+- `../config/config.go` - 配置管理
+- `../crawler/scheduler.go` - 数据爬取
+- `../storage/redis.go` - Redis 存储
+
+## 性能优化
+
+### 已实现优化
+1. **响应压缩** - 自动压缩文本响应
+2. **静态文件缓存** - 1 年长缓存，减少请求
+3. **读写超时** - 防止慢请求占用资源
+4. **连接复用** - Fiber 自动管理连接池
+
+### 可优化项
+1. **HTTP/2** - 启用 HTTP/2 提升性能
+2. **限流中间件** - 防止 DDoS 攻击
+3. **监控指标** - 添加 Prometheus metrics
+4. **优雅关闭** - 实现优雅关闭机制
 
 ## 常见问题
 
-### Q: 为何Redis失败就fatal？
+### Q: 如何修改端口？
+设置环境变量 `PORT` 或修改 `config.DefaultPort`。
 
-**A**: 此版本依赖Redis存储数据，没有Redis无法运行。因此直接退出。
+### Q: 如何禁用压缩？
+注释 `setupMiddleware()` 中的 `app.Use(compress.New())`。
 
-### Q: 速率限制能否调整？
+### Q: 静态文件 404？
+检查 `web-dist` 目录是否存在，运行 `cd web && pnpm build`。
 
-**A**: 可以，修改`Max`和`Expiration`：
+### Q: 如何添加新路由？
+在 `setupRoutes()` 中添加：
 ```go
-Max:        200,  // 每小时200次
-Expiration: 1 * time.Hour,
+app.Get("/new-route", api.NewHandler)
 ```
 
-### Q: CORS配置错误会怎样？
-
-**A**: 程序会panic退出。现已动态判断，不会崩溃。
-
-### Q: 能否修改端口？
-
-**A**: 可以，修改`.env`：
-```bash
-PORT=8080
-```
+### Q: 如何自定义 CSP？
+修改 `cspHeader` 常量，根据需求调整策略。
 
 ---
 
-## 相关文件
-
-- `server.go` - 服务器代码
-- `../api/handlers.go` - API处理器
-- `../config/config.go` - 配置管理
-- `../storage/redis.go` - Redis初始化
+**最后更新**: 2026-01-27
+**代码行数**: ~176 行
+**维护状态**: 活跃
