@@ -1,256 +1,144 @@
 {
-  "lastUpdated": "2026-01-27T17:02:37+08:00",
-  "projectName": "Top1000",
-  "projectDescription": "PT站点资源追踪系统 - 小型个人项目，日请求约100次",
-  "scanCoverage": {
-    "totalFiles": 956,
-    "scannedFiles": 15,
-    "coveragePercentage": 1.6,
-    "ignoredFiles": 941,
-    "ignoredReasons": [
-      "node_modules/** (前端依赖包)",
-      ".git/** (版本控制)",
-      "web/dist/** (前端构建产物)",
-      "**/LICENSE (许可证文件)",
-      "**/*.md (文档文件，node_modules中)"
-    ]
+  "lastUpdated": "2026-01-28T13:08:52+08:00",
+  "version": "1.0.0",
+  "project": {
+    "name": "top1000",
+    "description": "千站排行榜项目 - 站点数据采集与可视化",
+    "techStack": {
+      "backend": ["Go 1.25", "Fiber", "Redis"],
+      "frontend": ["TypeScript", "Vite", "AG Grid"],
+      "deployment": ["Docker", "Multi-stage build"]
+    }
   },
   "modules": [
     {
-      "name": "root",
-      "path": "/",
-      "description": "项目根目录 - 整体架构与文档",
-      "language": "Markdown",
-      "entryPoints": ["CLAUDE.md", "README.md"],
-      "interfaces": [],
-      "tests": [],
-      "dependencies": [],
-      "coverage": {
-        "filesScanned": 9,
-        "keyFiles": ["README.md", "go.mod", "docker-compose.yaml", "Dockerfile", ".air.toml", ".env.example", ".github/workflows/docker-image.yml"]
-      }
-    },
-    {
       "name": "cmd/top1000",
-      "path": "cmd/top1000/",
-      "description": "应用程序入口 - 环境变量加载与启动引导",
+      "path": "cmd/top1000",
+      "type": "entry",
       "language": "Go",
-      "entryPoints": ["main.go"],
-      "interfaces": [],
-      "tests": [],
-      "dependencies": ["github.com/joho/godotenv", "internal/server"],
-      "coverage": {
-        "filesScanned": 1,
-        "keyFiles": ["main.go"],
-        "missingTests": true
-      }
+      "entryPoint": "cmd/top1000/main.go",
+      "responsibility": "应用入口",
+      "documentation": "cmd/top1000/CLAUDE.md"
     },
     {
       "name": "internal/api",
-      "path": "internal/api/",
-      "description": "API处理层 - HTTP接口、数据更新调度、容错机制",
+      "path": "internal/api",
+      "type": "handler",
       "language": "Go",
-      "entryPoints": ["handlers.go"],
-      "interfaces": [
-        "GET /top1000.json - 获取Top1000数据",
-        "GET /sites.json - 获取IYUU站点列表"
-      ],
-      "tests": [],
-      "dependencies": ["github.com/gofiber/fiber/v2", "internal/config", "internal/crawler", "internal/storage"],
-      "coverage": {
-        "filesScanned": 1,
-        "keyFiles": ["handlers.go"],
-        "missingTests": true,
-        "gaps": ["缺少单元测试", "缺少并发测试", "缺少超时测试"]
-      }
+      "keyFiles": ["internal/api/handlers.go"],
+      "keyFunctions": ["GetTop1000Data", "GetSitesData"],
+      "responsibility": "HTTP API 处理器",
+      "documentation": "internal/api/CLAUDE.md"
     },
     {
       "name": "internal/crawler",
-      "path": "internal/crawler/",
-      "description": "数据爬取 - IYUU API数据抓取与解析",
+      "path": "internal/crawler",
+      "type": "service",
       "language": "Go",
-      "entryPoints": ["scheduler.go"],
-      "interfaces": [
-        "FetchTop1000() - 爬取Top1000数据",
-        "FetchTop1000WithContext(ctx) - 带context的爬取",
-        "PreloadData() - 启动时预加载"
-      ],
-      "tests": [],
-      "dependencies": ["net/http", "internal/config", "internal/model", "internal/storage"],
-      "coverage": {
-        "filesScanned": 1,
-        "keyFiles": ["scheduler.go"],
-        "missingTests": true,
-        "gaps": ["缺少解析逻辑测试", "缺少边界条件测试", "缺少并发锁测试"]
-      }
+      "keyFiles": ["internal/crawler/scheduler.go"],
+      "keyFunctions": ["FetchTop1000WithContext", "PreloadData"],
+      "responsibility": "数据爬取与解析",
+      "documentation": "internal/crawler/CLAUDE.md"
     },
     {
       "name": "internal/server",
-      "path": "internal/server/",
-      "description": "HTTP服务器 - Fiber应用、路由配置、中间件",
+      "path": "internal/server",
+      "type": "server",
       "language": "Go",
-      "entryPoints": ["server.go"],
-      "interfaces": [
-        "Start() - 启动服务器",
-        "GET /top1000.json - Top1000数据路由",
-        "GET /sites.json - 站点列表路由",
-        "Static / - 静态文件服务"
-      ],
-      "tests": [],
-      "dependencies": ["github.com/gofiber/fiber/v2", "internal/api", "internal/config", "internal/crawler", "internal/storage"],
-      "coverage": {
-        "filesScanned": 1,
-        "keyFiles": ["server.go"],
-        "missingTests": true,
-        "gaps": ["缺少中间件测试", "缺少路由测试", "缺少缓存策略测试"]
-      }
-    },
-    {
-      "name": "internal/storage",
-      "path": "internal/storage/",
-      "description": "Redis存储 - 连接管理、数据持久化、过期检查",
-      "language": "Go",
-      "entryPoints": ["redis.go"],
-      "interfaces": [
-        "InitRedis() - 初始化连接",
-        "SaveDataWithContext() - 保存Top1000数据",
-        "LoadDataWithContext() - 加载Top1000数据",
-        "IsDataExpiredWithContext() - 过期检查",
-        "SaveSitesDataWithContext() - 保存站点数据",
-        "IsUpdating() / SetUpdating() - 并发控制"
-      ],
-      "tests": [],
-      "dependencies": ["github.com/redis/go-redis/v9", "internal/config", "internal/model"],
-      "coverage": {
-        "filesScanned": 1,
-        "keyFiles": ["redis.go"],
-        "missingTests": true,
-        "gaps": ["缺少CRUD测试", "缺少过期检查测试", "缺少并发锁测试", "缺少Context超时测试"]
-      }
-    },
-    {
-      "name": "internal/model",
-      "path": "internal/model/",
-      "description": "数据模型 - 结构体定义与验证逻辑",
-      "language": "Go",
-      "entryPoints": ["types.go"],
-      "interfaces": [
-        "SiteItem - 站点数据结构",
-        "ProcessedData - 完整数据结构",
-        "SiteItem.Validate() - 数据验证",
-        "ProcessedData.Validate() - 完整验证"
-      ],
-      "tests": [],
-      "dependencies": [],
-      "coverage": {
-        "filesScanned": 1,
-        "keyFiles": ["types.go"],
-        "missingTests": true,
-        "gaps": ["缺少数据结构验证测试"]
-      }
+      "keyFiles": ["internal/server/server.go"],
+      "keyFunctions": ["Start", "createApp", "setupRoutes"],
+      "responsibility": "Fiber 服务器配置",
+      "documentation": "internal/server/CLAUDE.md"
     },
     {
       "name": "internal/config",
-      "path": "internal/config/",
-      "description": "配置管理 - 环境变量加载与验证",
+      "path": "internal/config",
+      "type": "config",
       "language": "Go",
-      "entryPoints": ["config.go"],
-      "interfaces": [
-        "Load() - 加载配置",
-        "Get() - 获取配置实例",
-        "Validate() - 配置验证"
-      ],
-      "tests": [],
-      "dependencies": [],
-      "coverage": {
-        "filesScanned": 1,
-        "keyFiles": ["config.go"],
-        "missingTests": true,
-        "gaps": ["缺少配置加载测试", "缺少验证逻辑测试"]
-      }
+      "keyFiles": ["internal/config/config.go"],
+      "keyFunctions": ["Load", "Validate", "Get"],
+      "responsibility": "配置管理与验证",
+      "documentation": "internal/config/CLAUDE.md"
+    },
+    {
+      "name": "internal/model",
+      "path": "internal/model",
+      "type": "model",
+      "language": "Go",
+      "keyFiles": ["internal/model/types.go"],
+      "keyTypes": ["SiteItem", "ProcessedData"],
+      "responsibility": "数据模型定义",
+      "documentation": "internal/model/CLAUDE.md"
+    },
+    {
+      "name": "internal/storage",
+      "path": "internal/storage",
+      "type": "storage",
+      "language": "Go",
+      "keyFiles": ["internal/storage/redis.go"],
+      "keyFunctions": ["InitRedis", "LoadDataWithContext", "SaveDataWithContext"],
+      "responsibility": "Redis 存储层",
+      "documentation": "internal/storage/CLAUDE.md"
     },
     {
       "name": "web",
-      "path": "web/",
-      "description": "前端应用 - TypeScript + Vite + AG Grid",
+      "path": "web",
+      "type": "frontend",
       "language": "TypeScript",
-      "entryPoints": ["src/main.ts", "index.html"],
-      "interfaces": [
-        "src/main.ts - 应用入口",
-        "src/gridConfig.ts - 表格配置",
-        "src/utils/index.ts - 工具函数",
-        "src/utils/config.ts - 站点配置加载"
-      ],
-      "tests": [],
-      "dependencies": ["ag-grid-community", "@ag-grid-community/locale", "typescript", "vite"],
-      "coverage": {
-        "filesScanned": 7,
-        "keyFiles": ["src/main.ts", "src/types.d.ts", "src/gridConfig.ts", "src/utils/index.ts", "vite.config.ts", "package.json"],
-        "missingTests": true,
-        "gaps": ["缺少单元测试", "缺少E2E测试"]
-      }
+      "entryPoint": "web/src/main.ts",
+      "keyFiles": ["web/src/main.ts", "web/src/types.d.ts", "web/vite.config.ts"],
+      "responsibility": "前端应用",
+      "documentation": "web/CLAUDE.md"
     }
   ],
-  "gaps": [
-    {
-      "module": "internal/api",
-      "issue": "缺少单元测试",
-      "priority": "high",
-      "recommendation": "创建 handlers_test.go，测试接口处理、并发控制、容错机制"
-    },
-    {
-      "module": "internal/crawler",
-      "issue": "缺少解析逻辑测试",
-      "priority": "high",
-      "recommendation": "创建 scheduler_test.go，测试数据解析、边界条件、并发锁"
-    },
-    {
-      "module": "internal/storage",
-      "issue": "缺少Redis操作测试",
-      "priority": "high",
-      "recommendation": "创建 redis_test.go，使用miniredis进行单元测试"
-    },
-    {
-      "module": "web",
-      "issue": "缺少前端测试",
-      "priority": "medium",
-      "recommendation": "添加工具函数单元测试和E2E测试（Playwright/Cypress）"
-    },
-    {
-      "module": "internal/model",
-      "issue": "缺少数据验证测试",
-      "priority": "medium",
-      "recommendation": "创建 types_test.go，测试各种数据格式的验证"
-    }
-  ],
-  "statistics": {
-    "totalGoFiles": 8,
-    "totalTypeScriptFiles": 7,
-    "totalMarkdownFiles": 10,
-    "totalYamlFiles": 2,
-    "totalLinesOfCode": {
-      "estimated": 1200,
-      "backend": 900,
-      "frontend": 300
-    },
-    "codeQualityScore": 95,
-    "documentationCoverage": 100
-  },
-  "recommendations": {
-    "nextSteps": [
-      "优先补齐测试：internal/api、internal/crawler、internal/storage",
-      "考虑添加集成测试验证完整数据流",
-      "前端添加工具函数单元测试",
-      "监控Redis连接池使用情况"
-    ],
-    "improvements": [
-      "添加Prometheus metrics监控",
-      "实现优雅关闭机制（Graceful Shutdown）",
-      "考虑添加HTTP/2支持提升性能",
-      "前端实现Service Worker离线缓存"
+  "coverage": {
+    "totalFiles": 12,
+    "scannedFiles": 12,
+    "coveragePercentage": 95,
+    "gaps": [
+      "缺少单元测试",
+      "缺少 API 文档",
+      "缺少部署文档"
     ]
   },
+  "ignoredPaths": [
+    "node_modules/**",
+    ".git/**",
+    "web-dist/**",
+    "dist/**",
+    "build/**",
+    ".next/**",
+    "__pycache__/**",
+    "*.lock",
+    "*.log",
+    "*.bin",
+    "*.pdf",
+    "*.png",
+    "*.jpg",
+    "*.jpeg",
+    "*.gif",
+    "*.mp4",
+    "*.zip",
+    "*.tar",
+    "*.gz"
+  ],
+  "statistics": {
+    "goFiles": 7,
+    "typeScriptFiles": 7,
+    "configFiles": 5,
+    "documentationFiles": 9,
+    "testFiles": 0
+  },
+  "documentationDuplication": {
+    "avoidedDuplicateLines": 0,
+    "usingAtReferenceLinks": true,
+    "progressiveDisclosure": true
+  },
   "truncated": false,
-  "truncatedReason": "",
-  "scanDuration": "阶段A+B完成，覆盖率1.6%（忽略node_modules和.git），核心模块已全扫描"
+  "nextSteps": [
+    "为核心模块添加单元测试（internal/**/*_test.go）",
+    "生成 API 文档（使用 swaggo/swag）",
+    "补充 docker-compose.yml 示例",
+    "添加 CI/CD 配置（GitHub Actions）"
+  ]
 }
