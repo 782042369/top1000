@@ -23,6 +23,14 @@ const (
 )
 
 // GetTop1000Data 提供Top1000数据的API接口
+// @Summary 获取Top1000站点数据
+// @Description 获取Top1000站点列表数据，数据会自动更新（24小时过期）
+// @Tags Top1000
+// @Accept json
+// @Produce json
+// @Success 200 {object} model.ProcessedData
+// @Failure 500 {object} map[string]string "error": "无法加载数据"
+// @Router /top1000.json [get]
 func GetTop1000Data(c *fiber.Ctx) error {
 	// 从Fiber的context提取标准的context.Context
 	// 设置超时保护（如果客户端没设置超时）
@@ -94,6 +102,15 @@ func refreshData(ctx context.Context) {
 }
 
 // GetSitesData 提供IYUU站点数据的API接口
+// @Summary 获取IYUU站点列表
+// @Description 获取IYUU站点列表数据（需要配置IYUU_SIGN环境变量）
+// @Tags Sites
+// @Accept json
+// @Produce json
+// @Success 200 {object} interface{} "站点列表数据"
+// @Failure 502 {object} map[string]string "error": "未配置IYUU_SIGN环境变量"
+// @Failure 500 {object} map[string]string "error": "无法加载站点数据"
+// @Router /sites.json [get]
 func GetSitesData(c *fiber.Ctx) error {
 	cfg := config.Get()
 

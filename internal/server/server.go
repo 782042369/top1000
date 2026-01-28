@@ -11,6 +11,8 @@ import (
 	"top1000/internal/crawler"
 	"top1000/internal/storage"
 
+	docs "top1000/docs" // Swagger docs
+
 	"github.com/gofiber/fiber/v2"
 	"github.com/gofiber/fiber/v2/middleware/compress"
 	"github.com/gofiber/fiber/v2/middleware/recover"
@@ -103,15 +105,68 @@ func securityHeadersMiddleware() fiber.Handler {
 
 // setupRoutes 配置路由
 func setupRoutes(app *fiber.App) {
+	// Swagger UI
+	app.Get("/swagger/*", swaggerUI)
+	app.Get("/swagger/doc.json", swaggerJSON)
+
+	// API 接口
 	app.Get("/top1000.json", api.GetTop1000Data)
 	app.Get("/sites.json", api.GetSitesData) // IYUU站点列表接口
 
+	// 静态文件
 	app.Static("/", config.DefaultWebDistDir, fiber.Static{
 		CacheDuration:  0, // Fiber内部缓存禁用，完全由ModifyResponse自定义
 		Browse:         true,
 		MaxAge:         0,
 		ModifyResponse: setCacheHeaders,
 	})
+}
+
+// swaggerUI 返回 Swagger UI HTML
+func swaggerUI(c *fiber.Ctx) error {
+	html := `<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <title>Top1000 API Documentation</title>
+    <link rel="stylesheet" type="text/css" href="https://unpkg.com/swagger-ui-dist@5.9.0/swagger-ui.css">
+    <style>
+        html { box-sizing: border-box; overflow: -moz-scrollbars-vertical; overflow-y: scroll; }
+        *, *:before, *:after { box-sizing: inherit; }
+        body { margin: 0; padding: 0; font-family: "Helvetica Neue", Helvetica, Arial, sans-serif; }
+    </style>
+</head>
+<body>
+    <div id="swagger-ui"></div>
+    <script src="https://unpkg.com/swagger-ui-dist@5.9.0/swagger-ui-bundle.js" charset="UTF-8"></script>
+    <script src="https://unpkg.com/swagger-ui-dist@5.9.0/swagger-ui-standalone-preset.js" charset="UTF-8"></script>
+    <script>
+        window.onload = function() {
+            const ui = SwaggerUIBundle({
+                url: "/swagger/doc.json",
+                dom_id: '#swagger-ui',
+                deepLinking: true,
+                presets: [
+                    SwaggerUIBundle.presets.apis,
+                    SwaggerUIStandalonePreset
+                ],
+                plugins: [
+                    SwaggerUIBundle.plugins.DownloadUrl
+                ],
+                layout: "StandaloneLayout"
+            })
+            window.ui = ui
+        }
+    </script>
+</body>
+</html>`
+	c.Set("Content-Type", "text/html; charset=utf-8")
+	return c.Send([]byte(html))
+}
+
+// swaggerJSON 返回 Swagger JSON 文档
+func swaggerJSON(c *fiber.Ctx) error {
+	return c.JSON(docs.SwaggerInfo)
 }
 
 // setCacheHeaders 设置静态文件缓存头
