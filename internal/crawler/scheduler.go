@@ -50,9 +50,21 @@ func FetchTop1000WithContext(ctx context.Context) (*model.ProcessedData, error) 
 
 	var lastErr error
 	for attempt := 0; attempt < maxRetries; attempt++ {
+		// 检查 context 是否已取消
+		if ctx.Err() != nil {
+			return nil, fmt.Errorf("请求被取消: %w", ctx.Err())
+		}
+
 		if attempt > 0 {
 			log.Printf("[%s] 第 %d 次重试...", logPrefix, attempt)
-			time.Sleep(retryInterval)
+
+			// 使用 select 等待，支持 context 取消
+			select {
+			case <-ctx.Done():
+				return nil, fmt.Errorf("重试期间请求被取消: %w", ctx.Err())
+			case <-time.After(retryInterval):
+				// 继续重试
+			}
 		}
 
 		data, err := doFetchWithContext(ctx)

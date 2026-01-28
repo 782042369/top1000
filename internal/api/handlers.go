@@ -3,9 +3,9 @@ package api
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 	"io"
 	"log"
-	"net/http"
 	"net/url"
 	"time"
 	"top1000/internal/config"
@@ -39,7 +39,10 @@ func GetTop1000Data(c *fiber.Ctx) error {
 
 	// 检查数据是否需要更新
 	if shouldUpdateData(ctx) {
-		refreshData(ctx)
+		if err := refreshData(ctx); err != nil {
+			log.Printf("[%s] ⚠️ 刷新数据失败: %v", dataUpdateLogPrefix, err)
+			// 容错：继续尝试读取旧数据
+		}
 	}
 
 	// 从Redis读取数据并返回（传递context）
@@ -68,18 +71,23 @@ func shouldUpdateData(ctx context.Context) bool {
 }
 
 // refreshData 刷新数据（带容错机制）
-func refreshData(ctx context.Context) {
+// 返回 error 让调用者知道刷新是否成功
+func refreshData(ctx context.Context) error {
 	// 防止并发更新
 	if storage.IsUpdating() {
 		log.Printf("[%s] ⏸️ 正在更新中，跳过", dataUpdateLogPrefix)
-		return
+		return nil
 	}
 
 	storage.SetUpdating(true)
 	defer storage.SetUpdating(false)
 
 	// 保存旧数据用于容错（传递context）
-	oldData, _ := storage.LoadDataWithContext(ctx)
+	oldData, err := storage.LoadDataWithContext(ctx)
+	if err != nil {
+		log.Printf("[%s] ⚠️ 加载旧数据失败: %v", dataUpdateLogPrefix, err)
+		// 容错：旧数据不存在时继续爬取新数据
+	}
 
 	log.Printf("[%s] 🔍 开始爬取新数据...", dataUpdateLogPrefix)
 	newData, err := crawler.FetchTop1000WithContext(ctx)
@@ -87,18 +95,19 @@ func refreshData(ctx context.Context) {
 		// 爬取失败，如果有旧数据则使用旧数据（容错）
 		if oldData != nil {
 			log.Printf("[%s] ✅ 爬取失败，使用旧数据: %v", dataUpdateLogPrefix, err)
-			return
+			return fmt.Errorf("爬取失败，使用旧数据: %w", err)
 		}
 		log.Printf("[%s] ❌ 爬取失败且无旧数据: %v", dataUpdateLogPrefix, err)
-		return
+		return fmt.Errorf("爬取失败且无旧数据: %w", err)
 	}
 
 	if err := storage.SaveDataWithContext(ctx, *newData); err != nil {
 		log.Printf("[%s] ❌ 保存数据失败: %v", dataUpdateLogPrefix, err)
-		return
+		return fmt.Errorf("保存数据失败: %w", err)
 	}
 
 	log.Printf("[%s] ✅ 数据更新成功（%d 条）", dataUpdateLogPrefix, len(newData.Items))
+	return nil
 }
 
 // GetSitesData 提供IYUU站点数据的API接口
@@ -127,7 +136,10 @@ func GetSitesData(c *fiber.Ctx) error {
 
 	// 检查数据是否存在，不存在或正在更新时触发更新
 	if shouldUpdateSitesData(ctx) {
-		refreshSitesData(ctx, cfg.IYYUSign)
+		if err := refreshSitesData(ctx, cfg.IYYUSign); err != nil {
+			log.Printf("[%s] ⚠️ 刷新站点数据失败: %v", sitesUpdateLogPrefix, err)
+			// 容错：继续尝试读取旧数据
+		}
 	}
 
 	// 从Redis读取数据并返回
@@ -157,11 +169,12 @@ func shouldUpdateSitesData(ctx context.Context) bool {
 }
 
 // refreshSitesData 刷新站点数据（带容错机制）
-func refreshSitesData(ctx context.Context, sign string) {
+// 返回 error 让调用者知道刷新是否成功
+func refreshSitesData(ctx context.Context, sign string) error {
 	// 防止并发更新
 	if storage.IsSitesUpdating() {
 		log.Printf("[%s] ⏸️ 正在更新中，跳过", sitesUpdateLogPrefix)
-		return
+		return nil
 	}
 
 	storage.SetSitesUpdating(true)
@@ -173,7 +186,7 @@ func refreshSitesData(ctx context.Context, sign string) {
 	apiURL, err := url.Parse("https://api.iyuu.cn/index.php")
 	if err != nil {
 		log.Printf("[%s] ❌ 解析基础URL失败: %v", sitesUpdateLogPrefix, err)
-		return
+		return fmt.Errorf("解析基础URL失败: %w", err)
 	}
 	params := url.Values{}
 	params.Add("service", "App.Api.Sites")
@@ -181,16 +194,14 @@ func refreshSitesData(ctx context.Context, sign string) {
 	params.Add("version", "2.0.0")
 	apiURL.RawQuery = params.Encode()
 
-	// 创建HTTP客户端（使用配置的超时时间）
-	client := &http.Client{
-		Timeout: defaultHTTPClientTimeout,
-	}
+	// 创建HTTP客户端（从 context 提取超时时间）
+	client := getHTTPClient(ctx)
 
 	// 发送GET请求
 	resp, err := client.Get(apiURL.String())
 	if err != nil {
 		log.Printf("[%s] ❌ 请求失败: %v", sitesUpdateLogPrefix, err)
-		return
+		return fmt.Errorf("请求失败: %w", err)
 	}
 	defer resp.Body.Close()
 
@@ -198,21 +209,22 @@ func refreshSitesData(ctx context.Context, sign string) {
 	body, err := io.ReadAll(resp.Body)
 	if err != nil {
 		log.Printf("[%s] ❌ 读取响应失败: %v", sitesUpdateLogPrefix, err)
-		return
+		return fmt.Errorf("读取响应失败: %w", err)
 	}
 
 	// 解析JSON
 	var result interface{}
 	if err := json.Unmarshal(body, &result); err != nil {
 		log.Printf("[%s] ❌ 解析JSON失败: %v", sitesUpdateLogPrefix, err)
-		return
+		return fmt.Errorf("解析JSON失败: %w", err)
 	}
 
 	// 保存到Redis（24小时TTL）
 	if err := storage.SaveSitesDataWithContext(ctx, result); err != nil {
 		log.Printf("[%s] ❌ 保存数据失败: %v", sitesUpdateLogPrefix, err)
-		return
+		return fmt.Errorf("保存数据失败: %w", err)
 	}
 
 	log.Printf("[%s] ✅ 站点数据更新成功", sitesUpdateLogPrefix)
+	return nil
 }
