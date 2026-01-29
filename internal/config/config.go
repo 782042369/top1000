@@ -21,10 +21,11 @@ const (
 
 // Config 应用程序配置（只保留必须从环境变量读取的配置）
 type Config struct {
-	RedisAddr     string // Redis地址（必须配置）
-	RedisPassword string // Redis密码（必须配置）
-	RedisDB       int    // Redis数据库编号（可选，默认0）
-	IYYUSign      string // IYUU签名（可选，用于调用站点API）
+	RedisAddr          string // Redis地址（必须配置）
+	RedisPassword      string // Redis密码（必须配置）
+	RedisDB            int    // Redis数据库编号（可选，默认0）
+	IYYUSign           string // IYUU签名（可选，用于调用站点API）
+	InsecureSkipVerify bool   // 跳过TLS证书验证（可选，仅用于证书过期等异常情况）
 }
 
 var appConfig *Config
@@ -36,10 +37,11 @@ func Load() *Config {
 	}
 
 	appConfig = &Config{
-		RedisAddr:     getEnv("REDIS_ADDR", ""),
-		RedisPassword: getEnv("REDIS_PASSWORD", ""),
-		RedisDB:       getEnvInt("REDIS_DB", DefaultRedisDB),
-		IYYUSign:      getEnv("IYUU_SIGN", ""),
+		RedisAddr:          getEnv("REDIS_ADDR", ""),
+		RedisPassword:      getEnv("REDIS_PASSWORD", ""),
+		RedisDB:            getEnvInt("REDIS_DB", DefaultRedisDB),
+		IYYUSign:           getEnv("IYUU_SIGN", ""),
+		InsecureSkipVerify: getEnvBool("INSECURE_SKIP_VERIFY", false),
 	}
 
 	return appConfig
@@ -111,4 +113,14 @@ func getEnvInt(key string, defaultValue int) int {
 	}
 
 	return defaultValue
+}
+
+// getEnvBool 获取布尔环境变量，如果不存在或解析失败则返回默认值
+func getEnvBool(key string, defaultValue bool) bool {
+	value := os.Getenv(key)
+	if value == "" {
+		return defaultValue
+	}
+	// 支持 true/false, 1/0, yes/no
+	return value == "true" || value == "1" || value == "yes"
 }
