@@ -1,5 +1,4 @@
 import { splitChunks } from '@xiaowaibuzheng/rolldown-vite-split-chunks'
-import { resolve } from 'node:path'
 import { defineConfig } from 'vite'
 import { createHtmlPlugin } from 'vite-plugin-html'
 
