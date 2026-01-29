@@ -7,8 +7,41 @@
     <title>收藏从未停止，观影从未开始</title>
   </head>
 
-  <body>
-    <div id="root"></div>
+  <body style="margin: 0; overflow: hidden;">
+    <!-- 工具栏 - 固定顶部 -->
+    <div
+      id="toolbar"
+      style="
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        height: 50px;
+        padding: 10px 20px;
+        background: #f5f5f5;
+        border-bottom: 1px solid #ddd;
+        display: flex;
+        gap: 10px;
+        align-items: center;
+        z-index: 1000;
+        box-sizing: border-box;
+      "
+    >
+      <button
+        id="exportCsv"
+        style="padding: 8px 16px; cursor: pointer; background: #fff; border: 1px solid #ccc; border-radius: 4px"
+      >
+        导出 CSV
+      </button>
+      <button
+        id="exportExcel"
+        style="padding: 8px 16px; cursor: pointer; background: #fff; border: 1px solid #ccc; border-radius: 4px"
+      >
+        导出 Excel
+      </button>
+    </div>
+    <!-- 表格容器 - 自适应高度，内部滚动 -->
+    <div id="root" style="height: 100vh; padding-top: 50px; box-sizing: border-box;"></div>
     <script type="module" src="/src/main.ts"></script>
   </body>
 </html>
