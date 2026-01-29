@@ -9,13 +9,37 @@ import {
   TextFilterModule,
   themeAlpine,
 } from 'ag-grid-community'
+import { CsvExportModule, ExcelExportModule, LicenseManager } from 'ag-grid-enterprise'
 
 import './index.css'
 import type { DataType } from './types'
 
-import { fetchData } from './utils'
 import { columnDefs, defaultColDef, interactionConfig, performanceConfig } from './gridConfig'
+import { fetchData } from './utils'
 import { loadSitesConfig } from './utils/config'
+
+// 排除列的表头名称
+const EXCLUDED_COLUMN = '操作'
+
+// 设置 AG Grid Enterprise License
+LicenseManager.setLicenseKey(
+  '[v3][RELEASE][0102]_NDg2Njc4MzY3MDgzNw==16d78ca762fb5d2ff740aed081e2af7b',
+)
+
+// Grid API 引用
+let gridApi: any = null
+
+// 生成导出文件名（带日期）
+function getExportFileName(extension: string): string {
+  const date = new Date().toISOString().slice(0, 10)
+  return `top1000-${date}.${extension}`
+}
+
+// 判断列是否应该导出（排除操作列）
+function shouldExportColumn(params: any): boolean {
+  const colDef = params.column.getColDef()
+  return colDef.headerName !== EXCLUDED_COLUMN
+}
 
 // 初始化应用（预加载站点配置）
 async function initApp() {
@@ -42,48 +66,62 @@ async function initApp() {
 }
 
 // 初始化表格
-function initGrid() {
-  // 注册 AG Grid 模块
+function initGrid(): void {
   ModuleRegistry.registerModules([
     ClientSideRowModelModule,
     TextFilterModule,
     LocaleModule,
+    CsvExportModule,
+    ExcelExportModule,
   ])
 
-  // 表格配置（小项目优化版）
   const gridOptions: GridOptions<DataType> = {
     theme: themeAlpine,
     localeText: AG_GRID_LOCALE_CN,
-
-    // 默认列配置
     defaultColDef,
-
-    // 初始化时加载数据
-    onGridReady: fetchData,
-
-    // 行ID用数据里的id字段
+    onGridReady: (params) => {
+      gridApi = params.api
+      fetchData(params)
+    },
     getRowId: params => `${params.data.id}`,
-
-    // 列定义（从配置文件导入）
     columnDefs,
-
-    // 性能优化（小项目简化配置）
     ...performanceConfig,
-
-    // 交互优化
     ...interactionConfig,
   }
 
-  // 初始化表格
   const rootElement = document.querySelector<HTMLElement>('#root')
-  if (rootElement) {
-    createGrid(rootElement, gridOptions)
-  }
-  else {
+  if (!rootElement) {
     console.error('❌ 未找到根元素 #root')
+    return
   }
+
+  createGrid(rootElement, gridOptions)
+  setupExportButtons()
+}
+
+// 设置导出按钮事件
+function setupExportButtons(): void {
+  const exportCsvBtn = document.querySelector<HTMLElement>('#exportCsv')
+  const exportExcelBtn = document.querySelector<HTMLElement>('#exportExcel')
+
+  exportCsvBtn?.addEventListener('click', () => {
+    if (gridApi) {
+      gridApi.exportDataAsCsv({
+        fileName: getExportFileName('csv'),
+        shouldExportColumn,
+      })
+    }
+  })
+
+  exportExcelBtn?.addEventListener('click', () => {
+    if (gridApi) {
+      gridApi.exportDataAsExcel({
+        fileName: getExportFileName('xlsx'),
+        shouldExportColumn,
+      })
+    }
+  })
 }
 
 // 启动应用
 initApp()
-

@@ -1,5 +1,7 @@
 import type { GridOptions } from 'ag-grid-community'
+
 import type { DataType } from './types'
+
 import { convertSizeToKb } from './utils'
 import { operationRender } from './utils/operationRender'
 
@@ -78,6 +80,7 @@ export const defaultColDef: GridOptions<DataType>['defaultColDef'] = {
 export const performanceConfig = {
   rowBuffer: 10, // 虚拟滚动缓冲区
   enableCellTextSelection: true, // 允许选择文本
+  domLayout: 'normal' as const, // 正常布局，固定高度容器内滚动
 }
 
 /**
