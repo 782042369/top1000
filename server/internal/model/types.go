@@ -7,9 +7,7 @@ import (
 	"strings"
 )
 
-var (
-	sizePattern = regexp.MustCompile(`^\d+(\.\d+)?\s*(KB|MB|GB|TB)$`)
-)
+var sizePattern = regexp.MustCompile(`^\d+(\.\d+)?\s*(KB|MB|GB|TB)$`)
 
 // SiteItem 一条站点数据
 type SiteItem struct {
@@ -33,7 +31,6 @@ func (s *SiteItem) Validate() error {
 		return fmt.Errorf("站点ID必须是数字: %s", s.SiteID)
 	}
 
-	// 重复度必须是数字
 	if s.Duplication != "" {
 		if _, err := strconv.ParseFloat(s.Duplication, 64); err != nil {
 			return fmt.Errorf("重复度必须为数字: %s", s.Duplication)

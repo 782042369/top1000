@@ -2,6 +2,7 @@ package api
 
 import (
 	"context"
+	"crypto/tls"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -18,20 +19,17 @@ import (
 )
 
 const (
-	dataUpdateLogPrefix      = "Top1000"
-	sitesUpdateLogPrefix     = "Sites"
-	defaultAPITimeout        = 15 * time.Second // API默认超时时间
-	defaultHTTPClientTimeout = 5 * time.Second  // HTTP客户端超时时间
+	dataUpdateLogPrefix  = "Top1000"
+	sitesUpdateLogPrefix = "Sites"
+	defaultAPITimeout    = 15 * time.Second
 )
 
 // Handler API 处理器（依赖注入模式）
-// 组合多个接口，遵循"组合优于继承"原则
 type Handler struct {
-	store      storage.DataStore  // 数据存储接口
-	sitesStore storage.SitesStore // 站点存储接口
-	lock       storage.UpdateLock // 更新锁接口
-	crawler    Crawler            // 爬虫接口
-	httpClient *http.Client       // HTTP 客户端
+	store      storage.DataStore
+	sitesStore storage.SitesStore
+	lock       storage.UpdateLock
+	crawler    Crawler
 }
 
 // Crawler 爬虫接口（小而专注）
@@ -42,14 +40,12 @@ type Crawler interface {
 }
 
 // NewHandler 创建 Handler 实例（依赖注入）
-// 接收接口类型，遵循"依赖倒置原则"
 func NewHandler(store storage.DataStore, sitesStore storage.SitesStore, lock storage.UpdateLock) *Handler {
 	return &Handler{
 		store:      store,
 		sitesStore: sitesStore,
 		lock:       lock,
-		crawler:    &defaultCrawler{}, // 使用默认爬虫实现
-		httpClient: &http.Client{Timeout: defaultHTTPClientTimeout},
+		crawler:    &defaultCrawler{},
 	}
 }
 
@@ -106,13 +102,11 @@ func (h *Handler) GetTop1000Data(c *fiber.Ctx) error {
 
 // shouldUpdateData 检查数据是否需要更新
 func (h *Handler) shouldUpdateData(ctx context.Context) bool {
-	// 数据不存在或出错时,需要更新
 	exists, err := h.store.DataExists(ctx)
 	if err != nil || !exists {
 		return true
 	}
 
-	// 数据过期时,需要更新
 	isExpired, err := h.store.IsDataExpired(ctx)
 	return err != nil || isExpired
 }
@@ -207,12 +201,8 @@ func (h *Handler) GetSitesData(c *fiber.Ctx) error {
 
 // shouldUpdateSitesData 检查站点数据是否需要更新
 func (h *Handler) shouldUpdateSitesData(ctx context.Context) bool {
-	// 数据不存在时，需要更新
 	exists, err := h.sitesStore.SitesDataExists(ctx)
-	if err != nil || !exists {
-		return true
-	}
-	return false
+	return err != nil || !exists
 }
 
 // refreshSitesData 刷新站点数据（带容错机制）
@@ -229,7 +219,6 @@ func (h *Handler) refreshSitesData(ctx context.Context, sign string) error {
 
 	log.Printf("[%s] 开始获取站点数据...", sitesUpdateLogPrefix)
 
-	// 构建API URL（使用net/url包，更安全规范）
 	apiURL, err := url.Parse("https://api.iyuu.cn/index.php")
 	if err != nil {
 		log.Printf("[%s] 解析基础URL失败: %v", sitesUpdateLogPrefix, err)
@@ -241,10 +230,21 @@ func (h *Handler) refreshSitesData(ctx context.Context, sign string) error {
 	params.Add("version", "2.0.0")
 	apiURL.RawQuery = params.Encode()
 
-	// 创建HTTP客户端（从 context 提取超时时间）
-	client := getHTTPClient(ctx)
+	timeout := 5 * time.Second
+	if deadline, ok := ctx.Deadline(); ok {
+		if remaining := time.Until(deadline); remaining > 0 && remaining < timeout {
+			timeout = remaining
+		}
+	}
 
-	// 发送GET请求
+	client := &http.Client{Timeout: timeout}
+	cfg := config.Get()
+	if cfg.InsecureSkipVerify {
+		client.Transport = &http.Transport{
+			TLSClientConfig: &tls.Config{InsecureSkipVerify: true},
+		}
+	}
+
 	resp, err := client.Get(apiURL.String())
 	if err != nil {
 		log.Printf("[%s] 请求失败: %v", sitesUpdateLogPrefix, err)
@@ -260,7 +260,7 @@ func (h *Handler) refreshSitesData(ctx context.Context, sign string) error {
 	}
 
 	// 解析JSON
-	var result interface{}
+	var result any
 	if err := json.Unmarshal(body, &result); err != nil {
 		log.Printf("[%s] 解析JSON失败: %v", sitesUpdateLogPrefix, err)
 		return fmt.Errorf("解析JSON失败: %w", err)

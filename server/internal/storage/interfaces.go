@@ -25,10 +25,10 @@ type DataStore interface {
 // 分离关注点，独立接口
 type SitesStore interface {
 	// LoadSitesData 加载站点数据
-	LoadSitesData(ctx context.Context) (interface{}, error)
+	LoadSitesData(ctx context.Context) (any, error)
 
 	// SaveSitesData 保存站点数据
-	SaveSitesData(ctx context.Context, data interface{}) error
+	SaveSitesData(ctx context.Context, data any) error
 
 	// SitesDataExists 检查站点数据是否存在
 	SitesDataExists(ctx context.Context) (bool, error)

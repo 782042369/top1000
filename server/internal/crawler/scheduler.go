@@ -34,14 +34,14 @@ var (
 	taskMutex sync.Mutex
 )
 
-// FetchTop1000 从IYUU获取数据并返回（向后兼容，使用默认超时）
+// FetchTop1000 从IYUU获取数据并返回
 func FetchTop1000() (*model.ProcessedData, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), httpTimeout)
 	defer cancel()
 	return FetchTop1000WithContext(ctx)
 }
 
-// FetchTop1000WithContext 从IYUU获取数据并返回（支持外部传入context）
+// FetchTop1000WithContext 从IYUU获取数据并返回
 func FetchTop1000WithContext(ctx context.Context) (*model.ProcessedData, error) {
 	if !taskMutex.TryLock() {
 		return nil, fmt.Errorf("任务正在执行中")
@@ -78,7 +78,7 @@ func FetchTop1000WithContext(ctx context.Context) (*model.ProcessedData, error) 
 	return nil, lastErr
 }
 
-// doFetchWithContext 执行HTTP请求获取数据（支持外部传入context）
+// doFetchWithContext 执行HTTP请求获取数据
 func doFetchWithContext(ctx context.Context) (*model.ProcessedData, error) {
 	log.Printf("[%s] 开始爬取IYUU数据...", logPrefix)
 
@@ -117,11 +117,12 @@ func doFetchWithContext(ctx context.Context) (*model.ProcessedData, error) {
 func parseResponse(rawData string) model.ProcessedData {
 	lines := strings.Split(normalizeLineEndings(rawData), "\n")
 
-	timeLine := ""
-	dataLines := []string{}
+	var timeLine string
 	if len(lines) > 0 {
 		timeLine = lines[timeLineIndex]
 	}
+
+	var dataLines []string
 	if len(lines) > dataStartLine {
 		dataLines = lines[dataStartLine:]
 	}
@@ -207,22 +208,18 @@ func extractTime(rawTime string) string {
 	return rawTime
 }
 
-// PreloadData 启动时预加载数据（如果Redis中没有数据或数据过期）
+// PreloadData 启动时预加载数据
 func PreloadData() {
 	log.Println("[爬虫] 检查是否需要预加载数据...")
 
-	// 创建带超时的context（启动时预加载不希望等待太久）
 	ctx, cancel := context.WithTimeout(context.Background(), httpTimeout)
 	defer cancel()
 
-	// 检查数据状态（存在性+过期检查）
-	needsLoad := checkDataLoadRequired(ctx)
-	if !needsLoad {
+	if !checkDataLoadRequired(ctx) {
 		log.Println("[爬虫] Redis中已有新鲜数据，无需预加载")
 		return
 	}
 
-	// 没有数据或数据过期，尝试获取新数据
 	log.Println("[爬虫] Redis中无数据或数据过期，开始预加载...")
 	data, err := FetchTop1000WithContext(ctx)
 	if err != nil {
@@ -231,7 +228,6 @@ func PreloadData() {
 		return
 	}
 
-	// 存入Redis（使用同一个context）
 	if err := storage.SaveDataWithContext(ctx, *data); err != nil {
 		log.Printf("[爬虫] 保存预加载数据失败: %v", err)
 		return
@@ -240,24 +236,19 @@ func PreloadData() {
 	log.Printf("[爬虫] 预加载成功，已存入Redis（共 %d 条记录）", len(data.Items))
 }
 
-// checkDataLoadRequired 检查是否需要加载数据（支持外部传入context）
+// checkDataLoadRequired 检查是否需要加载数据
 func checkDataLoadRequired(ctx context.Context) bool {
-	// 检查数据是否存在
 	exists, err := storage.DataExistsWithContext(ctx)
-	if err != nil {
-		log.Printf("[爬虫] 检查数据存在性失败: %v", err)
-		// 出错时保守处理,视为需要加载
-		return true
-	}
-	if !exists {
+	if err != nil || !exists {
+		if err != nil {
+			log.Printf("[爬虫] 检查数据存在性失败: %v", err)
+		}
 		return true
 	}
 
-	// 检查数据是否过期
 	isExpired, err := storage.IsDataExpiredWithContext(ctx)
 	if err != nil {
 		log.Printf("[爬虫] 检查数据过期失败: %v", err)
-		// 出错时保守处理,视为需要加载
 		return true
 	}
 

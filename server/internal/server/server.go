@@ -20,42 +20,35 @@ import (
 
 const (
 	appName          = "Top1000"
-	requestBodyLimit = 4 * 1024 * 1024 // 4MB
+	requestBodyLimit = 4 * 1024 * 1024
 	oneYearMaxAge    = "public, max-age=31536000"
 	noCache          = "no-cache, no-store, must-revalidate"
-	cspHeader        = "default-src 'self'; " +
-		"script-src 'self' 'unsafe-inline' 'unsafe-eval' https://log.939593.xyz; " +
-		"img-src 'self' data: https: https://lsky.939593.xyz:11111; " +
-		"style-src 'self' 'unsafe-inline'; " +
-		"connect-src 'self' https://log.939593.xyz;"
+	separatorLength  = 40
 )
 
 // Start 启动Web服务器
 func Start() {
 	cfg := config.Get()
 
-	// 验证配置
 	if err := config.Validate(); err != nil {
 		log.Fatalf("配置验证失败: %v", err)
 	}
 
-	printStartupBanner()
+	printSeparator()
+	log.Println("   Top1000 服务正在启动...")
+	printSeparator()
 
-	// 必须先初始化存储，再创建 app（因为 createApp 会调用 setupRoutes，
-	// 而 setupRoutes 依赖 storage.GetDefaultXXXStore()）
 	initStorage()
 	app := createApp()
-	preloadData() // 启动时预加载数据
+	preloadData()
 	printStartupInfo(cfg)
 
-	// 启动服务器（避免使用 log.Fatal，确保 defer 能执行）
 	if err := app.Listen(":" + config.DefaultPort); err != nil {
 		log.Printf("服务启动失败: %v", err)
-		closeRedis() // 手动调用确保清理
+		closeRedis()
 		return
 	}
 
-	// 正常退出时关闭Redis连接
 	closeRedis()
 }
 
@@ -101,6 +94,12 @@ func loggerMiddleware() fiber.Handler {
 
 // securityHeadersMiddleware 安全响应头中间件
 func securityHeadersMiddleware() fiber.Handler {
+	cspHeader := "default-src 'self'; " +
+		"script-src 'self' 'unsafe-inline' 'unsafe-eval' https://log.939593.xyz; " +
+		"img-src 'self' data: https: https://lsky.939593.xyz:11111; " +
+		"style-src 'self' 'unsafe-inline'; " +
+		"connect-src 'self' https://log.939593.xyz;"
+
 	return func(c *fiber.Ctx) error {
 		c.Set("X-XSS-Protection", "1; mode=block")
 		c.Set("X-Content-Type-Options", "nosniff")
@@ -219,26 +218,24 @@ func closeRedis() {
 	}
 }
 
-// printStartupBanner 打印启动横幅
-func printStartupBanner() {
-	log.Println(strings.Repeat("=", 40))
-	log.Println("   Top1000 服务正在启动...")
-	log.Println(strings.Repeat("=", 40))
+// printSeparator 打印分隔线
+func printSeparator() {
+	log.Println(strings.Repeat("=", separatorLength))
 }
 
 // printStartupInfo 打印启动信息
 func printStartupInfo(cfg *config.Config) {
-	log.Println(strings.Repeat("=", 40))
+	printSeparator()
 	log.Printf("服务已启动，监听端口: %s", config.DefaultPort)
 	log.Printf("存储方式: Redis (%s)", cfg.RedisAddr)
 	log.Println("数据更新策略: 过期自动更新（容错机制）")
 	log.Println("安全措施: 速率限制、安全响应头")
-	log.Println(strings.Repeat("=", 40))
+	printSeparator()
 }
 
 // preloadData 启动时预加载数据
 func preloadData() {
-	log.Println(strings.Repeat("=", 40))
+	printSeparator()
 	crawler.PreloadData()
-	log.Println(strings.Repeat("=", 40))
+	printSeparator()
 }

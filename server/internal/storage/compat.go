@@ -10,15 +10,14 @@ import (
 	"top1000/internal/model"
 )
 
-// 全局变量（向后兼容，新代码建议使用依赖注入）
 var (
-	defaultStore   DataStore
+	defaultStore      DataStore
 	defaultSitesStore SitesStore
-	defaultLock    UpdateLock
-	redisClient    *redis.Client
+	defaultLock       UpdateLock
+	redisClient       *redis.Client
 )
 
-// InitRedis 初始化 Redis 连接（向后兼容）
+// InitRedis 初始化 Redis 连接
 func InitRedis() error {
 	cfg := config.Get()
 	log.Printf("正在连接Redis: %s (DB: %d)", cfg.RedisAddr, cfg.RedisDB)
@@ -42,11 +41,10 @@ func InitRedis() error {
 		return fmt.Errorf("Redis连接失败: %w", err)
 	}
 
-	// 初始化默认存储实例
-	redisStore := &RedisStore{client: redisClient}
-	defaultStore = redisStore
-	defaultSitesStore = redisStore
-	defaultLock = redisStore
+	redisStore := NewRedisStore(redisClient)
+	defaultStore = redisStore.AsDataStore()
+	defaultSitesStore = redisStore.AsSitesStore()
+	defaultLock = redisStore.AsUpdateLock()
 
 	log.Println("Redis连接成功")
 	return nil
@@ -60,67 +58,67 @@ func CloseRedis() error {
 	return nil
 }
 
-// GetDefaultStore 获取默认数据存储实例（用于依赖注入）
+// GetDefaultStore 获取默认数据存储实例
 func GetDefaultStore() DataStore {
 	return defaultStore
 }
 
-// GetDefaultSitesStore 获取默认站点存储实例（用于依赖注入）
+// GetDefaultSitesStore 获取默认站点存储实例
 func GetDefaultSitesStore() SitesStore {
 	return defaultSitesStore
 }
 
-// GetDefaultLock 获取默认更新锁实例（用于依赖注入）
+// GetDefaultLock 获取默认更新锁实例
 func GetDefaultLock() UpdateLock {
 	return defaultLock
 }
 
-// ===== 向后兼容函数（委托给接口） =====
+// ===== 兼容函数 =====
 
-// SaveData 存储数据到 Redis（向后兼容，使用默认超时）
+// SaveData 存储数据到 Redis（使用默认超时）
 func SaveData(data model.ProcessedData) error {
 	ctx, cancel := context.WithTimeout(context.Background(), writeTimeout)
 	defer cancel()
-	return defaultStore.SaveData(ctx, data)
+	return SaveDataWithContext(ctx, data)
 }
 
-// SaveDataWithContext 存储数据到 Redis（支持外部传入 context）
+// SaveDataWithContext 存储数据到 Redis
 func SaveDataWithContext(ctx context.Context, data model.ProcessedData) error {
 	return defaultStore.SaveData(ctx, data)
 }
 
-// LoadData 从 Redis 读取数据（向后兼容，使用默认超时）
+// LoadData 从 Redis 读取数据（使用默认超时）
 func LoadData() (*model.ProcessedData, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), readTimeout)
 	defer cancel()
-	return defaultStore.LoadData(ctx)
+	return LoadDataWithContext(ctx)
 }
 
-// LoadDataWithContext 从 Redis 读取数据（支持外部传入 context）
+// LoadDataWithContext 从 Redis 读取数据
 func LoadDataWithContext(ctx context.Context) (*model.ProcessedData, error) {
 	return defaultStore.LoadData(ctx)
 }
 
-// IsDataExpired 检查数据是否过期（向后兼容）
+// IsDataExpired 检查数据是否过期（使用默认超时）
 func IsDataExpired() (bool, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), readTimeout)
 	defer cancel()
-	return defaultStore.IsDataExpired(ctx)
+	return IsDataExpiredWithContext(ctx)
 }
 
-// IsDataExpiredWithContext 检查数据是否过期（支持外部传入 context）
+// IsDataExpiredWithContext 检查数据是否过期
 func IsDataExpiredWithContext(ctx context.Context) (bool, error) {
 	return defaultStore.IsDataExpired(ctx)
 }
 
-// DataExists 检查数据是否存在（向后兼容）
+// DataExists 检查数据是否存在（使用默认超时）
 func DataExists() (bool, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), readTimeout)
 	defer cancel()
-	return defaultStore.DataExists(ctx)
+	return DataExistsWithContext(ctx)
 }
 
-// DataExistsWithContext 检查数据是否存在（支持外部传入 context）
+// DataExistsWithContext 检查数据是否存在
 func DataExistsWithContext(ctx context.Context) (bool, error) {
 	return defaultStore.DataExists(ctx)
 }
@@ -130,10 +128,8 @@ func Ping() error {
 	if redisClient == nil {
 		return fmt.Errorf("Redis客户端未初始化")
 	}
-
 	ctx, cancel := context.WithTimeout(context.Background(), dialTimeout)
 	defer cancel()
-
 	return redisClient.Ping(ctx).Err()
 }
 
@@ -147,38 +143,38 @@ func SetUpdating(updating bool) {
 	defaultLock.SetUpdating(updating)
 }
 
-// SaveSitesData 存储站点数据到 Redis（向后兼容）
-func SaveSitesData(data interface{}) error {
+// SaveSitesData 存储站点数据到 Redis（使用默认超时）
+func SaveSitesData(data any) error {
 	ctx, cancel := context.WithTimeout(context.Background(), writeTimeout)
 	defer cancel()
+	return SaveSitesDataWithContext(ctx, data)
+}
+
+// SaveSitesDataWithContext 存储站点数据到 Redis
+func SaveSitesDataWithContext(ctx context.Context, data any) error {
 	return defaultSitesStore.SaveSitesData(ctx, data)
 }
 
-// SaveSitesDataWithContext 存储站点数据到 Redis（支持外部传入 context）
-func SaveSitesDataWithContext(ctx context.Context, data interface{}) error {
-	return defaultSitesStore.SaveSitesData(ctx, data)
-}
-
-// LoadSitesData 从 Redis 读取站点数据
-func LoadSitesData() (interface{}, error) {
+// LoadSitesData 从 Redis 读取站点数据（使用默认超时）
+func LoadSitesData() (any, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), readTimeout)
 	defer cancel()
+	return LoadSitesDataWithContext(ctx)
+}
+
+// LoadSitesDataWithContext 从 Redis 读取站点数据
+func LoadSitesDataWithContext(ctx context.Context) (any, error) {
 	return defaultSitesStore.LoadSitesData(ctx)
 }
 
-// LoadSitesDataWithContext 从 Redis 读取站点数据（支持外部传入 context）
-func LoadSitesDataWithContext(ctx context.Context) (interface{}, error) {
-	return defaultSitesStore.LoadSitesData(ctx)
-}
-
-// SitesDataExists 检查站点数据是否存在
+// SitesDataExists 检查站点数据是否存在（使用默认超时）
 func SitesDataExists() (bool, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), readTimeout)
 	defer cancel()
-	return defaultSitesStore.SitesDataExists(ctx)
+	return SitesDataExistsWithContext(ctx)
 }
 
-// SitesDataExistsWithContext 检查站点数据是否存在（支持外部传入 context）
+// SitesDataExistsWithContext 检查站点数据是否存在
 func SitesDataExistsWithContext(ctx context.Context) (bool, error) {
 	return defaultSitesStore.SitesDataExists(ctx)
 }

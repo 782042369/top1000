@@ -43,19 +43,24 @@ type RedisStore struct {
 }
 
 // NewRedisStore 创建 Redis 存储实例
-// 依赖注入：接收 *redis.Client，返回接口类型
-func NewRedisStore(client *redis.Client) DataStore {
+// 返回的实例同时实现 DataStore、SitesStore、UpdateLock 三个接口
+func NewRedisStore(client *redis.Client) *RedisStore {
 	return &RedisStore{client: client}
 }
 
-// NewRedisSitesStore 创建站点存储实例
-func NewRedisSitesStore(client *redis.Client) SitesStore {
-	return &RedisStore{client: client}
+// AsDataStore 将 RedisStore 转换为 DataStore 接口
+func (r *RedisStore) AsDataStore() DataStore {
+	return r
 }
 
-// NewRedisUpdateLock 创建更新锁实例
-func NewRedisUpdateLock() UpdateLock {
-	return &RedisStore{}
+// AsSitesStore 将 RedisStore 转换为 SitesStore 接口
+func (r *RedisStore) AsSitesStore() SitesStore {
+	return r
+}
+
+// AsUpdateLock 将 RedisStore 转换为 UpdateLock 接口
+func (r *RedisStore) AsUpdateLock() UpdateLock {
+	return r
 }
 
 // ===== DataStore 接口实现 =====
@@ -146,7 +151,7 @@ func (r *RedisStore) IsDataExpired(ctx context.Context) (bool, error) {
 // ===== SitesStore 接口实现 =====
 
 // LoadSitesData 加载站点数据
-func (r *RedisStore) LoadSitesData(ctx context.Context) (interface{}, error) {
+func (r *RedisStore) LoadSitesData(ctx context.Context) (any, error) {
 	key := config.DefaultSitesKey
 
 	jsonData, err := r.client.Get(ctx, key).Bytes()
@@ -157,7 +162,7 @@ func (r *RedisStore) LoadSitesData(ctx context.Context) (interface{}, error) {
 		return nil, fmt.Errorf("从Redis读取站点数据失败: %w", err)
 	}
 
-	var result interface{}
+	var result any
 	if err := json.Unmarshal(jsonData, &result); err != nil {
 		return nil, fmt.Errorf("解析站点数据JSON失败: %w", err)
 	}
@@ -167,7 +172,7 @@ func (r *RedisStore) LoadSitesData(ctx context.Context) (interface{}, error) {
 }
 
 // SaveSitesData 保存站点数据
-func (r *RedisStore) SaveSitesData(ctx context.Context, data interface{}) error {
+func (r *RedisStore) SaveSitesData(ctx context.Context, data any) error {
 	jsonData, err := json.Marshal(data)
 	if err != nil {
 		return fmt.Errorf("序列化站点数据失败: %w", err)

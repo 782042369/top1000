@@ -3,6 +3,7 @@ package config
 import (
 	"fmt"
 	"os"
+	"strconv"
 	"strings"
 	"sync"
 	"sync/atomic"
@@ -108,11 +109,10 @@ func getEnvInt(key string, defaultValue int) int {
 		return defaultValue
 	}
 
-	var result int
-	if _, err := fmt.Sscanf(value, "%d", &result); err == nil {
+	result, err := strconv.Atoi(value)
+	if err == nil {
 		return result
 	}
-
 	return defaultValue
 }
 
