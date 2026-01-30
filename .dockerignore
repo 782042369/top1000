@@ -24,3 +24,40 @@ README.md
 # Test files
 *_test.go
 test/
+coverage/
+*.test
+
+# Dependencies (CRITICAL - 大幅减少构建上下文)
+node_modules/
+web/node_modules/
+
+# Build artifacts (避免重复复制)
+dist/
+web/dist/
+server/tmp/
+*.exe
+*.dll
+*.so
+*.dylib
+
+# Environment & secrets
+.env
+.env.*
+*.pem
+*.key
+!*.pub
+
+# Package manager cache
+.npm/
+.yarn/
+.pnpm-store/
+go.sum
+
+# CI/CD
+.github/
+.gitlab-ci.yml
+.travis.yml
+
+# Reports
+.reports/
+coverage.xml
