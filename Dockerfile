@@ -48,7 +48,7 @@ RUN echo "🗜️  使用 UPX 压缩二进制文件..." && \
 
 # 阶段二：构建 web
 FROM node:24-alpine AS web-builder
-WORKDIR /app
+WORKDIR /app/web
 
 LABEL stage="web-builder"
 
@@ -57,24 +57,22 @@ RUN echo "📦 安装 pnpm..." && \
     npm install -g pnpm@10 && \
     echo "✅ pnpm 安装完成"
 
-# 优先复制包管理文件以利用构建缓存
-COPY web/package.json web/pnpm-lock.yaml ./web/
+# 优先复制包管理文件以利用构建缓存（关键优化）
+COPY web/package.json web/pnpm-lock.yaml ./
 
-# 安装依赖
-RUN echo "📦 安装前端依赖..." && \
-    cd web && \
-    pnpm install --frozen-lockfile --prod=false && \
+# 安装依赖（利用 BuildKit 缓存挂载）
+RUN --mount=type=cache,target=/root/.local/share/pnpm/store \
+    echo "📦 安装前端依赖..." && \
+    pnpm install --frozen-lockfile && \
     echo "✅ 前端依赖安装完成"
 
-# 复制源代码
-COPY web ./web/
+# 复制源代码（依赖安装后才会执行这一层）
+COPY web ./
 
-# 执行构建，输出到 web/dist 目录
+# 执行构建，输出到 dist 目录
 RUN echo "🔨 开始构建前端..." && \
-    cd web && \
     pnpm build && \
-    echo "✅ 前端构建完成" && \
-    echo "📁 构建产物位置: web/dist"
+    echo "✅ 前端构建完成"
 
 # 阶段三：准备 CA 证书（从 Alpine 提取）
 FROM alpine:3.19 AS certs
@@ -96,7 +94,7 @@ COPY --from=certs /etc/ssl/certs/ca-certificates.crt /etc/ssl/certs/
 # 从 service-builder 阶段复制 Go 二进制
 COPY --from=service-builder /app/main ./main
 
-# 从 web-builder 阶段复制前端文件（注意路径：web/dist）
+# 从 web-builder 阶段复制前端文件
 COPY --from=web-builder /app/web/dist ./web-dist
 
 # 设置环境变量（时区默认为中国）
