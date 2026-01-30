@@ -36,20 +36,27 @@ func Start() {
 
 	// 验证配置
 	if err := config.Validate(); err != nil {
-		log.Fatalf("❌ 配置验证失败: %v", err)
+		log.Fatalf("配置验证失败: %v", err)
 	}
 
 	printStartupBanner()
 
-	app := createApp()
+	// 必须先初始化存储，再创建 app（因为 createApp 会调用 setupRoutes，
+	// 而 setupRoutes 依赖 storage.GetDefaultXXXStore()）
 	initStorage()
+	app := createApp()
 	preloadData() // 启动时预加载数据
 	printStartupInfo(cfg)
 
-	// 确保程序退出时关闭Redis连接
-	defer closeRedis()
+	// 启动服务器（避免使用 log.Fatal，确保 defer 能执行）
+	if err := app.Listen(":" + config.DefaultPort); err != nil {
+		log.Printf("服务启动失败: %v", err)
+		closeRedis() // 手动调用确保清理
+		return
+	}
 
-	log.Fatal(app.Listen(":" + config.DefaultPort))
+	// 正常退出时关闭Redis连接
+	closeRedis()
 }
 
 // createApp 创建Fiber应用并配置中间件和路由
@@ -105,13 +112,20 @@ func securityHeadersMiddleware() fiber.Handler {
 
 // setupRoutes 配置路由
 func setupRoutes(app *fiber.App) {
+	// 创建 Handler 实例（依赖注入）
+	// RedisStore 实现了所有三个接口（DataStore、SitesStore、UpdateLock）
+	handler := api.NewHandler(
+		storage.GetDefaultStore(),
+		storage.GetDefaultSitesStore(),
+		storage.GetDefaultLock(),
+	)
+
+	// 注册 Handler 的路由
+	handler.RegisterRoutes(app)
+
 	// Swagger UI
 	app.Get("/swagger/*", swaggerUI)
 	app.Get("/swagger/doc.json", swaggerJSON)
-
-	// API 接口
-	app.Get("/top1000.json", api.GetTop1000Data)
-	app.Get("/sites.json", api.GetSitesData) // IYUU站点列表接口
 
 	// 静态文件
 	app.Static("/", config.DefaultWebDistDir, fiber.Static{
@@ -188,20 +202,20 @@ func setCacheHeaders(c *fiber.Ctx) error {
 
 // initStorage 初始化Redis连接
 func initStorage() {
-	log.Println("🔌 正在初始化Redis连接...")
+	log.Println("正在初始化Redis连接...")
 	if err := storage.InitRedis(); err != nil {
-		log.Fatalf("❌ Redis初始化失败: %v", err)
+		log.Fatalf("Redis初始化失败: %v", err)
 	}
-	log.Println("✅ Redis初始化成功")
+	log.Println("Redis初始化成功")
 }
 
 // closeRedis 关闭Redis连接
 func closeRedis() {
-	log.Println("🔌 正在关闭Redis连接...")
+	log.Println("正在关闭Redis连接...")
 	if err := storage.CloseRedis(); err != nil {
-		log.Printf("❌ 关闭Redis连接失败: %v", err)
+		log.Printf("关闭Redis连接失败: %v", err)
 	} else {
-		log.Println("✅ Redis连接已关闭")
+		log.Println("Redis连接已关闭")
 	}
 }
 
@@ -215,10 +229,10 @@ func printStartupBanner() {
 // printStartupInfo 打印启动信息
 func printStartupInfo(cfg *config.Config) {
 	log.Println(strings.Repeat("=", 40))
-	log.Printf("✅ 服务已启动，监听端口: %s", config.DefaultPort)
-	log.Printf("📦 存储方式: Redis (%s)", cfg.RedisAddr)
-	log.Println("🔄 数据更新策略: 过期自动更新（容错机制）")
-	log.Println("🔒 安全措施: 速率限制、安全响应头")
+	log.Printf("服务已启动，监听端口: %s", config.DefaultPort)
+	log.Printf("存储方式: Redis (%s)", cfg.RedisAddr)
+	log.Println("数据更新策略: 过期自动更新（容错机制）")
+	log.Println("安全措施: 速率限制、安全响应头")
 	log.Println(strings.Repeat("=", 40))
 }
 

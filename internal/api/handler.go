@@ -8,12 +8,20 @@ import (
 	"log"
 	"net/http"
 	"net/url"
+	"time"
 
 	"github.com/gofiber/fiber/v2"
 	"top1000/internal/config"
 	"top1000/internal/crawler"
 	"top1000/internal/model"
 	"top1000/internal/storage"
+)
+
+const (
+	dataUpdateLogPrefix      = "Top1000"
+	sitesUpdateLogPrefix     = "Sites"
+	defaultAPITimeout        = 15 * time.Second // API默认超时时间
+	defaultHTTPClientTimeout = 5 * time.Second  // HTTP客户端超时时间
 )
 
 // Handler API 处理器（依赖注入模式）
@@ -79,7 +87,7 @@ func (h *Handler) GetTop1000Data(c *fiber.Ctx) error {
 	// 检查数据是否需要更新
 	if h.shouldUpdateData(ctx) {
 		if err := h.refreshData(ctx); err != nil {
-			log.Printf("[%s] ⚠️ 刷新数据失败: %v", dataUpdateLogPrefix, err)
+			log.Printf("[%s] 刷新数据失败: %v", dataUpdateLogPrefix, err)
 			// 容错：继续尝试读取旧数据
 		}
 	}
@@ -87,7 +95,7 @@ func (h *Handler) GetTop1000Data(c *fiber.Ctx) error {
 	// 从存储读取数据并返回（传递context）
 	data, err := h.store.LoadData(ctx)
 	if err != nil {
-		log.Printf("[%s] ❌ 加载数据失败: %v", dataUpdateLogPrefix, err)
+		log.Printf("[%s] 加载数据失败: %v", dataUpdateLogPrefix, err)
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
 			"error": "无法加载数据",
 		})
@@ -114,7 +122,7 @@ func (h *Handler) shouldUpdateData(ctx context.Context) bool {
 func (h *Handler) refreshData(ctx context.Context) error {
 	// 防止并发更新
 	if h.lock.IsUpdating() {
-		log.Printf("[%s] ⏸️ 正在更新中，跳过", dataUpdateLogPrefix)
+		log.Printf("[%s] 正在更新中，跳过", dataUpdateLogPrefix)
 		return nil
 	}
 
@@ -124,28 +132,28 @@ func (h *Handler) refreshData(ctx context.Context) error {
 	// 保存旧数据用于容错（传递context）
 	oldData, err := h.store.LoadData(ctx)
 	if err != nil {
-		log.Printf("[%s] ⚠️ 加载旧数据失败: %v", dataUpdateLogPrefix, err)
+		log.Printf("[%s] 加载旧数据失败: %v", dataUpdateLogPrefix, err)
 		// 容错：旧数据不存在时继续爬取新数据
 	}
 
-	log.Printf("[%s] 🔍 开始爬取新数据...", dataUpdateLogPrefix)
+	log.Printf("[%s] 开始爬取新数据...", dataUpdateLogPrefix)
 	newData, err := h.crawler.FetchTop1000WithContext(ctx)
 	if err != nil {
 		// 爬取失败，如果有旧数据则使用旧数据（容错）
 		if oldData != nil {
-			log.Printf("[%s] ✅ 爬取失败，使用旧数据: %v", dataUpdateLogPrefix, err)
+			log.Printf("[%s] 爬取失败，使用旧数据: %v", dataUpdateLogPrefix, err)
 			return err
 		}
-		log.Printf("[%s] ❌ 爬取失败且无旧数据: %v", dataUpdateLogPrefix, err)
+		log.Printf("[%s] 爬取失败且无旧数据: %v", dataUpdateLogPrefix, err)
 		return err
 	}
 
 	if err := h.store.SaveData(ctx, *newData); err != nil {
-		log.Printf("[%s] ❌ 保存数据失败: %v", dataUpdateLogPrefix, err)
+		log.Printf("[%s] 保存数据失败: %v", dataUpdateLogPrefix, err)
 		return err
 	}
 
-	log.Printf("[%s] ✅ 数据更新成功（%d 条）", dataUpdateLogPrefix, len(newData.Items))
+	log.Printf("[%s] 数据更新成功（%d 条）", dataUpdateLogPrefix, len(newData.Items))
 	return nil
 }
 
@@ -176,7 +184,7 @@ func (h *Handler) GetSitesData(c *fiber.Ctx) error {
 	// 检查数据是否存在，不存在或正在更新时触发更新
 	if h.shouldUpdateSitesData(ctx) {
 		if err := h.refreshSitesData(ctx, cfg.IYYUSign); err != nil {
-			log.Printf("[%s] ⚠️ 刷新站点数据失败: %v", sitesUpdateLogPrefix, err)
+			log.Printf("[%s] 刷新站点数据失败: %v", sitesUpdateLogPrefix, err)
 			// 容错：继续尝试读取旧数据
 		}
 	}
@@ -184,7 +192,7 @@ func (h *Handler) GetSitesData(c *fiber.Ctx) error {
 	// 从存储读取数据并返回
 	data, err := h.sitesStore.LoadSitesData(ctx)
 	if err != nil {
-		log.Printf("[%s] ❌ 加载站点数据失败: %v", sitesUpdateLogPrefix, err)
+		log.Printf("[%s] 加载站点数据失败: %v", sitesUpdateLogPrefix, err)
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
 			"error": "无法加载站点数据",
 		})
@@ -212,19 +220,19 @@ func (h *Handler) shouldUpdateSitesData(ctx context.Context) bool {
 func (h *Handler) refreshSitesData(ctx context.Context, sign string) error {
 	// 防止并发更新
 	if h.lock.IsSitesUpdating() {
-		log.Printf("[%s] ⏸️ 正在更新中，跳过", sitesUpdateLogPrefix)
+		log.Printf("[%s] 正在更新中，跳过", sitesUpdateLogPrefix)
 		return nil
 	}
 
 	h.lock.SetSitesUpdating(true)
 	defer h.lock.SetSitesUpdating(false)
 
-	log.Printf("[%s] 🔍 开始获取站点数据...", sitesUpdateLogPrefix)
+	log.Printf("[%s] 开始获取站点数据...", sitesUpdateLogPrefix)
 
 	// 构建API URL（使用net/url包，更安全规范）
 	apiURL, err := url.Parse("https://api.iyuu.cn/index.php")
 	if err != nil {
-		log.Printf("[%s] ❌ 解析基础URL失败: %v", sitesUpdateLogPrefix, err)
+		log.Printf("[%s] 解析基础URL失败: %v", sitesUpdateLogPrefix, err)
 		return fmt.Errorf("解析基础URL失败: %w", err)
 	}
 	params := url.Values{}
@@ -239,7 +247,7 @@ func (h *Handler) refreshSitesData(ctx context.Context, sign string) error {
 	// 发送GET请求
 	resp, err := client.Get(apiURL.String())
 	if err != nil {
-		log.Printf("[%s] ❌ 请求失败: %v", sitesUpdateLogPrefix, err)
+		log.Printf("[%s] 请求失败: %v", sitesUpdateLogPrefix, err)
 		return fmt.Errorf("请求失败: %w", err)
 	}
 	defer resp.Body.Close()
@@ -247,24 +255,24 @@ func (h *Handler) refreshSitesData(ctx context.Context, sign string) error {
 	// 读取响应体
 	body, err := io.ReadAll(resp.Body)
 	if err != nil {
-		log.Printf("[%s] ❌ 读取响应失败: %v", sitesUpdateLogPrefix, err)
+		log.Printf("[%s] 读取响应失败: %v", sitesUpdateLogPrefix, err)
 		return fmt.Errorf("读取响应失败: %w", err)
 	}
 
 	// 解析JSON
 	var result interface{}
 	if err := json.Unmarshal(body, &result); err != nil {
-		log.Printf("[%s] ❌ 解析JSON失败: %v", sitesUpdateLogPrefix, err)
+		log.Printf("[%s] 解析JSON失败: %v", sitesUpdateLogPrefix, err)
 		return fmt.Errorf("解析JSON失败: %w", err)
 	}
 
 	// 保存到存储（24小时TTL）
 	if err := h.sitesStore.SaveSitesData(ctx, result); err != nil {
-		log.Printf("[%s] ❌ 保存数据失败: %v", sitesUpdateLogPrefix, err)
+		log.Printf("[%s] 保存数据失败: %v", sitesUpdateLogPrefix, err)
 		return fmt.Errorf("保存数据失败: %w", err)
 	}
 
-	log.Printf("[%s] ✅ 站点数据更新成功", sitesUpdateLogPrefix)
+	log.Printf("[%s] 站点数据更新成功", sitesUpdateLogPrefix)
 	return nil
 }
 

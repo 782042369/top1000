@@ -16,7 +16,7 @@ import (
 )
 
 const (
-	logPrefix       = "🔍 爬虫"
+	logPrefix       = "爬虫"
 	httpTimeout     = 10 * time.Second
 	maxRetries      = 1
 	retryInterval   = 1 * time.Second
@@ -209,7 +209,7 @@ func extractTime(rawTime string) string {
 
 // PreloadData 启动时预加载数据（如果Redis中没有数据或数据过期）
 func PreloadData() {
-	log.Println("[🔍 爬虫] 检查是否需要预加载数据...")
+	log.Println("[爬虫] 检查是否需要预加载数据...")
 
 	// 创建带超时的context（启动时预加载不希望等待太久）
 	ctx, cancel := context.WithTimeout(context.Background(), httpTimeout)
@@ -218,26 +218,26 @@ func PreloadData() {
 	// 检查数据状态（存在性+过期检查）
 	needsLoad := checkDataLoadRequired(ctx)
 	if !needsLoad {
-		log.Println("[🔍 爬虫] ✅ Redis中已有新鲜数据，无需预加载")
+		log.Println("[爬虫] Redis中已有新鲜数据，无需预加载")
 		return
 	}
 
 	// 没有数据或数据过期，尝试获取新数据
-	log.Println("[🔍 爬虫] 🚀 Redis中无数据或数据过期，开始预加载...")
+	log.Println("[爬虫] Redis中无数据或数据过期，开始预加载...")
 	data, err := FetchTop1000WithContext(ctx)
 	if err != nil {
-		log.Printf("[🔍 爬虫] ❌ 预加载失败: %v", err)
-		log.Printf("[🔍 爬虫] 💡 提示：首次访问时会自动重试获取数据")
+		log.Printf("[爬虫] 预加载失败: %v", err)
+		log.Printf("[爬虫] 提示：首次访问时会自动重试获取数据")
 		return
 	}
 
 	// 存入Redis（使用同一个context）
 	if err := storage.SaveDataWithContext(ctx, *data); err != nil {
-		log.Printf("[🔍 爬虫] ❌ 保存预加载数据失败: %v", err)
+		log.Printf("[爬虫] 保存预加载数据失败: %v", err)
 		return
 	}
 
-	log.Printf("[🔍 爬虫] ✅ 预加载成功，已存入Redis（共 %d 条记录）", len(data.Items))
+	log.Printf("[爬虫] 预加载成功，已存入Redis（共 %d 条记录）", len(data.Items))
 }
 
 // checkDataLoadRequired 检查是否需要加载数据（支持外部传入context）
@@ -245,7 +245,7 @@ func checkDataLoadRequired(ctx context.Context) bool {
 	// 检查数据是否存在
 	exists, err := storage.DataExistsWithContext(ctx)
 	if err != nil {
-		log.Printf("[🔍 爬虫] ⚠️ 检查数据存在性失败: %v", err)
+		log.Printf("[爬虫] 检查数据存在性失败: %v", err)
 		// 出错时保守处理,视为需要加载
 		return true
 	}
@@ -256,7 +256,7 @@ func checkDataLoadRequired(ctx context.Context) bool {
 	// 检查数据是否过期
 	isExpired, err := storage.IsDataExpiredWithContext(ctx)
 	if err != nil {
-		log.Printf("[🔍 爬虫] ⚠️ 检查数据过期失败: %v", err)
+		log.Printf("[爬虫] 检查数据过期失败: %v", err)
 		// 出错时保守处理,视为需要加载
 		return true
 	}

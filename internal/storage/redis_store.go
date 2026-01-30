@@ -77,14 +77,14 @@ func (r *RedisStore) LoadData(ctx context.Context) (*model.ProcessedData, error)
 		return nil, fmt.Errorf("解析JSON失败: %w", err)
 	}
 
-	log.Printf("✅ 从Redis加载数据成功（共 %d 条记录）", len(data.Items))
+	log.Printf("从Redis加载数据成功（共 %d 条记录）", len(data.Items))
 	return &data, nil
 }
 
 // SaveData 保存数据
 func (r *RedisStore) SaveData(ctx context.Context, data model.ProcessedData) error {
 	if err := data.Validate(); err != nil {
-		log.Printf("❌ 数据验证失败，拒绝保存: %v", err)
+		log.Printf("数据验证失败，拒绝保存: %v", err)
 		return fmt.Errorf("数据验证失败: %w", err)
 	}
 
@@ -96,11 +96,11 @@ func (r *RedisStore) SaveData(ctx context.Context, data model.ProcessedData) err
 	key := config.DefaultRedisKey
 	// 不设置TTL，数据永久存储
 	if err := r.client.Set(ctx, key, jsonData, 0).Err(); err != nil {
-		log.Printf("❌ 保存数据到Redis失败: %v", err)
+		log.Printf("保存数据到Redis失败: %v", err)
 		return fmt.Errorf("保存数据到Redis失败: %w", err)
 	}
 
-	log.Printf("✅ 数据已保存到Redis（永久存储，过期判断基于数据time字段）")
+	log.Printf("数据已保存到Redis（永久存储，过期判断基于数据time字段）")
 	return nil
 }
 
@@ -127,7 +127,7 @@ func (r *RedisStore) IsDataExpired(ctx context.Context) (bool, error) {
 	// 解析时间字段（API返回的是北京时间UTC+8，需要转换为UTC）
 	dataTime, err := time.Parse(timeFormat, data.Time)
 	if err != nil {
-		log.Printf("⚠️ 解析数据时间失败: %v", err)
+		log.Printf("解析数据时间失败: %v", err)
 		return true, nil // 解析失败，认为过期，强制更新
 	}
 
@@ -162,7 +162,7 @@ func (r *RedisStore) LoadSitesData(ctx context.Context) (interface{}, error) {
 		return nil, fmt.Errorf("解析站点数据JSON失败: %w", err)
 	}
 
-	log.Printf("✅ 从Redis加载站点数据成功")
+	log.Printf("从Redis加载站点数据成功")
 	return result, nil
 }
 
@@ -177,11 +177,11 @@ func (r *RedisStore) SaveSitesData(ctx context.Context, data interface{}) error 
 	// 设置24小时TTL
 	ttl := config.DefaultSitesExpire
 	if err := r.client.Set(ctx, key, jsonData, ttl).Err(); err != nil {
-		log.Printf("❌ 保存站点数据到Redis失败: %v", err)
+		log.Printf("保存站点数据到Redis失败: %v", err)
 		return fmt.Errorf("保存站点数据到Redis失败: %w", err)
 	}
 
-	log.Printf("✅ 站点数据已保存到Redis（TTL: %v）", ttl)
+	log.Printf("站点数据已保存到Redis（TTL: %v）", ttl)
 	return nil
 }
 
@@ -232,8 +232,8 @@ func (r *RedisStore) SetSitesUpdating(updating bool) {
 // logDataStatus 记录数据状态日志
 func logDataStatus(dataTime string, age time.Duration, isExpired bool, threshold time.Duration) {
 	if isExpired {
-		log.Printf("⚠️ 数据过期了（数据时间: %v, 距今: %v，阈值: %v）", dataTime, age, threshold)
+		log.Printf("数据过期了（数据时间: %v, 距今: %v，阈值: %v）", dataTime, age, threshold)
 	} else {
-		log.Printf("✅ 数据还新鲜（数据时间: %v, 距今: %v）", dataTime, age)
+		log.Printf("数据还新鲜（数据时间: %v, 距今: %v）", dataTime, age)
 	}
 }

@@ -38,7 +38,7 @@ func InitRedis() error {
 	defer cancel()
 
 	if err := redisClient.Ping(ctx).Err(); err != nil {
-		log.Printf("❌ Redis连接失败: %v", err)
+		log.Printf("Redis连接失败: %v", err)
 		return fmt.Errorf("Redis连接失败: %w", err)
 	}
 
@@ -48,7 +48,7 @@ func InitRedis() error {
 	defaultSitesStore = redisStore
 	defaultLock = redisStore
 
-	log.Println("✅ Redis连接成功")
+	log.Println("Redis连接成功")
 	return nil
 }
 
@@ -58,6 +58,21 @@ func CloseRedis() error {
 		return redisClient.Close()
 	}
 	return nil
+}
+
+// GetDefaultStore 获取默认数据存储实例（用于依赖注入）
+func GetDefaultStore() DataStore {
+	return defaultStore
+}
+
+// GetDefaultSitesStore 获取默认站点存储实例（用于依赖注入）
+func GetDefaultSitesStore() SitesStore {
+	return defaultSitesStore
+}
+
+// GetDefaultLock 获取默认更新锁实例（用于依赖注入）
+func GetDefaultLock() UpdateLock {
+	return defaultLock
 }
 
 // ===== 向后兼容函数（委托给接口） =====
@@ -170,15 +185,10 @@ func SitesDataExistsWithContext(ctx context.Context) (bool, error) {
 
 // IsSitesUpdating 检查是否正在更新站点数据
 func IsSitesUpdating() bool {
-	if rs, ok := defaultStore.(*RedisStore); ok {
-		return rs.IsSitesUpdating()
-	}
-	return false
+	return defaultLock.IsSitesUpdating()
 }
 
 // SetSitesUpdating 设置站点数据更新标记
 func SetSitesUpdating(updating bool) {
-	if rs, ok := defaultStore.(*RedisStore); ok {
-		rs.SetSitesUpdating(updating)
-	}
+	defaultLock.SetSitesUpdating(updating)
 }
