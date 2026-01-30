@@ -89,32 +89,10 @@ jobs:
           push: true
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
-          cache-from: |
-            type=gha
-            type=local,src=/tmp/.buildx-cache
-          cache-to: |
-            type=gha,mode=max
-            type=local,dest=/tmp/.buildx-cache-new,mode=max
-          build-args: |
-            BUILDKIT_INLINE_CACHE=1
-            GOMODCACHE=/go/pkg/mod
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
           provenance: false
           sbom: false
-
-      - name: 优化本地缓存
-        run: |
-          echo "优化构建缓存..."
-          if [ -d /tmp/.buildx-cache ]; then
-            echo "当前缓存大小："
-            du -sh /tmp/.buildx-cache
-            rm -rf /tmp/.buildx-cache-backup || true
-            mv /tmp/.buildx-cache /tmp/.buildx-cache-backup || true
-          fi
-          if [ -d /tmp/.buildx-cache-new ]; then
-            mv /tmp/.buildx-cache-new /tmp/.buildx-cache || true
-          fi
-          rm -rf /tmp/.buildx-cache-backup || true
-          echo "缓存优化完成"
 
       - name: 显示镜像信息
         run: |
