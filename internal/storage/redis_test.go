@@ -351,6 +351,12 @@ func setupTestRedis(t *testing.T, mr *miniredis.Miniredis) {
 	redisClient = redis.NewClient(&redis.Options{
 		Addr: mr.Addr(),
 	})
+
+	// 初始化默认存储实例
+	redisStore := &RedisStore{client: redisClient}
+	defaultStore = redisStore
+	defaultSitesStore = redisStore
+	defaultLock = redisStore
 }
 
 func TestSaveLoadDataRoundTrip(t *testing.T) {
