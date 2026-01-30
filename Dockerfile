@@ -15,7 +15,7 @@ WORKDIR /app
 LABEL stage="service-builder"
 
 # 复制Go模块文件
-COPY go.mod go.sum ./
+COPY server/go.mod server/go.sum ./
 
 # 下载依赖
 RUN echo "📦 下载 Go 依赖..." && \
@@ -23,10 +23,10 @@ RUN echo "📦 下载 Go 依赖..." && \
     echo "✅ 验证依赖完成" && \
     go mod verify
 
-# 复制源代码（从根目录）
-COPY cmd ./cmd
-COPY internal ./internal
-COPY docs ./docs
+# 复制源代码（从 server 目录）
+COPY server/cmd ./cmd
+COPY server/internal ./internal
+COPY server/docs ./docs
 
 # 安装 UPX 压缩工具
 RUN echo "🔧 安装 UPX 压缩工具..." && \
