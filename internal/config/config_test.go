@@ -2,8 +2,15 @@ package config
 
 import (
 	"os"
+	"sync"
 	"testing"
 )
+
+// resetConfig 重置配置（仅用于测试）
+func resetConfig() {
+	initOnce = sync.Once{}
+	appConfig.Store((*Config)(nil))
+}
 
 func TestLoad(t *testing.T) {
 	tests := []struct {
@@ -93,7 +100,7 @@ func TestLoad(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			appConfig = nil
+			resetConfig()
 			cleanup := tt.setup()
 			defer cleanup()
 
@@ -115,25 +122,25 @@ func TestValidate(t *testing.T) {
 		{
 			name: "有效配置",
 			setup: func() func() {
-				appConfig = &Config{
+				appConfig.Store(&Config{
 					RedisAddr:     "localhost:6379",
 					RedisPassword: "password123",
 					RedisDB:       0,
 					IYYUSign:      "",
-				}
-				return func() { appConfig = nil }
+				})
+				return func() { resetConfig() }
 			},
 			wantErr: false,
 		},
 		{
 			name: "缺少REDIS_ADDR",
 			setup: func() func() {
-				appConfig = &Config{
+				appConfig.Store(&Config{
 					RedisAddr:     "",
 					RedisPassword: "password123",
 					RedisDB:       0,
-				}
-				return func() { appConfig = nil }
+				})
+				return func() { resetConfig() }
 			},
 			wantErr:    true,
 			errContains: "REDIS_ADDR",
@@ -141,12 +148,12 @@ func TestValidate(t *testing.T) {
 		{
 			name: "缺少REDIS_PASSWORD",
 			setup: func() func() {
-				appConfig = &Config{
+				appConfig.Store(&Config{
 					RedisAddr:     "localhost:6379",
 					RedisPassword: "",
 					RedisDB:       0,
-				}
-				return func() { appConfig = nil }
+				})
+				return func() { resetConfig() }
 			},
 			wantErr:    true,
 			errContains: "REDIS_PASSWORD",
@@ -154,12 +161,12 @@ func TestValidate(t *testing.T) {
 		{
 			name: "同时缺少REDIS_ADDR和REDIS_PASSWORD",
 			setup: func() func() {
-				appConfig = &Config{
+				appConfig.Store(&Config{
 					RedisAddr:     "",
 					RedisPassword: "",
 					RedisDB:       0,
-				}
-				return func() { appConfig = nil }
+				})
+				return func() { resetConfig() }
 			},
 			wantErr:    true,
 			errContains: "REDIS_ADDR",
@@ -187,7 +194,7 @@ func TestValidate(t *testing.T) {
 
 func TestGet(t *testing.T) {
 	t.Run("首次调用返回配置", func(t *testing.T) {
-		appConfig = nil
+		resetConfig()
 		cfg := Get()
 		if cfg == nil {
 			t.Error("Get() 返回 nil")
@@ -195,7 +202,7 @@ func TestGet(t *testing.T) {
 	})
 
 	t.Run("多次调用返回相同实例(单例模式)", func(t *testing.T) {
-		appConfig = nil
+		resetConfig()
 		cfg1 := Get()
 		cfg2 := Get()
 		if cfg1 != cfg2 {

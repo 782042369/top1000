@@ -4,6 +4,8 @@ import (
 	"fmt"
 	"os"
 	"strings"
+	"sync"
+	"sync/atomic"
 	"time"
 )
 
@@ -28,23 +30,24 @@ type Config struct {
 	InsecureSkipVerify bool   // 跳过TLS证书验证（可选，仅用于证书过期等异常情况）
 }
 
-var appConfig *Config
+var (
+	appConfig atomic.Value // 存储 *Config
+	initOnce  sync.Once
+)
 
-// Load 加载配置（单例模式）
+// Load 加载配置（单例模式，并发安全）
 func Load() *Config {
-	if appConfig != nil {
-		return appConfig
-	}
-
-	appConfig = &Config{
-		RedisAddr:          getEnv("REDIS_ADDR", ""),
-		RedisPassword:      getEnv("REDIS_PASSWORD", ""),
-		RedisDB:            getEnvInt("REDIS_DB", DefaultRedisDB),
-		IYYUSign:           getEnv("IYUU_SIGN", ""),
-		InsecureSkipVerify: getEnvBool("INSECURE_SKIP_VERIFY", false),
-	}
-
-	return appConfig
+	initOnce.Do(func() {
+		cfg := &Config{
+			RedisAddr:          getEnv("REDIS_ADDR", ""),
+			RedisPassword:      getEnv("REDIS_PASSWORD", ""),
+			RedisDB:            getEnvInt("REDIS_DB", DefaultRedisDB),
+			IYYUSign:           getEnv("IYUU_SIGN", ""),
+			InsecureSkipVerify: getEnvBool("INSECURE_SKIP_VERIFY", false),
+		}
+		appConfig.Store(cfg)
+	})
+	return appConfig.Load().(*Config)
 }
 
 // ValidationError 配置验证错误（收集所有错误）
@@ -69,12 +72,13 @@ func (e *ValidationError) IsValid() bool {
 
 // Validate 验证配置的有效性（返回所有错误）
 func Validate() error {
+	cfg := Get()
 	var errs ValidationError
 
-	if appConfig.RedisAddr == "" {
+	if cfg.RedisAddr == "" {
 		errs.Add("REDIS_ADDR")
 	}
-	if appConfig.RedisPassword == "" {
+	if cfg.RedisPassword == "" {
 		errs.Add("REDIS_PASSWORD")
 	}
 
@@ -84,12 +88,9 @@ func Validate() error {
 	return nil
 }
 
-// Get 获取配置实例
+// Get 获取配置实例（并发安全）
 func Get() *Config {
-	if appConfig == nil {
-		return Load()
-	}
-	return appConfig
+	return Load()
 }
 
 // getEnv 获取环境变量，如果不存在则返回默认值
