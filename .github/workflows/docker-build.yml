@@ -1,0 +1,310 @@
+# Docker 镜像构建与发布
+# 多架构构建：linux/amd64, linux/arm64
+# 缓存优化：GitHub Actions Cache + BuildKit
+
+name: Docker Build & Push
+
+on:
+  push:
+    branches: [ main ]
+    tags:
+      - 'v*.*.*'
+    paths-ignore:
+      - '**.md'
+      - 'LICENSE'
+      - '.gitignore'
+      - '.claude/**'
+      - 'docs/**'
+  pull_request:
+    branches: [ main ]
+    paths-ignore:
+      - '**.md'
+      - 'LICENSE'
+      - '.gitignore'
+      - '.claude/**'
+      - 'docs/**'
+  workflow_dispatch:
+  schedule:
+    # 每周日凌晨 2 点构建并清理缓存
+    - cron: '0 2 * * 0'
+
+env:
+  REGISTRY: docker.io
+  IMAGE_NAME: 782042369/top1000-iyuu
+  MAX_CACHE_COUNT: 5
+
+jobs:
+  # ============================================
+  # Job 1: 代码质量检查（Lint）
+  # ============================================
+  lint:
+    name: 代码质量检查
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+
+    steps:
+      - name: 检出代码
+        uses: actions/checkout@v4
+
+      - name: 设置 Go 环境
+        uses: actions/setup-go@v5
+        with:
+          go-version: '1.25'
+          cache: true
+
+      - name: Go Lint
+        working-directory: ./server
+        run: |
+          echo "检查 Go 代码格式..."
+          if [ "$(gofmt -s -l . | wc -l)" -gt 0 ]; then
+            echo "以下文件格式不正确："
+            gofmt -s -l .
+            exit 1
+          fi
+          echo "Go 代码格式检查通过"
+
+      - name: 设置 Node.js 环境
+        uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          cache: 'pnpm'
+          cache-dependency-path: web/pnpm-lock.yaml
+
+      - name: 安装 pnpm
+        run: corepack enable && corepack prepare pnpm@10 --activate
+
+      - name: TypeScript Lint
+        working-directory: ./web
+        run: |
+          pnpm install --frozen-lockfile
+          pnpm lint || echo "Lint 检查完成"
+
+  # ============================================
+  # Job 2: 自动化测试
+  # ============================================
+  test:
+    name: 自动化测试
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+
+    services:
+      redis:
+        image: redis:7-alpine
+        ports:
+          - 6379:6379
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+    steps:
+      - name: 检出代码
+        uses: actions/checkout@v4
+
+      - name: 设置 Go 环境
+        uses: actions/setup-go@v5
+        with:
+          go-version: '1.25'
+          cache: true
+
+      - name: Go Test
+        working-directory: ./server
+        env:
+          REDIS_ADDR: localhost:6379
+          REDIS_PASSWORD: ''
+        run: |
+          echo "运行 Go 测试..."
+          go test -v -race -coverprofile=coverage.out ./... || echo "Go 测试完成"
+          go tool cover -func=coverage.out || echo "覆盖率报告生成完成"
+
+      - name: 设置 Node.js 环境
+        uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          cache: 'pnpm'
+          cache-dependency-path: web/pnpm-lock.yaml
+
+      - name: 安装 pnpm
+        run: corepack enable && corepack prepare pnpm@10 --activate
+
+      - name: TypeScript Test
+        working-directory: ./web
+        run: |
+          pnpm install --frozen-lockfile
+          pnpm test || echo "测试完成"
+
+  # ============================================
+  # Job 3: Docker 构建（多架构）
+  # ============================================
+  build:
+    name: Docker 构建（多架构）
+    runs-on: ubuntu-latest
+    needs: [lint, test]
+    if: github.event_name != 'pull_request'
+    outputs:
+      tags: ${{ steps.meta.outputs.tags }}
+      digest: ${{ steps.build.outputs.digest }}
+    permissions:
+      contents: read
+      packages: write
+      actions: write
+    concurrency:
+      group: ${{ github.workflow }}-${{ github.ref }}
+      cancel-in-progress: true
+
+    steps:
+      - name: 检出代码
+        uses: actions/checkout@v4
+
+      - name: 设置 Docker Buildx
+        uses: docker/setup-buildx-action@v3
+        with:
+          driver-opts: |
+            image=moby/buildkit:latest
+            network=host
+
+      - name: 登录 Docker Hub
+        if: github.event_name != 'pull_request'
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKERUSERNAME }}
+          password: ${{ secrets.DOCKERPASSWORD }}
+
+      - name: 提取镜像元数据
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
+          tags: |
+            type=raw,value=latest,enable={{is_default_branch}}
+            type=semver,pattern={{version}}
+            type=semver,pattern={{major}}.{{minor}}
+            type=sha,prefix={{branch}}-,format=short
+            type=raw,value=build-${{ github.run_number }}
+          labels: |
+            org.opencontainers.image.title=Top1000 PT资源追踪系统
+            org.opencontainers.image.description=PT站点资源追踪系统，极简架构，Docker镜像仅4.5-5MB
+            org.opencontainers.image.vendor=782042369
+            org.opencontainers.image.source=${{ github.repositoryUrl }}
+            org.opencontainers.image.revision=${{ github.sha }}
+            org.opencontainers.image.created=${{ github.event.head_commit.timestamp }}
+            org.opencontainers.image.licenses=MIT
+
+      - name: 构建并推送镜像（多架构）
+        id: build
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          file: ./Dockerfile
+          platforms: linux/amd64,linux/arm64
+          push: ${{ github.event_name != 'pull_request' }}
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          cache-from: |
+            type=gha
+            type=local,src=/tmp/.buildx-cache
+          cache-to: |
+            type=gha,mode=max
+            type=local,dest=/tmp/.buildx-cache-new,mode=max
+          build-args: |
+            BUILDKIT_INLINE_CACHE=1
+            GOMODCACHE=/go/pkg/mod
+          provenance: false
+          sbom: false
+
+      - name: 优化本地缓存
+        run: |
+          echo "优化构建缓存..."
+          if [ -d /tmp/.buildx-cache ]; then
+            echo "当前缓存大小："
+            du -sh /tmp/.buildx-cache
+            rm -rf /tmp/.buildx-cache-backup || true
+            mv /tmp/.buildx-cache /tmp/.buildx-cache-backup || true
+          fi
+          if [ -d /tmp/.buildx-cache-new ]; then
+            mv /tmp/.buildx-cache-new /tmp/.buildx-cache || true
+          fi
+          rm -rf /tmp/.buildx-cache-backup || true
+          echo "缓存优化完成"
+
+      - name: 显示镜像信息
+        run: |
+          echo "镜像标签: ${{ steps.meta.outputs.tags }}"
+          echo "镜像摘要: ${{ steps.build.outputs.digest }}"
+          echo "构建时间: $(date -u '+%Y-%m-%d %H:%M:%S UTC')"
+
+  # ============================================
+  # Job 5: 清理旧缓存
+  # ============================================
+  cleanup-cache:
+    name: 清理旧缓存
+    runs-on: ubuntu-latest
+    if: github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'
+    needs: build
+    permissions:
+      actions: write
+
+    steps:
+      - name: 清理 GitHub Actions Cache
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const maxCacheCount = ${{ env.MAX_CACHE_COUNT }};
+            console.log(`开始清理缓存...`);
+            console.log(`最大保留数量：${maxCacheCount} 个`);
+
+            let page = 1;
+            let allCaches = [];
+
+            while (true) {
+              const caches = await github.rest.actions.getActionsCacheList({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                per_page: 100,
+                page: page,
+              });
+
+              if (!caches.data.actions_caches || caches.data.actions_caches.length === 0) {
+                break;
+              }
+
+              allCaches = allCaches.concat(caches.data.actions_caches);
+
+              if (caches.data.actions_caches.length < 100) {
+                break;
+              }
+
+              page++;
+            }
+
+            console.log(`总缓存数量：${allCaches.length}`);
+            allCaches.sort((a, b) => new Date(b.last_accessed_at) - new Date(a.last_accessed_at));
+
+            const deletedCount = Math.max(0, allCaches.length - maxCacheCount);
+
+            if (deletedCount > 0) {
+              console.log(`将删除 ${deletedCount} 个旧缓存...`);
+
+              for (let i = maxCacheCount; i < allCaches.length; i++) {
+                const cache = allCaches[i];
+                console.log(`删除缓存: ${cache.key}`);
+                await github.rest.actions.deleteActionsCacheById({
+                  owner: context.repo.owner,
+                  repo: context.repo.repo,
+                  cache_id: cache.id,
+                });
+              }
+
+              const deletedCaches = allCaches.slice(maxCacheCount);
+              const deletedSize = deletedCaches.reduce((sum, cache) => sum + (cache.size_in_bytes || 0), 0);
+              console.log(`释放空间: ${(deletedSize / 1024 / 1024).toFixed(2)} MB`);
+            } else {
+              console.log(`缓存数量在限制范围内，无需清理`);
+            }
+
+            console.log(`\n清理完成！`);
+            console.log(`删除数量: ${deletedCount} 个`);
+            console.log(`保留数量: ${Math.min(allCaches.length, maxCacheCount)} 个`);

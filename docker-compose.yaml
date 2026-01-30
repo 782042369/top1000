@@ -16,9 +16,11 @@ services:
     ports:
       - "${PORT:-7066}:7066"
     restart: always
+
     # 优先从 .env 文件读取，其次从环境变量读取
     env_file:
       - .env
+
     # 可选：在这里覆盖环境变量（最高优先级）
     # environment:
     #   - REDIS_ADDR=custom.redis.com:6379
