@@ -69,7 +69,6 @@ jobs:
             type=semver,pattern={{version}}
             type=semver,pattern={{major}}.{{minor}}
             type=sha,prefix={{branch}}-,format=short
-            type=raw,value=build-${{ github.run_number }}
           labels: |
             org.opencontainers.image.title=Top1000 PT资源追踪系统
             org.opencontainers.image.description=PT站点资源追踪系统，极简架构，Docker镜像仅4.5-5MB
