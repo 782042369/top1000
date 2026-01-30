@@ -18,43 +18,66 @@ Top1000 是一个千站排行榜项目，提供站点数据的实时采集、存
 - 容错机制：数据更新失败时使用旧数据，保证服务可用性
 - 日请求1w左右不需要过度设计
 
+## 目录结构
+
+```
+top1000/
+├── server/          # 后端服务（Go）
+│   ├── cmd/         # 应用入口
+│   ├── internal/    # 内部模块
+│   │   ├── api/     # HTTP API 处理器
+│   │   ├── crawler/ # 数据爬取
+│   │   ├── server/  # Fiber 服务器
+│   │   ├── config/  # 配置管理
+│   │   ├── model/   # 数据模型
+│   │   └── storage/ # Redis 存储
+│   ├── docs/        # API 文档
+│   ├── go.mod
+│   └── go.sum
+├── web/             # 前端应用（TypeScript + Vite）
+├── Dockerfile       # 容器化构建
+├── docker-compose.yml
+└── .env             # 环境变量
+```
+
 ## 模块导航
 
 ```mermaid
 graph TD
-    A["Top1000（根）"] --> B["cmd/top1000"]
-    A --> C["internal"]
-    C --> D["api"]
-    C --> E["crawler"]
-    C --> F["server"]
-    C --> G["config"]
-    C --> H["model"]
-    C --> I["storage"]
-    A --> J["web"]
-    A --> K["Dockerfile"]
+    A["Top1000（根）"] --> B["server/"]
+    A --> C["web/"]
+    A --> D["Dockerfile"]
+    B --> E["cmd/top1000"]
+    B --> F["internal"]
+    F --> G["api"]
+    F --> H["crawler"]
+    F --> I["server"]
+    F --> J["config"]
+    F --> K["model"]
+    F --> L["storage"]
 
-    click B "./cmd/top1000/CLAUDE.md" "查看入口模块"
-    click D "./internal/api/CLAUDE.md" "查看 API 模块"
-    click E "./internal/crawler/CLAUDE.md" "查看爬虫模块"
-    click F "./internal/server/CLAUDE.md" "查看服务器模块"
-    click G "./internal/config/CLAUDE.md" "查看配置模块"
-    click H "./internal/model/CLAUDE.md" "查看数据模型"
-    click I "./internal/storage/CLAUDE.md" "查看存储模块"
-    click J "./web/CLAUDE.md" "查看前端模块"
+    click E "./server/cmd/top1000/CLAUDE.md" "查看入口模块"
+    click G "./server/internal/api/CLAUDE.md" "查看 API 模块"
+    click H "./server/internal/crawler/CLAUDE.md" "查看爬虫模块"
+    click I "./server/internal/server/CLAUDE.md" "查看服务器模块"
+    click J "./server/internal/config/CLAUDE.md" "查看配置模块"
+    click K "./server/internal/model/CLAUDE.md" "查看数据模型"
+    click L "./server/internal/storage/CLAUDE.md" "查看存储模块"
+    click C "./web/CLAUDE.md" "查看前端模块"
 ```
 
 ### 模块索引
 
 | 路径 | 职责 | 关键命令/入口 |
 |------|------|--------------|
-| `cmd/top1000/` | 应用入口 | `go run ./cmd/top1000/main.go` |
-| `internal/api/` | HTTP API 处理器 | `GetTop1000Data()`, `GetSitesData()` |
-| `internal/crawler/` | 数据爬取与解析 | `FetchTop1000WithContext()` |
-| `internal/server/` | Fiber 服务器配置 | `server.Start()` |
-| `internal/config/` | 配置管理 | `config.Load()`, `config.Validate()` |
-| `internal/model/` | 数据模型定义 | `SiteItem`, `ProcessedData` |
-| `internal/storage/` | Redis 存储层 | `storage.InitRedis()`, `storage.LoadData()` |
-| `web/` | 前端应用 | `pnpm dev`, `pnpm build` |
+| `server/cmd/top1000/` | 应用入口 | `cd server && go run ./cmd/top1000/main.go` |
+| `server/internal/api/` | HTTP API 处理器 | `GetTop1000Data()`, `GetSitesData()` |
+| `server/internal/crawler/` | 数据爬取与解析 | `FetchTop1000WithContext()` |
+| `server/internal/server/` | Fiber 服务器配置 | `server.Start()` |
+| `server/internal/config/` | 配置管理 | `config.Load()`, `config.Validate()` |
+| `server/internal/model/` | 数据模型定义 | `SiteItem`, `ProcessedData` |
+| `server/internal/storage/` | Redis 存储层 | `storage.InitRedis()`, `storage.LoadData()` |
+| `web/` | 前端应用 | `cd web && pnpm dev`, `cd web && pnpm build` |
 | `Dockerfile` | 容器化构建 | `docker build -t top1000 .` |
 
 ## 快速启动
@@ -69,13 +92,13 @@ graph TD
 
 ```bash
 # 后端开发（支持热重载）
-air  # 使用 .air.toml 配置
+cd server && air  # 使用 .air.toml 配置
 
 # 前端开发
 cd web && pnpm install && pnpm dev
 
-# 直接运行
-go run ./cmd/top1000/main.go
+# 直接运行后端
+cd server && go run ./cmd/top1000/main.go
 ```
 
 ### 生产构建
@@ -89,7 +112,7 @@ docker run -p 7066:7066 \
   top1000
 
 # 手动构建
-go build -o main ./cmd/top1000
+cd server && go build -o main ./cmd/top1000
 cd web && pnpm build
 ```
 

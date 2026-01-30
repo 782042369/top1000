@@ -181,6 +181,7 @@ IYUU_SIGN=your_iyuu_sign
 ### 4. 构建应用
 
 ```bash
+cd server
 go mod download
 go build -o top1000 ./cmd/top1000
 ```
@@ -373,7 +374,7 @@ save 60 10000
 
 ### 应用配置
 
-1. **增加连接池大小**（修改 `internal/storage/redis.go`）
+1. **增加连接池大小**（修改 `server/internal/storage/redis_store.go`）
 
 ```go
 poolSize: 10  // 默认 3
