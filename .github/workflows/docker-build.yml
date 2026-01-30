@@ -33,7 +33,6 @@ jobs:
     name: Docker 构建（多架构）
     runs-on: ubuntu-latest
     outputs:
-      tags: ${{ steps.meta.outputs.tags }}
       digest: ${{ steps.build.outputs.digest }}
     permissions:
       contents: read
@@ -119,9 +118,10 @@ jobs:
 
       - name: 显示镜像信息
         run: |
-          echo "镜像标签: ${{ steps.meta.outputs.tags }}"
           echo "镜像摘要: ${{ steps.build.outputs.digest }}"
           echo "构建时间: $(date -u '+%Y-%m-%d %H:%M:%S UTC')"
+          echo "镜像已推送至 Docker Hub"
+          echo "标签格式: ${IMAGE_NAME}:[TAG]"
 
   # ============================================
   # Job 2: 清理旧缓存
