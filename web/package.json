@@ -14,7 +14,7 @@
     "preview": "vite preview"
   },
   "dependencies": {
-    "@ag-grid-community/locale": "^35.0.0",
+    "@ag-grid-community/locale": "^35.0.1",
     "ag-grid-community": "^35.0.1",
     "ag-grid-enterprise": "^35.0.1"
   },
