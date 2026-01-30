@@ -1,4 +1,4 @@
-import type { GridOptions } from 'ag-grid-community'
+import type { GridApi, GridOptions } from 'ag-grid-community'
 
 import { AG_GRID_LOCALE_CN } from '@ag-grid-community/locale'
 import {
@@ -18,46 +18,36 @@ import { columnDefs, defaultColDef, interactionConfig, performanceConfig } from 
 import { fetchData } from './utils'
 import { loadSitesConfig } from './utils/config'
 
-// 排除列的表头名称
 const EXCLUDED_COLUMN = '操作'
+const ROOT_ID = '#root'
 
-// 设置 AG Grid Enterprise License
 LicenseManager.setLicenseKey(
   '[v3][RELEASE][0102]_NDg2Njc4MzY3MDgzNw==16d78ca762fb5d2ff740aed081e2af7b',
 )
 
-// Grid API 引用
-let gridApi: any = null
+let gridApi: GridApi<DataType> | null = null
 
-// 生成导出文件名（带日期）
 function getExportFileName(extension: string): string {
   const date = new Date().toISOString().slice(0, 10)
   return `top1000-${date}.${extension}`
 }
 
-// 判断列是否应该导出（排除操作列）
 function shouldExportColumn(params: any): boolean {
   const colDef = params.column.getColDef()
   return colDef.headerName !== EXCLUDED_COLUMN
 }
-
-// 初始化应用（预加载站点配置）
 async function initApp() {
   try {
-    // 预加载站点配置
     await loadSitesConfig()
-
-    // 初始化表格
     initGrid()
   }
   catch (error) {
-    console.error('❌ 应用初始化失败:', error)
-    // 显示错误信息给用户
-    const rootElement = document.querySelector<HTMLElement>('#root')
+    console.error('应用初始化失败:', error)
+    const rootElement = document.querySelector<HTMLElement>(ROOT_ID)
     if (rootElement) {
       rootElement.innerHTML = `
         <div style="padding: 20px; color: #fff;">
-          <h2>❌ 应用加载失败</h2>
+          <h2>应用加载失败</h2>
           <p>无法加载站点配置，请检查网络连接或联系管理员。</p>
         </div>
       `
@@ -65,7 +55,6 @@ async function initApp() {
   }
 }
 
-// 初始化表格
 function initGrid(): void {
   ModuleRegistry.registerModules([
     ClientSideRowModelModule,
@@ -89,9 +78,9 @@ function initGrid(): void {
     ...interactionConfig,
   }
 
-  const rootElement = document.querySelector<HTMLElement>('#root')
+  const rootElement = document.querySelector<HTMLElement>(ROOT_ID)
   if (!rootElement) {
-    console.error('❌ 未找到根元素 #root')
+    console.error('未找到根元素', ROOT_ID)
     return
   }
 
@@ -99,29 +88,17 @@ function initGrid(): void {
   setupExportButtons()
 }
 
-// 设置导出按钮事件
 function setupExportButtons(): void {
   const exportCsvBtn = document.querySelector<HTMLElement>('#exportCsv')
   const exportExcelBtn = document.querySelector<HTMLElement>('#exportExcel')
 
   exportCsvBtn?.addEventListener('click', () => {
-    if (gridApi) {
-      gridApi.exportDataAsCsv({
-        fileName: getExportFileName('csv'),
-        shouldExportColumn,
-      })
-    }
+    gridApi?.exportDataAsCsv({ fileName: getExportFileName('csv'), shouldExportColumn })
   })
 
   exportExcelBtn?.addEventListener('click', () => {
-    if (gridApi) {
-      gridApi.exportDataAsExcel({
-        fileName: getExportFileName('xlsx'),
-        shouldExportColumn,
-      })
-    }
+    gridApi?.exportDataAsExcel({ fileName: getExportFileName('xlsx'), shouldExportColumn })
   })
 }
 
-// 启动应用
 initApp()
